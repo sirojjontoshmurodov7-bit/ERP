@@ -6,10 +6,10 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795028630.9166849,
-    "seen": 1795029055.0732903,
-    "ast_hash": "7108c2ef744e6ac209fa4244ed9288ac",
-    "semantic_hash": "7108c2ef744e6ac209fa4244ed9288ac"
+    "mtime": 1795030056.5906408,
+    "seen": 1795030076.08055,
+    "ast_hash": "da2c9b23b6b391d889bde39cd44e7db1",
+    "semantic_hash": ""
   },
   "REJA.md": {
     "mtime": 1794526494.1805844,
@@ -276,10 +276,10 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795027923.6414442,
-    "seen": 1795029055.0731835,
-    "ast_hash": "eede015d411926ece1a87e22733e58c9",
-    "semantic_hash": "eede015d411926ece1a87e22733e58c9"
+    "mtime": 1795029575.7476845,
+    "seen": 1795030076.069793,
+    "ast_hash": "ae362dba140459b2c95453cf446b5d42",
+    "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
     "mtime": 1795012426.1609733,
@@ -306,10 +306,10 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795028211.8938203,
-    "seen": 1795029055.07325,
-    "ast_hash": "0805b38e2f7c80e25907d86a0b2b437b",
-    "semantic_hash": "0805b38e2f7c80e25907d86a0b2b437b"
+    "mtime": 1795029732.4107368,
+    "seen": 1795030076.0769508,
+    "ast_hash": "de97633f9b9f16252ac3f334e52293b4",
+    "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
     "mtime": 1795023419.60464,
@@ -380,38 +380,38 @@
   "apps/api/drizzle/0000_init_core.sql": {
     "mtime": 1795012429.367787,
     "seen": 1795029055.0730636,
-    "ast_hash": "b408c110253bea456eb22e187ff52900",
-    "semantic_hash": "b408c110253bea456eb22e187ff52900"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0001_rls_and_grants.sql": {
     "mtime": 1795022501.5504894,
     "seen": 1795029055.0730674,
-    "ast_hash": "a224880b5191316a73078f1dccf56f72",
-    "semantic_hash": "a224880b5191316a73078f1dccf56f72"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0002_tenant_composite_fks.sql": {
     "mtime": 1795022501.6371846,
     "seen": 1795029055.0730696,
-    "ast_hash": "b829637fd763451e4e32ef2f9c34f39a",
-    "semantic_hash": "b829637fd763451e4e32ef2f9c34f39a"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0003_centers_platform_guard.sql": {
     "mtime": 1795022501.7036736,
     "seen": 1795029055.0730717,
-    "ast_hash": "f7ebad49d4b4e856a100faa3399637af",
-    "semantic_hash": "f7ebad49d4b4e856a100faa3399637af"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "docker/initdb/01-app-role.sql": {
     "mtime": 1795002928.905884,
     "seen": 1795029055.0732765,
-    "ast_hash": "8d9289ead428eec710bfb23498df1fc5",
-    "semantic_hash": "8d9289ead428eec710bfb23498df1fc5"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795028857.721577,
-    "seen": 1795029055.0732918,
-    "ast_hash": "9c5712024750e9d8e1904021fa9610d2",
-    "semantic_hash": "9c5712024750e9d8e1904021fa9610d2"
+    "mtime": 1795030060.852308,
+    "seen": 1795030076.080553,
+    "ast_hash": "2a5d0c85e2bd2cb30577ff46e3a9da46",
+    "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
     "mtime": 1795024528.266486,
@@ -696,16 +696,16 @@
     "semantic_hash": "44ef37a6a37e6bfe552fba15e48a6064"
   },
   "apps/api/src/billing/billing.module.ts": {
-    "mtime": 1795028094.790975,
-    "seen": 1795029055.0731268,
-    "ast_hash": "7a4449efe68b7a740a69d553a27d55ff",
-    "semantic_hash": "7a4449efe68b7a740a69d553a27d55ff"
+    "mtime": 1795029692.7666984,
+    "seen": 1795030076.064858,
+    "ast_hash": "128f42d596138949cbdf3f549f2fcc1b",
+    "semantic_hash": ""
   },
   "apps/api/src/billing/billing.service.ts": {
-    "mtime": 1795028059.7857347,
-    "seen": 1795029055.0731285,
-    "ast_hash": "d36843f78da70b377ca1a68499eda366",
-    "semantic_hash": "d36843f78da70b377ca1a68499eda366"
+    "mtime": 1795029639.3470669,
+    "seen": 1795030076.06486,
+    "ast_hash": "0af6eaa085f24e13f6812a772e4b5a1d",
+    "semantic_hash": ""
   },
   "apps/api/src/billing/charges.schemas.ts": {
     "mtime": 1795028094.4449897,
@@ -714,10 +714,10 @@
     "semantic_hash": "6bd7a99bfe39a441fe819df90c1199c3"
   },
   "apps/api/src/billing/charges.service.ts": {
-    "mtime": 1795028094.5838363,
-    "seen": 1795029055.0731318,
-    "ast_hash": "4ac7acd9f9506a178a26dc26fd40b228",
-    "semantic_hash": "4ac7acd9f9506a178a26dc26fd40b228"
+    "mtime": 1795029704.1103487,
+    "seen": 1795030076.0650253,
+    "ast_hash": "e8371c9de9048ea20efb19e1dfd1d621",
+    "semantic_hash": ""
   },
   "apps/api/src/common/dates.ts": {
     "mtime": 1795027836.4499395,
@@ -726,45 +726,81 @@
     "semantic_hash": "ed94c2eb5d09f03c0b787839f3136a6f"
   },
   "apps/api/test/billing.e2e-spec.ts": {
-    "mtime": 1795028381.3942556,
-    "seen": 1795029055.0732365,
-    "ast_hash": "d75b97fbfa53a9a3e35b49c2975851b5",
-    "semantic_hash": "d75b97fbfa53a9a3e35b49c2975851b5"
+    "mtime": 1795029789.895261,
+    "seen": 1795030076.0757902,
+    "ast_hash": "68f7e1d9cdb7764d6b20dbe3d5c84f7d",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0004_teacher_profiles.sql": {
     "mtime": 1795024460.687514,
     "seen": 1795029055.0730736,
-    "ast_hash": "af3f4b7210d0affe75dd2f129a998134",
-    "semantic_hash": "af3f4b7210d0affe75dd2f129a998134"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0005_student_profiles.sql": {
     "mtime": 1795025146.8642087,
     "seen": 1795029055.0730755,
-    "ast_hash": "60d31f100bf126823fcf3418f1bb4cb7",
-    "semantic_hash": "60d31f100bf126823fcf3418f1bb4cb7"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0006_courses_groups.sql": {
     "mtime": 1795025534.7797973,
     "seen": 1795029055.073077,
-    "ast_hash": "cd22617daba4f9635b2680a20ea7c998",
-    "semantic_hash": "cd22617daba4f9635b2680a20ea7c998"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0007_enrollments.sql": {
     "mtime": 1795025936.3640983,
     "seen": 1795029055.0730786,
-    "ast_hash": "c1869d69f3629a8049638bf273f93abd",
-    "semantic_hash": "c1869d69f3629a8049638bf273f93abd"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0008_lessons_attendance.sql": {
     "mtime": 1795026537.488099,
     "seen": 1795029055.07308,
-    "ast_hash": "48de7d6a1263fc60919d9afcf6c76a62",
-    "semantic_hash": "48de7d6a1263fc60919d9afcf6c76a62"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0009_charges.sql": {
     "mtime": 1795027926.9486096,
     "seen": 1795029055.0730815,
-    "ast_hash": "dca8af42214625c0a122f2e11cc044c4",
-    "semantic_hash": "dca8af42214625c0a122f2e11cc044c4"
+    "ast_hash": "",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/allocator.ts": {
+    "mtime": 1795029638.9783044,
+    "seen": 1795030076.0643678,
+    "ast_hash": "4694170e5bf464177fd5d851bda550d0",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/payments.controller.ts": {
+    "mtime": 1795029692.5963635,
+    "seen": 1795030076.0650275,
+    "ast_hash": "28c0e4921b8f9168fb57b5cc3d3abb5b",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/payments.schemas.ts": {
+    "mtime": 1795029677.9422812,
+    "seen": 1795030076.0650299,
+    "ast_hash": "1727cd8834da2962a40b46cc5a2da9fa",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/payments.service.ts": {
+    "mtime": 1795029683.444638,
+    "seen": 1795030076.0650315,
+    "ast_hash": "8658ecd6df0848ed783db2eee18b389c",
+    "semantic_hash": ""
+  },
+  "apps/api/test/payments.e2e-spec.ts": {
+    "mtime": 1795029917.4746974,
+    "seen": 1795030076.0764472,
+    "ast_hash": "d2f346fdad46dfeb5f0830f2ad785cd0",
+    "semantic_hash": ""
+  },
+  "pnpm-lock.yaml": {
+    "mtime": 1795013925.2936294,
+    "seen": 1795030076.0807266,
+    "ast_hash": "c3d762903458ed9a4c0bb37a81a1b53c",
+    "semantic_hash": ""
   }
 }

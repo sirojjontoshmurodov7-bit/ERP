@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795030056.5906408,
-    "seen": 1795030076.08055,
-    "ast_hash": "da2c9b23b6b391d889bde39cd44e7db1",
+    "mtime": 1795030551.9808798,
+    "seen": 1795030563.2512872,
+    "ast_hash": "3133458c9bfe35a98ef11bafb588fd05",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795030060.852308,
-    "seen": 1795030076.080553,
-    "ast_hash": "2a5d0c85e2bd2cb30577ff46e3a9da46",
+    "mtime": 1795030551.980376,
+    "seen": 1795030563.2512906,
+    "ast_hash": "3c53a7c94517ba6ba6347530c76a90f9",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -696,9 +696,9 @@
     "semantic_hash": "44ef37a6a37e6bfe552fba15e48a6064"
   },
   "apps/api/src/billing/billing.module.ts": {
-    "mtime": 1795029692.7666984,
-    "seen": 1795030076.064858,
-    "ast_hash": "128f42d596138949cbdf3f549f2fcc1b",
+    "mtime": 1795030249.8115733,
+    "seen": 1795030563.2218935,
+    "ast_hash": "92109ca2ce087b3f0eadc4e867844303",
     "semantic_hash": ""
   },
   "apps/api/src/billing/billing.service.ts": {
@@ -795,6 +795,36 @@
     "mtime": 1795029917.4746974,
     "seen": 1795030076.0764472,
     "ast_hash": "d2f346fdad46dfeb5f0830f2ad785cd0",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/debtors.service.ts": {
+    "mtime": 1795030249.3773673,
+    "seen": 1795030563.2224228,
+    "ast_hash": "2e483c7331d91f8538adb02c2e92e083",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/discounts.controller.ts": {
+    "mtime": 1795030249.5101056,
+    "seen": 1795030563.222425,
+    "ast_hash": "1af04bbcce6626341cab307178d15ff8",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/discounts.schemas.ts": {
+    "mtime": 1795030219.6894765,
+    "seen": 1795030563.222427,
+    "ast_hash": "5ef662a5601657e42025570b5cfa888f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/discounts.service.ts": {
+    "mtime": 1795030355.6778371,
+    "seen": 1795030563.2224286,
+    "ast_hash": "ae3329b6cba1cb8585398dd18d5fe61a",
+    "semantic_hash": ""
+  },
+  "apps/api/test/discounts-debtors.e2e-spec.ts": {
+    "mtime": 1795030494.6289134,
+    "seen": 1795030563.2425213,
+    "ast_hash": "84c3f309fc95f2b709872f94642e22e9",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {
