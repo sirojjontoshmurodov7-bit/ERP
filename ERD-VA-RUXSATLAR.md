@@ -408,8 +408,9 @@ erDiagram
         uuid group_id FK "NULL = umumiy qoida"
         string type "FIXED|PERCENT|PER_GROUP|PER_LESSON"
         bigint amount "FIXED/PER_GROUP/PER_LESSON"
-        numeric percent "PERCENT"
+        numeric percent "PERCENT, 0.01-100"
         string percent_base "PAID|CHARGED"
+        string teacher_kind "NULL|MAIN|ASSISTANT: faqat shu sifatda biriktirilgan guruhlar"
         date valid_from
         date valid_to
     }
@@ -418,7 +419,9 @@ erDiagram
         uuid center_id FK
         date month
         string status "DRAFT|APPROVED|PAID"
+        timestamptz calculated_at
         uuid approved_by FK
+        timestamptz approved_at
     }
     payroll_items {
         uuid id PK
@@ -443,7 +446,10 @@ erDiagram
         uuid period_id FK
         uuid employee_id FK
         bigint amount
-        string method
+        string method "CASH|CARD|TRANSFER"
+        string status "CONFIRMED|REVERSED"
+        uuid reverses_payout_id FK "qaytarish yozuvida asl to'lov; summa manfiy"
+        string note
         uuid paid_by FK
         timestamptz paid_at
     }
@@ -478,6 +484,13 @@ erDiagram
 | Aralash + bonus/jarima | bir nechta `payroll_rules` + `payroll_adjustments` |
 
 Maosh hisoblash: davr oxirida `payroll_periods` (DRAFT) yaratiladi, `payroll_items` hisoblab to'ldiriladi, rahbar tasdiqlaydi (APPROVED), kassir/rahbar to'laydi (`payroll_payouts`). Tasdiqlangandan keyin tahrirlash yo'q, faqat keyingi davrda tuzatish.
+
+**Maosh (implementatsiya, 16-qadam):**
+- **Motor** `payroll/payroll-engine.ts` (sof funksiya `planPayroll`). Qoida oy bilan kesishsa amalda (`valid_from <= oy oxiri` va `valid_to` yo'q yoki `>= oy boshi`). `FIXED`: oyiga bitta qator. `PER_GROUP`: xodim shu oyda biriktirilgan har guruh uchun (`group_teachers` oy bilan kesishsa; `teacher_kind` filtri); `group_id` berilgan bo'lsa faqat shu guruh, biriktirishdan qat'i nazar. `PER_LESSON`: oyda xodim o'tgan (`lessons.teacher_id`, `HELD`) darslar x summa, guruh bo'yicha. `PERCENT`: guruh bo'yicha asosdan foiz (yaxlitlanadi): `PAID` = oy ichida (Toshkent sanasi) hisoblarga taqsimlangan sof to'lov (qaytarish manfiy taqsimotlari ayiriladi, asos 0 dan past tushmaydi); `CHARGED` = oy ichida `due_date`i kelgan bekor qilinmagan hisoblar. Nol summa qator bermaydi. `payroll_items.base_amount`: FIXED/PER_GROUP summa, PER_LESSON darslar soni, PERCENT asos summa. Hamma qoidalar bir xodimda qo'shiladi. Markaz/filial tushumidan foiz va guruhsiz xodim (admin/kassir) uchun foiz hozircha yo'q (faqat guruh bo'yicha, `group_id` bilan).
+- **Davr:** oyiga bitta (`payroll_periods`, oyning 1-kuni). `calculate` DRAFT davrni qayta hisoblaydi (qatorlar almashadi, tuzatishlar saqlanadi); joriy oy ham hisoblanadi, kelajak oyi yo'q. `approve` (`payroll.approve`, rahbar) davrni qulflaydi: qator va tuzatishlar triggerda faqat DRAFT davrda o'zgaradi, holat DRAFT'ga qaytmaydi, oy o'zgarmaydi. Hamma to'langach (jami > 0 bo'lgan har xodim) davr `PAID`, to'lov qaytarilsa yana `APPROVED`.
+- **Xodim jami** = qatorlar yig'indisi + bonus/jarima (`payroll_adjustments`, faqat DRAFT davrda qo'shiladi/o'chiriladi). To'lanadigan qoldiq = `max(0, jami) - to'langan`; manfiy jami to'lanmaydi. To'lov qoldiqdan oshmaydi, faqat tasdiqlangan davrga. To'langan = asl to'lovlar + manfiy qaytarish yozuvlari yig'indisi.
+- **To'lov** `payroll_payouts` append-only (payments kabi): asl > 0, qaytarish yozuvi < 0 (`reverses_payout_id`, bitta to'lov bir marta), asl faqat `CONFIRMED -> REVERSED` (trigger). To'lov `payroll.pay` (rahbar, kassir ○), qaytarish `payroll.approve` (faqat rahbar).
+- **Ko'rish:** `payroll.view_all` (rahbar, kassir): davrlar, tafsilot, qoidalar, to'lovlar. `payroll.view_own` (ustoz): `GET /payroll/me`, faqat tasdiqlangan/to'langan davrlarning o'z qatorlari. Admin sukutda hech narsa ko'rmaydi.
 
 ## 3. Ruxsatlar matritsasi
 

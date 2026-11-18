@@ -13,6 +13,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgTable,
   primaryKey,
   text,
@@ -470,6 +471,153 @@ export const paymentAllocations = pgTable(
     index('payment_allocations_charge_idx').on(t.chargeId),
     index('payment_allocations_center_idx').on(t.centerId),
     check('payment_allocations_amount_chk', sql`${t.amount} <> 0`),
+  ],
+);
+
+// --- Maosh (ERD 2.4). Qoida -> davr (DRAFT) -> qatorlar -> tasdiq -> to'lov. Davr qulfi va to'lov append-only triggerlarda (0011). ---
+export const payrollRules = pgTable(
+  'payroll_rules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    employeeId: uuid('employee_id').notNull(),
+    groupId: uuid('group_id'), // NULL = umumiy (xodimning davrdagi guruhlari)
+    type: text('type').notNull(), // FIXED | PERCENT | PER_GROUP | PER_LESSON
+    amount: bigint('amount', { mode: 'number' }), // FIXED/PER_GROUP/PER_LESSON
+    percent: numeric('percent', { precision: 5, scale: 2 }), // PERCENT (0.01-100)
+    percentBase: text('percent_base'), // PAID | CHARGED
+    teacherKind: text('teacher_kind'), // ixtiyoriy filtr: faqat MAIN yoki ASSISTANT sifatida biriktirilgan guruhlar
+    validFrom: date('valid_from', { mode: 'string' }).notNull(),
+    validTo: date('valid_to', { mode: 'string' }),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'payroll_rules_employee_center_fk', columns: [t.employeeId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    foreignKey({ name: 'payroll_rules_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    unique('payroll_rules_id_center_uq').on(t.id, t.centerId),
+    index('payroll_rules_employee_idx').on(t.employeeId),
+    index('payroll_rules_center_idx').on(t.centerId),
+    check('payroll_rules_type_chk', sql`${t.type} in ('FIXED','PERCENT','PER_GROUP','PER_LESSON')`),
+    check(
+      'payroll_rules_value_chk',
+      sql`(${t.type} = 'PERCENT' and ${t.percent} is not null and ${t.percent} > 0 and ${t.percent} <= 100 and ${t.percentBase} is not null and ${t.percentBase} in ('PAID','CHARGED') and ${t.amount} is null) or (${t.type} <> 'PERCENT' and ${t.amount} is not null and ${t.amount} > 0 and ${t.percent} is null and ${t.percentBase} is null)`,
+    ),
+    check('payroll_rules_kind_chk', sql`${t.teacherKind} is null or ${t.teacherKind} in ('MAIN','ASSISTANT')`),
+    check('payroll_rules_dates_chk', sql`${t.validTo} is null or ${t.validTo} >= ${t.validFrom}`),
+  ],
+);
+
+export const payrollPeriods = pgTable(
+  'payroll_periods',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    month: date('month', { mode: 'string' }).notNull(), // oyning 1-kuni
+    status: text('status').notNull().default('DRAFT'), // DRAFT | APPROVED | PAID
+    calculatedAt: ts('calculated_at'),
+    approvedBy: uuid('approved_by').references(() => users.id),
+    approvedAt: ts('approved_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    unique('payroll_periods_id_center_uq').on(t.id, t.centerId),
+    uniqueIndex('payroll_periods_month_uq').on(t.centerId, t.month),
+    check('payroll_periods_status_chk', sql`${t.status} in ('DRAFT','APPROVED','PAID')`),
+    check('payroll_periods_month_chk', sql`extract(day from ${t.month}) = 1`),
+    check('payroll_periods_approved_chk', sql`(${t.status} = 'DRAFT') = (${t.approvedAt} is null)`),
+  ],
+);
+
+// Faqat DRAFT davrda o'zgaradi (trigger): qayta hisoblashda eski qatorlar o'chiriladi.
+export const payrollItems = pgTable(
+  'payroll_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    periodId: uuid('period_id').notNull(),
+    employeeId: uuid('employee_id').notNull(),
+    ruleId: uuid('rule_id').notNull(),
+    groupId: uuid('group_id'),
+    baseAmount: bigint('base_amount', { mode: 'number' }).notNull(), // FIXED/PER_GROUP: summa; PER_LESSON: darslar soni; PERCENT: asos summa
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    description: text('description').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'payroll_items_period_center_fk', columns: [t.periodId, t.centerId], foreignColumns: [payrollPeriods.id, payrollPeriods.centerId] }),
+    foreignKey({ name: 'payroll_items_employee_center_fk', columns: [t.employeeId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    foreignKey({ name: 'payroll_items_rule_center_fk', columns: [t.ruleId, t.centerId], foreignColumns: [payrollRules.id, payrollRules.centerId] }),
+    foreignKey({ name: 'payroll_items_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    index('payroll_items_period_idx').on(t.periodId),
+    index('payroll_items_employee_idx').on(t.employeeId),
+    index('payroll_items_center_idx').on(t.centerId),
+    check('payroll_items_amount_chk', sql`${t.amount} > 0 and ${t.baseAmount} >= 0`),
+  ],
+);
+
+// Bonus (musbat) va jarima (manfiy): faqat DRAFT davrda qo'shiladi/o'chiriladi (trigger).
+export const payrollAdjustments = pgTable(
+  'payroll_adjustments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    periodId: uuid('period_id').notNull(),
+    employeeId: uuid('employee_id').notNull(),
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    reason: text('reason').notNull(),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'payroll_adjustments_period_center_fk', columns: [t.periodId, t.centerId], foreignColumns: [payrollPeriods.id, payrollPeriods.centerId] }),
+    foreignKey({ name: 'payroll_adjustments_employee_center_fk', columns: [t.employeeId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    index('payroll_adjustments_period_idx').on(t.periodId),
+    index('payroll_adjustments_center_idx').on(t.centerId),
+    check('payroll_adjustments_amount_chk', sql`${t.amount} <> 0`),
+  ],
+);
+
+// Maosh to'lovi: append-only (payments kabi): asl > 0, qaytarish yozuvi < 0; asl faqat CONFIRMED -> REVERSED (trigger).
+export const payrollPayouts = pgTable(
+  'payroll_payouts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    periodId: uuid('period_id').notNull(),
+    employeeId: uuid('employee_id').notNull(),
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    method: text('method').notNull(), // CASH | CARD | TRANSFER
+    status: text('status').notNull().default('CONFIRMED'), // CONFIRMED | REVERSED
+    reversesPayoutId: uuid('reverses_payout_id'),
+    note: text('note'), // qaytarishda sabab
+    paidBy: uuid('paid_by').references(() => users.id),
+    paidAt: ts('paid_at').notNull().defaultNow(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'payroll_payouts_period_center_fk', columns: [t.periodId, t.centerId], foreignColumns: [payrollPeriods.id, payrollPeriods.centerId] }),
+    foreignKey({ name: 'payroll_payouts_employee_center_fk', columns: [t.employeeId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    foreignKey({ name: 'payroll_payouts_reverses_center_fk', columns: [t.reversesPayoutId, t.centerId], foreignColumns: [t.id, t.centerId] }),
+    unique('payroll_payouts_id_center_uq').on(t.id, t.centerId),
+    uniqueIndex('payroll_payouts_reverses_uq').on(t.reversesPayoutId).where(sql`${t.reversesPayoutId} is not null`),
+    index('payroll_payouts_period_idx').on(t.periodId),
+    index('payroll_payouts_employee_idx').on(t.employeeId),
+    index('payroll_payouts_center_idx').on(t.centerId),
+    check('payroll_payouts_method_chk', sql`${t.method} in ('CASH','CARD','TRANSFER')`),
+    check('payroll_payouts_status_chk', sql`${t.status} in ('CONFIRMED','REVERSED')`),
+    check('payroll_payouts_amount_chk', sql`(${t.reversesPayoutId} is null and ${t.amount} > 0) or (${t.reversesPayoutId} is not null and ${t.amount} < 0)`),
+    check('payroll_payouts_reversal_status_chk', sql`${t.reversesPayoutId} is null or ${t.status} = 'CONFIRMED'`),
   ],
 );
 

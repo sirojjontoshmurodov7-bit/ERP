@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795030551.9808798,
-    "seen": 1795030563.2512872,
-    "ast_hash": "3133458c9bfe35a98ef11bafb588fd05",
+    "mtime": 1795031818.7504466,
+    "seen": 1795031829.75298,
+    "ast_hash": "4f89e3ba1c9efaa319f567c360d2f0ee",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,10 +48,10 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795028127.042891,
-    "seen": 1795029055.0730917,
-    "ast_hash": "3bd616848586866c1ef76607b0b1ab7f",
-    "semantic_hash": "3bd616848586866c1ef76607b0b1ab7f"
+    "mtime": 1795031370.8554456,
+    "seen": 1795031829.7322502,
+    "ast_hash": "fcb3ab6cce2aa92e1f102461c7f57c04",
+    "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
     "mtime": 1795002973.2981012,
@@ -276,9 +276,9 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795029575.7476845,
-    "seen": 1795030076.069793,
-    "ast_hash": "ae362dba140459b2c95453cf446b5d42",
+    "mtime": 1795031447.2633553,
+    "seen": 1795031829.7429988,
+    "ast_hash": "501d4c8c6917c6dcfd2234ddad90b18c",
     "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
@@ -306,9 +306,9 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795029732.4107368,
-    "seen": 1795030076.0769508,
-    "ast_hash": "de97633f9b9f16252ac3f334e52293b4",
+    "mtime": 1795031479.25076,
+    "seen": 1795031829.749874,
+    "ast_hash": "89f33135b52de0d10be1600665589a9d",
     "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795030551.980376,
-    "seen": 1795030563.2512906,
-    "ast_hash": "3c53a7c94517ba6ba6347530c76a90f9",
+    "mtime": 1795031818.7528586,
+    "seen": 1795031829.7529824,
+    "ast_hash": "6f89f01e947a0c9f923cb28e61629c19",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -825,6 +825,60 @@
     "mtime": 1795030494.6289134,
     "seen": 1795030563.2425213,
     "ast_hash": "84c3f309fc95f2b709872f94642e22e9",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payouts.service.ts": {
+    "mtime": 1795031370.3238952,
+    "seen": 1795031829.7455976,
+    "ast_hash": "63e80d462ed28e769a1d1cd750823cbb",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll-engine.spec.ts": {
+    "mtime": 1795031232.7908447,
+    "seen": 1795031829.7456007,
+    "ast_hash": "ddc567b1bfda0f67a2a9417ed0dc1b23",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll-engine.ts": {
+    "mtime": 1795031232.6592555,
+    "seen": 1795031829.7456033,
+    "ast_hash": "3db20d5d801a42eb461d373cf9423216",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll-rules.service.ts": {
+    "mtime": 1795031296.6594005,
+    "seen": 1795031829.7456057,
+    "ast_hash": "816ecc9777f05e0e4210e3ebac25c80d",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll.controller.ts": {
+    "mtime": 1795031370.4408774,
+    "seen": 1795031829.7456074,
+    "ast_hash": "c355ae442acfc7b1ede09ca32031e522",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll.module.ts": {
+    "mtime": 1795031370.554607,
+    "seen": 1795031829.7456095,
+    "ast_hash": "75bd900300a5317d152fbf5dbbe1fee3",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll.schemas.ts": {
+    "mtime": 1795031271.2140224,
+    "seen": 1795031829.7456112,
+    "ast_hash": "6806684b738461f7792e44922c3beaf9",
+    "semantic_hash": ""
+  },
+  "apps/api/src/payroll/payroll.service.ts": {
+    "mtime": 1795031614.309997,
+    "seen": 1795031829.7456133,
+    "ast_hash": "7d963bcab119e9c62da9da5cfb4bfc43",
+    "semantic_hash": ""
+  },
+  "apps/api/test/payroll.e2e-spec.ts": {
+    "mtime": 1795031762.1748278,
+    "seen": 1795031829.7493842,
+    "ast_hash": "ca3496a6c0133fea4c201caea771d8bc",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

@@ -30,6 +30,11 @@ const TENANT_TABLES = [
   'enrollment_freezes',
   'payments',
   'payment_allocations',
+  'payroll_rules',
+  'payroll_periods',
+  'payroll_items',
+  'payroll_adjustments',
+  'payroll_payouts',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -43,6 +48,8 @@ interface Fixture {
   enrollment: string;
   charge: string;
   payment: string;
+  payrollRule: string;
+  payrollPeriod: string;
   lesson: string;
   branch1: string;
   branch2: string;
@@ -125,6 +132,16 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into payments (center_id, branch_id, student_id, amount, method, receipt_no) values (${f.center}, ${f.branch1}, ${f.admin}, 5000, 'CASH', ${Math.floor(Math.random() * 1e9) + 1000})`;
       case 'payment_allocations':
         return sql`insert into payment_allocations (center_id, payment_id, charge_id, amount) values (${f.center}, ${f.payment}, ${f.charge}, 100)`;
+      case 'payroll_rules':
+        return sql`insert into payroll_rules (center_id, employee_id, type, amount, valid_from) values (${f.center}, ${f.admin}, 'FIXED', 1000, '2026-01-01')`;
+      case 'payroll_periods':
+        return sql`insert into payroll_periods (center_id, month) values (${f.center}, date_trunc('month', date '2100-01-01' + (floor(random() * 100000))::int)::date)`;
+      case 'payroll_items':
+        return sql`insert into payroll_items (center_id, period_id, employee_id, rule_id, base_amount, amount, description) values (${f.center}, ${f.payrollPeriod}, ${f.admin}, ${f.payrollRule}, 1, 1, 'x')`;
+      case 'payroll_adjustments':
+        return sql`insert into payroll_adjustments (center_id, period_id, employee_id, amount, reason) values (${f.center}, ${f.payrollPeriod}, ${f.admin}, -5, 'jarima')`;
+      case 'payroll_payouts':
+        return sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method) values (${f.center}, ${f.payrollPeriod}, ${f.admin}, 100, 'CASH')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -169,6 +186,11 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     const [payment] = await db.insert(s.payments).values({ centerId: c!.id, branchId: b1!.id, studentId: admin!.id, amount: 100000, method: 'CASH', receiptNo: 1 }).returning();
     await db.insert(s.paymentAllocations).values({ centerId: c!.id, paymentId: payment!.id, chargeId: charge!.id, amount: 50000 });
     await db.insert(s.enrollmentFreezes).values({ centerId: c!.id, enrollmentId: enrollment!.id, fromDate: '2026-01-01', toDate: '2026-01-05' });
+    const [prule] = await db.insert(s.payrollRules).values({ centerId: c!.id, employeeId: admin!.id, type: 'FIXED', amount: 1000, validFrom: '2026-01-01' }).returning();
+    const [pperiod] = await db.insert(s.payrollPeriods).values({ centerId: c!.id, month: '2026-01-01' }).returning();
+    await db.insert(s.payrollItems).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, ruleId: prule!.id, baseAmount: 1000, amount: 1000, description: 'seed' });
+    await db.insert(s.payrollAdjustments).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 500, reason: 'seed' });
+    await db.insert(s.payrollPayouts).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 300, method: 'CASH' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -176,7 +198,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
     await db.insert(s.auditLogs).values({ centerId: c!.id, actorId: owner!.id, action: 'seed', entity: 'user' });
-    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, charge: charge!.id, payment: payment!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
+    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, charge: charge!.id, payment: payment!.id, payrollRule: prule!.id, payrollPeriod: pperiod!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
   }
 
   beforeAll(async () => {
@@ -420,6 +442,71 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, sql`delete from payment_allocations where payment_id = ${A.payment}`))).toMatch(/permission denied/);
       expect(await failure(q(ctxA, sql`update payments set status = 'REVERSED' where id = ${A.payment}`))).toBeNull();
       expect(await failure(q(ctxA, sql`update payments set status = 'CONFIRMED' where id = ${A.payment}`))).toMatch(/append-only/);
+    });
+
+    it("maosh jadvallari: kross-markaz havola, bazaviy qoidalar, davr qulfi va append-only", async () => {
+      const rule = (cols: string, vals: unknown[]) => sql`insert into payroll_rules (center_id, employee_id, ${sql.raw(cols)}) values (${A.center}, ${A.admin}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      // boshqa markaz xodimi/guruhi/davri/qoidasi
+      expect(await failure(q(ctxA, sql`insert into payroll_rules (center_id, employee_id, type, amount, valid_from) values (${A.center}, ${B.admin}, 'FIXED', 1, '2026-01-01')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into payroll_rules (center_id, employee_id, group_id, type, amount, valid_from) values (${A.center}, ${A.admin}, ${B.group}, 'PER_GROUP', 1, '2026-01-01')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into payroll_items (center_id, period_id, employee_id, rule_id, base_amount, amount, description) values (${A.center}, ${B.payrollPeriod}, ${A.admin}, ${A.payrollRule}, 1, 1, 'x')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into payroll_items (center_id, period_id, employee_id, rule_id, base_amount, amount, description) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, ${B.payrollRule}, 1, 1, 'x')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method) values (${A.center}, ${B.payrollPeriod}, ${A.admin}, 1, 'CASH')`))).toMatch(/foreign key/);
+      // qoida qiymatlari
+      expect(await failure(q(ctxA, rule('type, valid_from', ['FIXED', '2026-01-01'])))).toMatch(/payroll_rules_value_chk/); // summa yo'q
+      expect(await failure(q(ctxA, rule('type, amount, valid_from', ['FIXED', 0, '2026-01-01'])))).toMatch(/payroll_rules_value_chk/);
+      expect(await failure(q(ctxA, rule('type, percent, percent_base, valid_from', ['PERCENT', 101, 'PAID', '2026-01-01'])))).toMatch(/payroll_rules_value_chk|numeric field overflow/);
+      expect(await failure(q(ctxA, rule('type, percent, valid_from', ['PERCENT', 10, '2026-01-01'])))).toMatch(/payroll_rules_value_chk/); // asos yo'q
+      expect(await failure(q(ctxA, rule('type, amount, percent, percent_base, valid_from', ['FIXED', 5, 10, 'PAID', '2026-01-01'])))).toMatch(/payroll_rules_value_chk/);
+      expect(await failure(q(ctxA, rule('type, amount, valid_from', ['WEIRD', 5, '2026-01-01'])))).toMatch(/payroll_rules_type_chk/);
+      expect(await failure(q(ctxA, rule('type, amount, teacher_kind, valid_from', ['FIXED', 5, 'BOSS', '2026-01-01'])))).toMatch(/payroll_rules_kind_chk/);
+      expect(await failure(q(ctxA, rule('type, amount, valid_from, valid_to', ['FIXED', 5, '2026-02-01', '2026-01-01'])))).toMatch(/payroll_rules_dates_chk/);
+      expect(await failure(q(ctxA, rule('type, percent, percent_base, valid_from', ['PERCENT', 12.5, 'CHARGED', '2026-01-01'])))).toBeNull();
+      // davr: oyning 1-kuni, oyiga bitta, holat qoidalari
+      expect(await failure(q(ctxA, sql`insert into payroll_periods (center_id, month) values (${A.center}, '2099-05-15')`))).toMatch(/payroll_periods_month_chk/);
+      expect(await failure(q(ctxA, sql`insert into payroll_periods (center_id, month) values (${A.center}, '2026-01-01')`))).toMatch(/payroll_periods_month_uq|duplicate/);
+      expect(await failure(q(ctxA, sql`insert into payroll_periods (center_id, month, status) values (${A.center}, '2099-06-01', 'WEIRD')`))).toMatch(/payroll_periods_status_chk|payroll_periods_approved_chk/);
+      expect(await failure(q(ctxA, sql`insert into payroll_periods (center_id, month, status) values (${A.center}, '2099-07-01', 'APPROVED')`))).toMatch(/payroll_periods_approved_chk/); // approved_at yo'q
+      // qatorlar: summa > 0, tuzatish != 0
+      const item = (amount: number) => sql`insert into payroll_items (center_id, period_id, employee_id, rule_id, base_amount, amount, description) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, ${A.payrollRule}, 1, ${amount}, 'x')`;
+      expect(await failure(q(ctxA, item(0)))).toMatch(/payroll_items_amount_chk/);
+      expect(await failure(q(ctxA, sql`insert into payroll_adjustments (center_id, period_id, employee_id, amount, reason) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, 0, 'x')`))).toMatch(/payroll_adjustments_amount_chk/);
+
+      // tasdiqlangan davr qulflanadi: qator/tuzatish qo'shish, o'zgartirish, o'chirish rad etiladi; DRAFT ga qaytib bo'lmaydi
+      const [locked] = await q<{ id: string }>(ctxA, sql`insert into payroll_periods (center_id, month) values (${A.center}, '2099-08-01') returning id`);
+      await q(ctxA, sql`insert into payroll_items (center_id, period_id, employee_id, rule_id, base_amount, amount, description) values (${A.center}, ${locked!.id}, ${A.admin}, ${A.payrollRule}, 1, 7, 'qulfdan oldin')`);
+      expect(await failure(q(ctxA, sql`update payroll_periods set status = 'APPROVED', approved_at = now() where id = ${locked!.id}`))).toBeNull();
+      const into = (tbl: string) => (tbl === 'i' ? sql`insert into payroll_items (center_id, period_id, employee_id, rule_id, base_amount, amount, description) values (${A.center}, ${locked!.id}, ${A.admin}, ${A.payrollRule}, 1, 1, 'x')` : sql`insert into payroll_adjustments (center_id, period_id, employee_id, amount, reason) values (${A.center}, ${locked!.id}, ${A.admin}, 5, 'x')`);
+      expect(await failure(q(ctxA, into('i')))).toMatch(/locked/);
+      expect(await failure(q(ctxA, into('a')))).toMatch(/locked/);
+      expect(await failure(q(ctxA, sql`update payroll_items set amount = 9 where period_id = ${locked!.id}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from payroll_items where period_id = ${locked!.id}`))).toMatch(/locked/);
+      expect(await failure(q(ctxA, sql`update payroll_periods set status = 'DRAFT', approved_at = null where id = ${locked!.id}`))).toMatch(/transition/);
+      expect(await failure(q(ctxA, sql`update payroll_periods set month = '2099-09-01' where id = ${locked!.id}`))).toMatch(/immutable/);
+      expect(await failure(q(ctxA, sql`update payroll_periods set calculated_at = now() where id = ${locked!.id}`))).toMatch(/locked/);
+      expect(await failure(q(ctxA, sql`update payroll_periods set status = 'PAID' where id = ${locked!.id}`))).toBeNull();
+      expect(await failure(q(ctxA, sql`update payroll_periods set status = 'APPROVED' where id = ${locked!.id}`))).toBeNull(); // to'lov qaytarilganda
+      // DRAFT davrda qatorlarni o'chirish mumkin (qayta hisoblash)
+      expect(await failure(q(ctxA, sql`delete from payroll_items where id = (select id from payroll_items where period_id = ${A.payrollPeriod} limit 1)`))).toBeNull();
+
+      // to'lov append-only (payments kabi)
+      const po = (n: number, amount: number) => sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method, reverses_payout_id) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, ${amount}, 'CASH', ${n})`;
+      const [paid] = await q<{ id: string }>(ctxA, sql`select id from payroll_payouts where period_id = ${A.payrollPeriod} limit 1`);
+      const pay = (extra: SQL) => sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method ${extra})`;
+      void po; void pay;
+      const rev = (amount: number) => sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method, reverses_payout_id) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, ${amount}, 'CASH', ${paid!.id})`;
+      expect(await failure(q(ctxA, sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, 0, 'CASH')`))).toMatch(/payroll_payouts_amount_chk/);
+      expect(await failure(q(ctxA, sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method) values (${A.center}, ${A.payrollPeriod}, ${A.admin}, 5, 'BITCOIN')`))).toMatch(/payroll_payouts_method_chk/);
+      expect(await failure(q(ctxA, rev(50)))).toMatch(/payroll_payouts_amount_chk/);
+      expect(await failure(q(ctxA, rev(-300)))).toBeNull();
+      expect(await failure(q(ctxA, rev(-300)))).toMatch(/payroll_payouts_reverses_uq|duplicate/);
+      expect(await failure(q(ctxA, sql`update payroll_payouts set amount = 1 where id = ${paid!.id}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`update payroll_payouts set status = 'REVERSED', note = 'x' where id = ${paid!.id}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`delete from payroll_payouts where id = ${paid!.id}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from payroll_rules where id = ${A.payrollRule}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from payroll_periods where id = ${A.payrollPeriod}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`update payroll_payouts set status = 'REVERSED' where id = ${paid!.id}`))).toBeNull();
+      expect(await failure(q(ctxA, sql`update payroll_payouts set status = 'CONFIRMED' where id = ${paid!.id}`))).toMatch(/append-only/);
     });
 
     it("charges va enrollment_freezes: boshqa markaz yozilishi, o'quvchisi va guruhiga bog'lab bo'lmaydi", async () => {

@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar) tayyor; moliya bosqichi yopildi, keyingi: maosh). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh) tayyor; keyingi: xarajat va kassa hisoboti). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -19,10 +19,11 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 12. Davomat qulfi va ko'rish (`GET /attendance`) | tayyor | `apps/api/src/lessons/`, `test/attendance-lock.e2e-spec.ts` |
 | 13. Hisob-kitob (`charges`, `enrollment_freezes`) | tayyor | `apps/api/src/billing/`, `common/dates.ts`, `drizzle/0009`, `test/billing.e2e-spec.ts` |
 | 14. To'lovlar (`payments`, `payment_allocations`) | tayyor | `apps/api/src/billing/{allocator,payments.*}`, `drizzle/0010`, `test/payments.e2e-spec.ts` |
-| 15. Chegirmalar va qarzdorlar (`/enrollments/:id/discounts`, `/debtors`) | tayyor (commitsiz) | `apps/api/src/billing/{discounts,debtors}.*`, `test/discounts-debtors.e2e-spec.ts` |
-| **16. Maosh** | **keyingi** | hali yozilmagan (ERD 2.4) |
+| 15. Chegirmalar va qarzdorlar (`/enrollments/:id/discounts`, `/debtors`) | tayyor | `apps/api/src/billing/{discounts,debtors}.*`, `test/discounts-debtors.e2e-spec.ts` |
+| 16. Maosh (`payroll_*`) | tayyor (commitsiz) | `apps/api/src/payroll/`, `drizzle/0011`, `test/payroll.e2e-spec.ts` |
+| **17. Xarajat va moliyaviy hisobotlar** | **keyingi** | hali yozilmagan (`expenses`, `finance.report`) |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`. 15-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`. 16-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -35,7 +36,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~70 s, 363 test; unit 36 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~70 s, 403 test; unit 43 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -150,7 +151,7 @@ Qoidalar manbasi: ERD 2.3 ("To'lov va taqsimot", "Qaytarish", "To'langan hisobni
 - **Ochiq:** `CLICK/PAYME` provayderlari (DB'da usul bor, API rad etadi); kassa smenasi/kunlik yopilish; chek PDF/chop etish; to'lov sanasini orqaga surish (`paidAt`) taqsimot tartibiga ta'sir qilmaydi (taqsimot `paid_at` bo'yicha emas, hisob `due_date` bo'yicha FIFO, havza `paid_at` bo'yicha).
 - Test: `test/payments.e2e-spec.ts` (19 ta: FIFO, avans, oldindan to'lov, parallel to'lov, qaytarish, hisob bekor qilish, qamrov/ruxsat, audit) + izolyatsiya testida 2 jadval va bazaviy qoidalar/append-only. Umumiy 347 e2e + 36 unit.
 
-### 15-qadam: chegirmalar va qarzdorlar (tayyor, commitsiz)
+### 15-qadam: chegirmalar va qarzdorlar (tayyor)
 Yangi migratsiya yo'q: `enrollment_discounts` 0007 da tayyor edi. Qoidalar: ERD 2.3 va ruxsat matritsasi.
 - **Chegirmalar** (`billing/discounts.*`): `POST /enrollments/:id/discounts` (`{type: PERCENT|AMOUNT|FREE, value?, reason, fromDate?, toDate?}`; `discount.grant`: rahbar ✔, admin/kassir ○, o'z filialida), `GET /enrollments/:id/discounts` (`payment.view` yoki `discount.grant`; o'quvchi faqat o'zinikini; `active` bayrog'i), `POST /discounts/:id/end` (`{toDate?}`, sukut bugun; qator o'chirilmaydi, `to_date` qo'yiladi). Qiymat qoidalari zod'da va bazadagi CHECK'da (FREE qiymatsiz, PERCENT 1-100, AMOUNT > 0), sabab majburiy.
 - **Faqat keyingi hisoblarga ta'sir:** berish va tugatishdan oldin yozilish hisobi `generate` bilan hozirgacha yaratiladi, shuning uchun o'tgan davrlar eski narxda qotadi (ERD 2.3). `fromDate/toDate` to'lov muddatiga (`due_date`) qo'llanadi, ikkala chegara ham kiradi. Bir yozilishdagi chegirmalar **qo'shiladi** (asos summadan oshmaydi); ustma-ust tushganda javobda `overlaps` (chegirma id'lari) qaytadi, lekin berish rad etilmaydi. Tugagan yozilishga (`LEFT`) 409 `ALREADY_LEFT`; takror tugatish 409 `ALREADY_ENDED`; boshlanishdan oldin tugatish 400 `INVALID_DATES`.
@@ -159,6 +160,17 @@ Yangi migratsiya yo'q: `enrollment_discounts` 0007 da tayyor edi. Qoidalar: ERD 
 - **Ochiq:** `/debtors` hamma qarzdorni SQL'da guruhlaydi (sahifalash SQL'da, katta markazda indeks/materializatsiya keyin); chegirma berilganda mavjud hisobni qayta hisoblash yo'q (rahbar qo'lda bekor qilib qayta hisoblashi mumkin); qarzdorlarga Telegram eslatma (bot bosqichida).
 - Audit: `discount.grant`, `discount.end`.
 - Test: `test/discounts-debtors.e2e-spec.ts` (16 ta: chegirma turlari va qotirish, muddat, tugatish, overlaps, ruxsat/qamrov; grace chegarasi, ma'lumot va saralash, filtrlar, to'lov/bekor qilish ta'siri, filial/ustoz/o'quvchi ko'rinishi). Umumiy 363 e2e + 36 unit.
+
+### 16-qadam: maosh (tayyor, commitsiz)
+Qoidalar manbasi: ERD 2.4 ("Maosh (implementatsiya, 16-qadam)").
+- **Migratsiya `0011`:** `payroll_rules` (`employee_id`, `group_id`?, `type` FIXED|PERCENT|PER_GROUP|PER_LESSON, `amount`, `percent` numeric(5,2), `percent_base` PAID|CHARGED, `teacher_kind`?, `valid_from/to`), `payroll_periods` (oyiga bitta, `status`, `calculated_at`, `approved_by/at`), `payroll_items`, `payroll_adjustments`, `payroll_payouts`. RLS, kompozit FK, `TENANT_TABLES` da. Bazada: tur bo'yicha qiymat CHECK (FIXED/PER_GROUP/PER_LESSON summa, PERCENT foiz va asos), davr oyi 1-kun, `payroll_draft_only` trigger (qator va tuzatish faqat DRAFT davrda o'zgaradi; items/adjustments'ga DELETE huquqi bor, UPDATE yo'q), `payroll_periods_guard` (DRAFT -> APPROVED -> PAID, PAID -> APPROVED; oy o'zgarmaydi), `payroll_payouts_guard` (append-only). Qoidalar, davrlar, to'lovlardan DELETE huquqi yo'q.
+- **Motor** `payroll/payroll-engine.ts` (sof, 7 unit test): FIXED, PER_GROUP, PER_LESSON, PERCENT (to'langan/hisoblangan asos). Tafsilot: ERD 2.4.
+- **Endpointlar** (`payroll/`): `POST/GET /payroll/rules`, `PATCH /payroll/rules/:id` (summa, foiz, asos, filtr, sanalar; tur/xodim/guruh o'zgarmaydi), `POST /payroll/rules/:id/end`; `GET /payroll/periods`, `GET /payroll/periods/:month` (YYYY-MM), `POST .../calculate`, `POST .../approve`, `POST .../adjustments`, `DELETE /payroll/adjustments/:id`; `POST/GET /payroll/payouts`, `POST /payroll/payouts/:id/reverse`; `GET /payroll/me`.
+- **Ruxsat:** qoidalarni yozish `payroll.rules.manage` (rahbar); ko'rish `payroll.view_all` (rahbar, kassir); hisoblash va tuzatish `payroll.calculate` (rahbar, kassir ○); tasdiqlash va to'lovni qaytarish `payroll.approve` (rahbar); to'lov `payroll.pay` (rahbar, kassir ○); o'z maoshi `payroll.view_own` (ustoz). Maosh faqat ADMIN/CASHIER/TEACHER ga (400 `INVALID_EMPLOYEE`).
+- **Xatolar:** 400 `MONTH_IN_FUTURE`, `RULE_FIELD_INVALID`, `INVALID_DATES`; 404 `PERIOD_NOT_FOUND`, `RULE_NOT_FOUND`, `EMPLOYEE_NOT_FOUND`, `ADJUSTMENT_NOT_FOUND`, `PAYOUT_NOT_FOUND`; 409 `PERIOD_LOCKED`, `ALREADY_APPROVED`, `NOT_CALCULATED`, `PERIOD_NOT_APPROVED`, `PAYOUT_EXCEEDS_REMAINING`, `ALREADY_REVERSED`, `NOT_REVERSIBLE`, `ALREADY_ENDED`.
+- **Audit:** `payroll.rule_create|rule_edit|rule_end`, `payroll.calculate|approve`, `payroll.adjust|adjust_remove`, `payroll.pay|pay_reverse`.
+- **Ochiq:** markaz/filial tushumidan foiz; guruhsiz xodimga PERCENT; maoshni Telegram orqali xabarlash; davr oxirida avtomatik hisoblash (cron yo'q, qo'lda); "boshqa oyga o'tkazish" tuzatishlari (tasdiqlangan davrni keyingi davrdagi bonus/jarima bilan tuzatish; avtomatik o'tkazish yo'q); `payroll.view_all` kassirga filial qamrovi qo'llanmaydi (ERD: ✔ bez 'f').
+- Test: `test/payroll.e2e-spec.ts` (14 ta: qoidalar, hisoblash va summalar, qayta hisoblash, bonus/jarima, tasdiq qulfi, to'lov va qoldiq, qaytarish, o'z maoshi, ruxsat) + `src/payroll/payroll-engine.spec.ts` (7 unit) + izolyatsiya testida 5 jadval va bazaviy qoidalar. Umumiy 403 e2e + 43 unit.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).
