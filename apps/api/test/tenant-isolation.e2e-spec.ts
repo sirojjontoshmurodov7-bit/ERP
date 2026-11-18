@@ -26,6 +26,8 @@ const TENANT_TABLES = [
   'enrollment_discounts',
   'lessons',
   'attendance_records',
+  'charges',
+  'enrollment_freezes',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -110,6 +112,11 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into lessons (center_id, group_id, lesson_date) values (${f.center}, ${f.group}, '2026-02-02')`;
       case 'attendance_records':
         return sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${f.lesson}, ${f.owner}, ${f.center}, 'PRESENT')`;
+      case 'charges':
+        return sql`insert into charges (center_id, enrollment_id, student_id, group_id, period_start, period_end, due_date, base_amount, discount_amount, amount, kind)
+                   values (${f.center}, ${f.enrollment}, ${f.admin}, ${f.group}, '2026-05-05', '2026-06-04', '2026-05-05', 1000, 0, 1000, 'REGULAR')`;
+      case 'enrollment_freezes':
+        return sql`insert into enrollment_freezes (center_id, enrollment_id, from_date, to_date) values (${f.center}, ${f.enrollment}, '2026-02-01', '2026-02-10')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -147,6 +154,11 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.enrollmentDiscounts).values({ enrollmentId: enrollment!.id, centerId: c!.id, type: 'PERCENT', value: 10 });
     const [lesson] = await db.insert(s.lessons).values({ centerId: c!.id, groupId: group!.id, lessonDate: '2026-01-01', teacherId: admin!.id }).returning();
     await db.insert(s.attendanceRecords).values({ lessonId: lesson!.id, studentId: admin!.id, centerId: c!.id, status: 'ABSENT' });
+    await db.insert(s.charges).values({
+      centerId: c!.id, enrollmentId: enrollment!.id, studentId: admin!.id, groupId: group!.id,
+      periodStart: '2026-04-05', periodEnd: '2026-05-04', dueDate: '2026-04-05', baseAmount: 400000, discountAmount: 0, amount: 400000, kind: 'REGULAR',
+    });
+    await db.insert(s.enrollmentFreezes).values({ centerId: c!.id, enrollmentId: enrollment!.id, fromDate: '2026-01-01', toDate: '2026-01-05' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -368,6 +380,42 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(bad).toMatch(/attendance_status_chk/);
       const twice = await failure(q(ctxA, sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${A.lesson}, ${A.admin}, ${A.center}, 'PRESENT')`));
       expect(twice).toMatch(/duplicate|attendance_records_pkey/);
+    });
+
+    it("charges va enrollment_freezes: boshqa markaz yozilishi, o'quvchisi va guruhiga bog'lab bo'lmaydi", async () => {
+      const ch = (enrollment: string, student: string, group: string) =>
+        sql`insert into charges (center_id, enrollment_id, student_id, group_id, period_start, period_end, due_date, base_amount, amount, kind)
+            values (${A.center}, ${enrollment}, ${student}, ${group}, '2026-07-05', '2026-08-04', '2026-07-05', 1, 1, 'REGULAR')`;
+      expect(await failure(q(ctxA, ch(B.enrollment, A.admin, A.group)))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, ch(A.enrollment, B.admin, A.group)))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, ch(A.enrollment, A.admin, B.group)))).toMatch(/foreign key/);
+      const fz = await failure(q(ctxA, sql`insert into enrollment_freezes (center_id, enrollment_id, from_date) values (${A.center}, ${B.enrollment}, '2026-03-03')`));
+      expect(fz).toMatch(/foreign key/);
+    });
+
+    it("hisob-kitob qoidalari bazada: davr boshiga bitta avtomatik charge, summa = asos - chegirma, qo'lda hisobga sabab, bekor qilish izchilligi, bitta ochiq muzlatish", async () => {
+      const ins = (cols: string, vals: unknown[]) =>
+        sql`insert into charges (center_id, enrollment_id, student_id, group_id, ${sql.raw(cols)})
+            values (${A.center}, ${A.enrollment}, ${A.admin}, ${A.group}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      const base = ['period_start, period_end, due_date, base_amount, discount_amount, amount, kind'];
+      // seed: 2026-04-05 REGULAR bor
+      expect(await failure(q(ctxA, ins(base[0]!, ['2026-04-05', '2026-05-04', '2026-04-05', 1000, 0, 1000, 'FIRST_PRORATED'])))).toMatch(/charges_cycle_uq|duplicate/);
+      expect(await failure(q(ctxA, ins(base[0]!, ['2026-09-05', '2026-10-04', '2026-09-05', 1000, 100, 1000, 'REGULAR'])))).toMatch(/charges_amounts_chk/);
+      expect(await failure(q(ctxA, ins(base[0]!, ['2026-09-05', '2026-10-04', '2026-09-05', 1000, 2000, -1000, 'REGULAR'])))).toMatch(/charges_amounts_chk/);
+      expect(await failure(q(ctxA, ins(base[0]!, ['2026-10-05', '2026-09-04', '2026-10-05', 1000, 0, 1000, 'REGULAR'])))).toMatch(/charges_period_chk/);
+      expect(await failure(q(ctxA, ins(base[0]!, ['2026-09-05', '2026-10-04', '2026-09-05', 1000, 0, 1000, 'WEIRD'])))).toMatch(/charges_kind_chk/);
+      expect(await failure(q(ctxA, ins(base[0]!, ['2026-09-05', '2026-09-05', '2026-09-05', 1000, 0, 1000, 'MANUAL'])))).toMatch(/charges_manual_note_chk/);
+      const manual = (n: number) => q(ctxA, ins('period_start, period_end, due_date, base_amount, discount_amount, amount, kind, note', ['2026-09-05', '2026-09-05', '2026-09-05', n, 0, n, 'MANUAL', 'Qo\'lda']));
+      expect(await failure(manual(500))).toBeNull();
+      expect(await failure(manual(700))).toBeNull(); // qo'lda hisoblar bir kunga ko'p bo'lishi mumkin
+      expect(await failure(q(ctxA, ins('period_start, period_end, due_date, base_amount, discount_amount, amount, kind, status', ['2026-11-05', '2026-12-04', '2026-11-05', 1000, 0, 1000, 'REGULAR', 'CANCELLED'])))).toMatch(/charges_cancel_chk/);
+      expect(await failure(q(ctxA, ins('period_start, period_end, due_date, base_amount, discount_amount, amount, kind, status', ['2026-11-05', '2026-12-04', '2026-11-05', 1000, 0, 1000, 'REGULAR', 'BROKEN'])))).toMatch(/charges_status_chk/);
+
+      const open = () => q(ctxA, sql`insert into enrollment_freezes (center_id, enrollment_id, from_date) values (${A.center}, ${A.enrollment}, '2026-03-01')`);
+      expect(await failure(open())).toBeNull();
+      expect(await failure(open())).toMatch(/enrollment_freezes_open_uq|duplicate/);
+      const bad = await failure(q(ctxA, sql`insert into enrollment_freezes (center_id, enrollment_id, from_date, to_date) values (${A.center}, ${A.enrollment}, '2026-03-10', '2026-03-01')`));
+      expect(bad).toMatch(/enrollment_freezes_dates_chk/);
     });
 
     it("superuser ulanishi bilan ham kross-markaz bog'lash rad etiladi (baza darajasida)", async () => {

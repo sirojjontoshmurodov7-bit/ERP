@@ -4,13 +4,14 @@ import type { AuthUser } from '../auth/auth.types.js';
 import type { Tx } from '../db/db.service.js';
 import { enrollments, groups, groupTeachers } from '../db/schema.js';
 import { type BranchScope, branchFilter } from './branch-scope.js';
+import { todayLocal } from './dates.js';
 
 /** Ustoz biriktirilishi amalda: tugash sanasi yo'q yoki bugundan oldin emas. */
-export const currentTeacher = or(isNull(groupTeachers.toDate), gte(groupTeachers.toDate, sql`current_date`));
+export const currentTeacher = () => or(isNull(groupTeachers.toDate), gte(groupTeachers.toDate, todayLocal()));
 
 /** Ustozning amaldagi guruhlari (subquery). */
 export const teacherGroupIds = (tx: Tx, teacherId: string) =>
-  tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.teacherId, teacherId), currentTeacher));
+  tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.teacherId, teacherId), currentTeacher()));
 
 /** O'quvchining tugallanmagan (ACTIVE/FROZEN) yozilishlaridagi guruhlar (subquery). */
 export const studentGroupIds = (tx: Tx, studentId: string) =>

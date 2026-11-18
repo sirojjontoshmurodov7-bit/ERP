@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { and, eq } from 'drizzle-orm';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { addDays, todayLocal } from '../src/common/dates.js';
 import { hashPassword } from '../src/auth/password.js';
 import { APP_CONFIG, type AppConfig } from '../src/config/app-config.js';
 import { DB, DB_OPTIONS } from '../src/db/db.service.js';
@@ -22,7 +23,7 @@ const config: AppConfig = {
 const ROOT_PW = 'Root-Password-1';
 const PW = 'User-Password-9';
 const NOPE = '00000000-0000-4000-8000-000000000000';
-const TODAY = new Date().toISOString().slice(0, 10);
+const TODAY = todayLocal();
 type Api = ReturnType<typeof makeApi>;
 let httpFn: () => request.Agent;
 const makeApi = (t: string) => ({
@@ -235,7 +236,7 @@ describe('Yozilish (PGlite, RLS yoqilgan)', () => {
     it("sanasiz chiqarish bugun; kelajak sanali yozilishda chiqish yozilish sanasidan oldin bo'lmaydi", async () => {
       const g = await mkGroup(A, 'Sana Guruhi');
       const st = await mkStudent(A, 'Kelajak Oquvchi', A.main);
-      const future = new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10);
+      const future = addDays(TODAY, 10);
       const id = await enrollId(A, g.id, st.id, { joinedAt: future });
       expect((await A.owner.post(`/enrollments/${id}/leave`).expect(200)).body.leftAt).toBe(future);
       const st2 = await mkStudent(A, 'Bugun Oquvchi', A.main);

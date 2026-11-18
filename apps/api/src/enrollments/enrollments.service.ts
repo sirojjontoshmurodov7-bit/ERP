@@ -5,7 +5,9 @@ import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { PermissionsService } from '../auth/permissions.service.js';
 import { type BranchScope, branchFilter, branchScope, inScope } from '../common/branch-scope.js';
+import { todayLocal } from '../common/dates.js';
 import { teacherGroupIds } from '../common/group-access.js';
+import { BillingService } from '../billing/billing.service.js';
 import { pgErrorInfo } from '../common/pg-errors.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
 import { branches, courses, enrollments, groups, userBranches, users } from '../db/schema.js';
@@ -22,7 +24,7 @@ const bad = (code: string, message: string) => new BadRequestException({ code, m
 const enrollmentNotFound = () => new NotFoundException({ code: 'ENROLLMENT_NOT_FOUND', message: 'Yozilish topilmadi' });
 const groupNotFound = () => new NotFoundException({ code: 'GROUP_NOT_FOUND', message: 'Guruh topilmadi' });
 const studentNotFound = () => new NotFoundException({ code: 'STUDENT_NOT_FOUND', message: "O'quvchi topilmadi" });
-const today = () => new Date().toISOString().slice(0, 10);
+const today = todayLocal;
 
 type EnrollmentRow = typeof enrollments.$inferSelect;
 type GroupRow = typeof groups.$inferSelect;
@@ -37,6 +39,7 @@ export class EnrollmentsService {
   constructor(
     private readonly db: DbService,
     private readonly perms: PermissionsService,
+    private readonly billing: BillingService,
   ) {}
 
   private ctx(actor: AuthUser) {
@@ -68,6 +71,7 @@ export class EnrollmentsService {
           })
           .returning();
         await this.linkStudentToBranch(tx, actor, student.id, group.branchId);
+        await this.billing.generate(tx, actor.centerId!, { enrollmentIds: [e!.id] }); // birinchi davr hisobi
         await this.audit(tx, actor, client, 'enrollment.create', e!.id, undefined, this.auditView(e!));
         return (await this.present(tx, actor, [e!]))[0]!;
       }),
@@ -81,6 +85,10 @@ export class EnrollmentsService {
       if (e.status === 'FROZEN') throw conflict('ALREADY_FROZEN', 'Yozilish allaqachon muzlatilgan');
       if (e.status === 'LEFT') throw conflict('ALREADY_LEFT', 'Yozilish tugagan');
       return { status: 'FROZEN' };
+    }, {
+      // Muzlatishdan oldingi davrlar hisobdan tushib qolmasligi uchun avval shu kungacha hisoblanadi, keyin muzlatish davri ochiladi
+      before: (tx, e) => this.billing.generate(tx, e.centerId, { enrollmentIds: [e.id] }).then(() => undefined),
+      after: (tx, e) => this.billing.openFreeze(tx, e.centerId, e.id, today(), actor.id),
     });
   }
 
@@ -89,6 +97,11 @@ export class EnrollmentsService {
       if (e.status === 'LEFT') throw conflict('ALREADY_LEFT', 'Yozilish tugagan');
       if (e.status !== 'FROZEN') throw conflict('NOT_FROZEN', 'Yozilish muzlatilmagan');
       return { status: 'ACTIVE' };
+    }, {
+      after: async (tx, e) => {
+        await this.billing.closeOpenFreezes(tx, { enrollmentIds: [e.id] }, today());
+        await this.billing.generate(tx, e.centerId, { enrollmentIds: [e.id] }); // qaytgan kundan boshlangan davr
+      },
     });
   }
 
@@ -98,6 +111,12 @@ export class EnrollmentsService {
       const leftAt = input.leftAt ?? (today() < e.joinedAt ? e.joinedAt : today());
       if (leftAt < e.joinedAt) throw bad('INVALID_DATES', "Chiqish sanasi yozilish sanasidan oldin bo'lishi mumkin emas");
       return { status: 'LEFT', leftAt, leftReason: input.reason ?? null };
+    }, {
+      before: async (tx, e, set) => {
+        const leftAt = set.leftAt!;
+        if (e.status === 'ACTIVE') await this.billing.generate(tx, e.centerId, { enrollmentIds: [e.id], leftAt });
+        else await this.billing.closeOpenFreezes(tx, { enrollmentIds: [e.id] }, leftAt); // muzlatilgan holatda chiqdi
+      },
     });
   }
 
@@ -115,6 +134,8 @@ export class EnrollmentsService {
         const date = input.transferDate ?? (today() < old.joinedAt ? old.joinedAt : today());
         if (date < old.joinedAt) throw bad('INVALID_DATES', "Ko'chirish sanasi yozilish sanasidan oldin bo'lishi mumkin emas");
 
+        if (old.status === 'ACTIVE') await this.billing.generate(tx, actor.centerId!, { enrollmentIds: [old.id], leftAt: date });
+        else await this.billing.closeOpenFreezes(tx, { enrollmentIds: [old.id] }, date);
         const [closed] = await tx
           .update(enrollments)
           .set({ status: 'LEFT', leftAt: date, leftReason: input.reason ? `TRANSFER: ${input.reason}` : 'TRANSFER', updatedAt: new Date() })
@@ -133,6 +154,7 @@ export class EnrollmentsService {
           })
           .returning();
         await this.linkStudentToBranch(tx, actor, old.studentId, target.branchId);
+        await this.billing.generate(tx, actor.centerId!, { enrollmentIds: [opened!.id] });
         await this.audit(tx, actor, client, 'enrollment.transfer', id, this.auditView(old), { from: this.auditView(closed!), toEnrollmentId: opened!.id, to: this.auditView(opened!) });
         const [from, to] = await this.present(tx, actor, [closed!, opened!]);
         return { from: from!, to: to! };
@@ -189,16 +211,23 @@ export class EnrollmentsService {
     client: ClientInfo,
     action: string,
     change: (e: EnrollmentRow) => Partial<typeof enrollments.$inferInsert>,
+    hooks?: {
+      /** Holat o'zgargunga qadar (yangi qiymatlar `set` da). */
+      before?: (tx: Tx, e: EnrollmentRow, set: Partial<typeof enrollments.$inferInsert>) => Promise<unknown>;
+      after?: (tx: Tx, e: EnrollmentRow) => Promise<unknown>;
+    },
   ) {
     return this.db.withContext(this.ctx(actor), async (tx) => {
       await this.assertManage(tx, actor, false);
       const before = await this.manageableEnrollment(tx, await branchScope(tx, actor), id);
       const set = change(before);
+      await hooks?.before?.(tx, before, set);
       const [after] = await tx
         .update(enrollments)
         .set({ ...set, updatedAt: new Date() })
         .where(eq(enrollments.id, id))
         .returning();
+      await hooks?.after?.(tx, after!);
       await this.audit(tx, actor, client, action, id, this.auditView(before), this.auditView(after!));
       return (await this.present(tx, actor, [after!]))[0]!;
     });

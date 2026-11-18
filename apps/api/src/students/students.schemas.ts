@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { todayLocal } from '../common/dates.js';
 
 const phone = z.string().regex(/^\+?[0-9 ()-]{7,20}$/, "Telefon raqami noto'g'ri");
 const login = z.string().regex(/^[a-z0-9][a-z0-9._-]{2,49}$/, "Login kichik lotin harf, raqam, '.', '_' yoki '-' bo'lishi kerak");
-const birthDate = z.iso.date().refine((d) => d <= new Date().toISOString().slice(0, 10), { message: 'Tug\'ilgan sana kelajakda bo\'lishi mumkin emas' });
+const birthDate = z.iso.date().refine((d) => d <= todayLocal(), { message: 'Tug\'ilgan sana kelajakda bo\'lishi mumkin emas' });
 const text = (max: number) => z.string().trim().min(1).max(max);
 
 export const createStudentSchema = z.object({

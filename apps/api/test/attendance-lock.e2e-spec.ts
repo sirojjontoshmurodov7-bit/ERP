@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { eq, sql } from 'drizzle-orm';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { addDays, todayLocal } from '../src/common/dates.js';
 import { hashPassword } from '../src/auth/password.js';
 import { APP_CONFIG, type AppConfig } from '../src/config/app-config.js';
 import { DB, DB_OPTIONS } from '../src/db/db.service.js';
@@ -21,8 +22,8 @@ const config: AppConfig = {
 };
 const ROOT_PW = 'Root-Password-1';
 const PW = 'User-Password-9';
-const TODAY = new Date().toISOString().slice(0, 10);
-const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+const TODAY = todayLocal();
+const daysAgo = (n: number) => addDays(todayLocal(), -n);
 type Api = ReturnType<typeof makeApi>;
 let httpFn: () => request.Agent;
 const makeApi = (t: string) => ({

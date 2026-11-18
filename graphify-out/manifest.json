@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795027558.7387648,
-    "seen": 1795027569.9366448,
-    "ast_hash": "b9402267c9f60a685f376c493f23b5f3",
+    "mtime": 1795028630.9166849,
+    "seen": 1795028642.409098,
+    "ast_hash": "7108c2ef744e6ac209fa4244ed9288ac",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,9 +48,9 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795026629.3911164,
-    "seen": 1795026871.2085903,
-    "ast_hash": "a6016fe7c4a01ed12e78f55aea369c22",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.392728,
+    "ast_hash": "3bd616848586866c1ef76607b0b1ab7f",
     "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
@@ -276,9 +276,9 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795026535.4406023,
-    "seen": 1795026871.218612,
-    "ast_hash": "d8a5c1e08893f8b3b99f23dcb49b8106",
+    "mtime": 1795027923.6414442,
+    "seen": 1795028642.399317,
+    "ast_hash": "eede015d411926ece1a87e22733e58c9",
     "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
@@ -306,9 +306,9 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795026549.210488,
-    "seen": 1795026871.223396,
-    "ast_hash": "2b1b9683bb662493997319f93493e689",
+    "mtime": 1795028211.8938203,
+    "seen": 1795028642.404682,
+    "ast_hash": "0805b38e2f7c80e25907d86a0b2b437b",
     "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795027558.5446079,
-    "seen": 1795027569.9366486,
-    "ast_hash": "0b48d03cd6bfb0ce1299ed1921c533ff",
+    "mtime": 1795028630.6136434,
+    "seen": 1795028642.4091017,
+    "ast_hash": "ed8d08a1102c60e47e628ac671716381",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -528,21 +528,21 @@
     "semantic_hash": ""
   },
   "apps/api/src/students/students.module.ts": {
-    "mtime": 1795025212.1087453,
-    "seen": 1795025324.8968813,
-    "ast_hash": "b5fd8d532fa7b4b5354411c0fe483437",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.4028838,
+    "ast_hash": "8bd1a23eb0f0b70d01ca578c4fcd1a65",
     "semantic_hash": ""
   },
   "apps/api/src/students/students.schemas.ts": {
-    "mtime": 1795025169.1743753,
-    "seen": 1795025324.896883,
-    "ast_hash": "d552cfc1528b6b60be991433c1d251ff",
+    "mtime": 1795027836.8809276,
+    "seen": 1795028642.402886,
+    "ast_hash": "874dbbca52269ee4468bf5544d453211",
     "semantic_hash": ""
   },
   "apps/api/src/students/students.service.ts": {
-    "mtime": 1795026060.214458,
-    "seen": 1795026336.3598704,
-    "ast_hash": "e552085cc6abded58912bd6e91c7c0bb",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.4028876,
+    "ast_hash": "ae2f11cbf67d64bc81fcd1551d450efe",
     "semantic_hash": ""
   },
   "apps/api/test/students.e2e-spec.ts": {
@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/groups/groups.module.ts": {
-    "mtime": 1795025666.4878805,
-    "seen": 1795025839.1176977,
-    "ast_hash": "3436e17b235ec2fa7e8f8e81fcac0ead",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.4007943,
+    "ast_hash": "bff23f1ad81f5d2f8c4a3cf03caa4a3c",
     "semantic_hash": ""
   },
   "apps/api/src/groups/groups.schemas.ts": {
@@ -594,9 +594,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/groups/groups.service.ts": {
-    "mtime": 1795026645.5207362,
-    "seen": 1795026871.2199242,
-    "ast_hash": "a22b2ba07a47aa184e718c13fb10c437",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.4011672,
+    "ast_hash": "e8eb795781265f6d8fbe4fcf555da212",
     "semantic_hash": ""
   },
   "apps/api/test/groups.e2e-spec.ts": {
@@ -606,9 +606,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/common/group-access.ts": {
-    "mtime": 1795026556.4387128,
-    "seen": 1795026871.212925,
-    "ast_hash": "d93a70a9423b98bcd73e217ad305ab3f",
+    "mtime": 1795027836.873415,
+    "seen": 1795028642.3966818,
+    "ast_hash": "3498107e3510d418534d58f496bf9ef4",
     "semantic_hash": ""
   },
   "apps/api/src/enrollments/enrollments.controller.ts": {
@@ -618,9 +618,9 @@
     "semantic_hash": ""
   },
   "apps/api/src/enrollments/enrollments.module.ts": {
-    "mtime": 1795026045.765093,
-    "seen": 1795026336.35748,
-    "ast_hash": "f3c9e1596b415b16ebc87144262bbd7c",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.3997073,
+    "ast_hash": "6a41e4d4abc4e5185df81b6df272c809",
     "semantic_hash": ""
   },
   "apps/api/src/enrollments/enrollments.schemas.ts": {
@@ -630,15 +630,15 @@
     "semantic_hash": ""
   },
   "apps/api/src/enrollments/enrollments.service.ts": {
-    "mtime": 1795026289.5161572,
-    "seen": 1795026336.3574855,
-    "ast_hash": "08d937c6951e016796efd69626142571",
+    "mtime": 1795028127.042891,
+    "seen": 1795028642.4005044,
+    "ast_hash": "52ecb3f9d234d6fd136a8d5db113cc29",
     "semantic_hash": ""
   },
   "apps/api/test/enrollments.e2e-spec.ts": {
-    "mtime": 1795026247.1984613,
-    "seen": 1795026336.3613598,
-    "ast_hash": "2e32d680a848ebe71d415b753f659f38",
+    "mtime": 1795027840.9120762,
+    "seen": 1795028642.4038687,
+    "ast_hash": "2b3e60fd8095c9be94c7ed5fc89c9bdd",
     "semantic_hash": ""
   },
   "apps/api/src/lessons/lessons.controller.ts": {
@@ -660,21 +660,75 @@
     "semantic_hash": ""
   },
   "apps/api/src/lessons/lessons.service.ts": {
-    "mtime": 1795027299.1626964,
-    "seen": 1795027569.9280717,
-    "ast_hash": "b4aeaebbaf56dd5c2b5b5050336d17fe",
+    "mtime": 1795027836.8799286,
+    "seen": 1795028642.4017816,
+    "ast_hash": "5208d3785182223a48847a8519ec8730",
     "semantic_hash": ""
   },
   "apps/api/test/attendance.e2e-spec.ts": {
-    "mtime": 1795027299.2938986,
-    "seen": 1795027569.9303815,
-    "ast_hash": "de28522a1873223c6843ab7adb33225f",
+    "mtime": 1795027836.8819282,
+    "seen": 1795028642.4035356,
+    "ast_hash": "b5ce1f79e5d60a314f4b8bb7a97086ba",
     "semantic_hash": ""
   },
   "apps/api/test/attendance-lock.e2e-spec.ts": {
-    "mtime": 1795027490.0702598,
-    "seen": 1795027569.9303787,
-    "ast_hash": "60cde5f0b22296473be4a41cdbb7efec",
+    "mtime": 1795027836.8834019,
+    "seen": 1795028642.4035335,
+    "ast_hash": "f1f54f8b98d282d20a9529911edfa7c3",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/billing-engine.spec.ts": {
+    "mtime": 1795028012.0599458,
+    "seen": 1795028642.3952234,
+    "ast_hash": "93c086410d14118775d079280192ef14",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/billing-engine.ts": {
+    "mtime": 1795028000.8675103,
+    "seen": 1795028642.3952258,
+    "ast_hash": "8fc1a124c5452732950456171cc935cb",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/billing.controller.ts": {
+    "mtime": 1795028094.702899,
+    "seen": 1795028642.3952277,
+    "ast_hash": "44ef37a6a37e6bfe552fba15e48a6064",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/billing.module.ts": {
+    "mtime": 1795028094.790975,
+    "seen": 1795028642.3952293,
+    "ast_hash": "7a4449efe68b7a740a69d553a27d55ff",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/billing.service.ts": {
+    "mtime": 1795028059.7857347,
+    "seen": 1795028642.3952312,
+    "ast_hash": "d36843f78da70b377ca1a68499eda366",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/charges.schemas.ts": {
+    "mtime": 1795028094.4449897,
+    "seen": 1795028642.395233,
+    "ast_hash": "6bd7a99bfe39a441fe819df90c1199c3",
+    "semantic_hash": ""
+  },
+  "apps/api/src/billing/charges.service.ts": {
+    "mtime": 1795028094.5838363,
+    "seen": 1795028642.3952348,
+    "ast_hash": "4ac7acd9f9506a178a26dc26fd40b228",
+    "semantic_hash": ""
+  },
+  "apps/api/src/common/dates.ts": {
+    "mtime": 1795027836.4499395,
+    "seen": 1795028642.396679,
+    "ast_hash": "ed94c2eb5d09f03c0b787839f3136a6f",
+    "semantic_hash": ""
+  },
+  "apps/api/test/billing.e2e-spec.ts": {
+    "mtime": 1795028381.3942556,
+    "seen": 1795028642.4037044,
+    "ast_hash": "d75b97fbfa53a9a3e35b49c2975851b5",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

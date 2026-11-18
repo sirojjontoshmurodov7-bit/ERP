@@ -1,0 +1,20 @@
+{
+  "3": "web/package.json",
+  "5": "CLAUDE.md (loyiha ko'rsatmalari)",
+  "7": "ERD-VA-RUXSATLAR.md (ERD va ruxsatlar)",
+  "8": "compilerOptions",
+  "9": "Ruxsatlar matritsasi (3-bo'lim)",
+  "10": "compilerOptions",
+  "11": "scripts",
+  "12": "db",
+  "13": "scripts",
+  "16": "dependencies",
+  "22": "shared/package.json",
+  "25": "compilerOptions",
+  "32": "Buyruqlar ro'yxati",
+  "37": ".oxlintrc.json",
+  "39": "tsconfig.build.json",
+  "41": "nest-cli.json",
+  "43": "allowBuilds",
+  "45": "vitest"
+}

@@ -167,6 +167,7 @@ erDiagram
     groups ||--o{ enrollments : ""
     users ||--o{ enrollments : "o'quvchi"
     enrollments ||--o{ enrollment_discounts : ""
+    enrollments ||--o{ enrollment_freezes : "muzlatish davri"
     groups ||--o{ lessons : ""
     lessons ||--o{ attendance_records : ""
     users ||--o{ attendance_records : ""
@@ -234,6 +235,14 @@ erDiagram
         date from_date
         date to_date
         uuid granted_by FK
+    }
+    enrollment_freezes {
+        uuid id PK
+        uuid center_id FK
+        uuid enrollment_id FK
+        date from_date "muzlatilgan kun"
+        date to_date "NULL = hozir muzlatilgan; qaytgan/chiqqan kun (shu kun kiritilmaydi)"
+        uuid created_by FK
     }
     lessons {
         uuid id PK
@@ -361,7 +370,10 @@ erDiagram
 | Qarzdor | `today > due_date + grace_days` va charge to'lanmagan | xuddi shunday |
 | Oy oxiri | 29–31 kun kerak bo'lsa oyning oxirgi kuniga siljitiladi | xuddi shunday |
 
-- Muzlatilgan (`FROZEN`) yoki chiqqan (`LEFT`) yozilishga charge yaratilmaydi.
+- Muzlatilgan (`FROZEN`) yoki chiqqan (`LEFT`) yozilishga charge yaratilmaydi. Muzlatish davri `enrollment_freezes` da saqlanadi: davr boshi `[from_date, to_date)` oralig'iga tushsa (to_date NULL = hali muzlatilgan) shu davrga charge yaratilmaydi. Muzlatish, qaytarish, chiqish va ko'chirishdan oldin tegishli yozilish uchun charge'lar shu sanagacha yaratiladi, shuning uchun muzlatishdan oldingi davrlar hisobdan tushib qolmaydi.
+- **Charge yaratish (implementatsiya, 13-qadam):** takroriy chaqirilsa ham xavfsiz (har yozilish va davr boshiga bitta `REGULAR`/`FIRST_PRORATED` charge, bekor qilingani ham saqlanadi va qayta yaratilmaydi). Cron o'rniga: yozilish, muzlatish/qaytarish, chiqish/ko'chirish, guruh narxi o'zgarishi/tugashi hodisalarida, `POST /billing/generate` va hisob-kitob o'qish so'rovlari oldidan. Davr boshi `due_date` dan o'tmagan bo'lsa charge yaratilmaydi (kelajak davr oldindan hisoblanmaydi). `GROUP_CYCLE`: davr `groups.billing_day` (1-28) kunidan; `STUDENT_CYCLE`: `billing_anchor` kunidan, 29-31 bo'lsa qisqa oyda oyning oxirgi kuniga siljiydi. Kech yozilgan o'quvchining birinchi davri (`GROUP_CYCLE`) `FIRST_PRORATED`, `due_date` = yozilgan kun; `FULL_MONTH` to'liq narx, `REMAINING_LESSONS` guruh jadvalidagi qolgan darslar nisbatida (jadval bo'sh bo'lsa to'liq narx). Guruh `PLANNED` va boshlanish sanasiga yetmagan bo'lsa, `FINISHED` bo'lgan yoki arxivlangan bo'lsa, `end_date` dan keyingi davrlarga charge yaratilmaydi. Narx: yozilishdagi `price_override`, bo'lmasa guruh narxi (yaratilish paytidagi qiymat qotiriladi). Guruh narxi o'zgargunga qadar kelgan davrlar eski narxda hisoblanadi. Hisob-kitob mavjud bo'lgan guruhning `billing_mode`/`billing_day` ini o'zgartirib bo'lmaydi.
+- **Biznes sanasi** `Asia/Tashkent` (UTC+5, yozgi vaqt yo'q) bo'yicha; hamma "bugun" shu mintaqada.
+- `groups.grace_days` guruh yaratilganda markaz sozlamasidan nusxalanadi (NULL emas): keyingi o'zgarishda faqat guruh qiymati o'zgaradi.
 - Chegirma `charges.discount_amount` ga **charge yaratilgan paytda** qotiriladi (keyingi chegirma o'zgarishi eski hisobni o'zgartirmaydi).
 - To'lov `payment_allocations` orqali eng eski ochiq charge'ga taqsimlanadi; ortiqcha summa avans bo'lib qoladi (taqsimlanmagan qoldiq).
 - Qaytarish: `payments` da `status=REVERSED` va teskari yozuv (`reverses_payment_id`), taqsimot bekor qilinadi.
@@ -554,6 +566,7 @@ Rollar: **SA** Super admin · **R** Rahbar (OWNER) · **A** Admin · **K** Kassi
 
 **Markaz yaratish (implementatsiya, `POST /admin/centers`):** bitta tranzaksiyada `centers` (sukut: `TRIAL`, 14 kun; `trialDays=0` bo'lsa `ACTIVE`), "Asosiy filial", rol shabloni va rahbar (`OWNER`, vaqtinchalik parol, `must_change_password=true`). Biror qadam yiqilsa hech narsa qolmaydi. Vaqtinchalik parol javobda faqat bir marta ko'rsatiladi (`Cache-Control: no-store`), bazada faqat xesh, auditga yozilmaydi. Slug nomdan avtomatik (kirill ham lotinga o'giriladi), rahbar logini sukut bo'yicha `slug.ism`. Boshlang'ich `settings`: `billing_mode=GROUP_CYCLE`, `grace_days=0`, `join_proration=FULL_MONTH`, `rounding=NONE`, `locale=uz`.
 **Bloklash:** `POST /admin/centers/:id/block` (sabab majburiy) holatni o'zgartiradi va markazning hamma sessiyasini yopadi; `unblock` sinov muddati tugamagan bo'lsa `TRIAL`ga, aks holda `ACTIVE`ga qaytaradi. Rahbar parolini yo'qotsa: `POST /admin/centers/:id/owner/reset-password`.
+**Hisob-kitob (13-qadam):** `charges` va `enrollment_freezes`; davr hisobi cron siz (hodisalar, `POST /billing/generate`, o'qishdan oldin) yaratiladi, takroriy chaqirish xavfsiz; biznes sanasi Asia/Tashkent; to'lovlar 14-qadamda.
 **Davomat (11-qadam):** `lessons` (guruhda sana noyob, HELD|CANCELLED) va `attendance_records` (PRESENT|ABSENT|LATE|EXCUSED); dars qo'lda ochiladi, belgilash `attendance.mark` (ustoz o'z guruhida, admin ○), ko'rish `attendance.view` (o'quvchi faqat o'zinikini); muzlatilgan o'quvchi belgilanmaydi. Qulf: dars sanasidan `attendance_lock_days` (sukut 3) kun o'tgach faqat `attendance.edit_past` tuzatadi (12-qadam); `GET /attendance` va yig'ma (kelgan/kelmagan/kech/sababli, rate).
 **Yozilish (10-qadam):** `enrollments` (ACTIVE|FROZEN|LEFT, qator o'chirilmaydi, bir vaqtda bitta ochiq yozilish), ko'chirish eski qatorni `LEFT` bilan yopib yangisini ochadi; ustoz o'z guruhidagi o'quvchilarni, o'quvchi o'z yozilishi va guruhini ko'radi (scope `o`); o'quvchi arxivlanganda yozilishlari yopiladi.
 **Kurs va guruh (9-qadam):** `courses`, `groups`, `group_schedules`, `group_teachers`; narx va sikl maydonlari `group.billing_settings` bilan, ustozga ko'rsatilmaydi; guruhda bir vaqtda bitta asosiy ustoz; ustoz faqat o'z filialidan biriktiriladi.

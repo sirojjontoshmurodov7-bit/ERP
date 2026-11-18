@@ -7,6 +7,8 @@ import { hashPassword } from '../auth/password.js';
 import { PermissionsService } from '../auth/permissions.service.js';
 import { generateTempPassword } from '../auth/temp-password.js';
 import { type BranchScope, branchScope, inScope } from '../common/branch-scope.js';
+import { todayLocal } from '../common/dates.js';
+import { BillingService } from '../billing/billing.service.js';
 import { teacherStudentIds } from '../common/group-access.js';
 import { generateLogin, isLoginConflict, MAX_LOGIN_TRIES } from '../common/login.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
@@ -25,6 +27,7 @@ export class StudentsService {
   constructor(
     private readonly db: DbService,
     private readonly perms: PermissionsService,
+    private readonly billing: BillingService,
   ) {}
 
   private ctx(actor: AuthUser) {
@@ -185,10 +188,13 @@ export class StudentsService {
       const now = new Date();
       await tx.update(users).set({ status: 'ARCHIVED', updatedAt: now }).where(eq(users.id, id));
       await tx.update(sessions).set({ revokedAt: now }).where(and(eq(sessions.userId, id), isNull(sessions.revokedAt)));
+      // Yozilishlar yopilishidan oldin shu kungacha hisob-kitob yaratiladi va muzlatishlar yopiladi
+      await this.billing.generate(tx, actor.centerId!, { studentId: id, leftAt: todayLocal() });
+      await this.billing.closeOpenFreezes(tx, { studentId: id }, todayLocal());
       // Arxivlangan o'quvchining tugallanmagan yozilishlari yopiladi (tarix saqlanadi; qarz ma'lumoti hisob-kitobda qoladi)
       const closed = await tx
         .update(enrollments)
-        .set({ status: 'LEFT', leftAt: sql`greatest(${enrollments.joinedAt}, current_date)`, leftReason: 'STUDENT_ARCHIVED', updatedAt: now })
+        .set({ status: 'LEFT', leftAt: sql`greatest(${enrollments.joinedAt}, ${todayLocal()}::date)`, leftReason: 'STUDENT_ARCHIVED', updatedAt: now })
         .where(and(eq(enrollments.studentId, id), sql`${enrollments.status} <> 'LEFT'`))
         .returning({ id: enrollments.id });
       await writeAudit(tx, {

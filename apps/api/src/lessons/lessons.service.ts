@@ -5,6 +5,7 @@ import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { PermissionsService } from '../auth/permissions.service.js';
 import { branchScope, type BranchScope } from '../common/branch-scope.js';
+import { daysBetween, todayLocal } from '../common/dates.js';
 import { currentTeacher, groupVisibility } from '../common/group-access.js';
 import { uniqueViolation } from '../common/pg-errors.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
@@ -16,11 +17,10 @@ const conflict = (code: string, message: string) => new ConflictException({ code
 const bad = (code: string, message: string) => new BadRequestException({ code, message });
 const groupNotFound = () => new NotFoundException({ code: 'GROUP_NOT_FOUND', message: 'Guruh topilmadi' });
 const lessonNotFound = () => new NotFoundException({ code: 'LESSON_NOT_FOUND', message: 'Dars topilmadi' });
-const today = () => new Date().toISOString().slice(0, 10);
+const today = todayLocal;
 
 /** Markaz sozlamasi `attendance_lock_days` yo'q bo'lsa: dars sanasidan keyin shuncha kun davomat tuzatiladi. */
 export const DEFAULT_ATTENDANCE_LOCK_DAYS = 3;
-const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
 const rate = (present: number, late: number, absent: number) => (present + late + absent > 0 ? Math.round(((present + late) / (present + late + absent)) * 1000) / 10 : null);
 
 type LessonRow = typeof lessons.$inferSelect;
@@ -318,7 +318,7 @@ export class LessonsService {
     const [row] = await tx
       .select({ id: groupTeachers.teacherId })
       .from(groupTeachers)
-      .where(and(eq(groupTeachers.groupId, groupId), eq(groupTeachers.teacherId, teacherId), currentTeacher));
+      .where(and(eq(groupTeachers.groupId, groupId), eq(groupTeachers.teacherId, teacherId), currentTeacher()));
     if (!row) throw bad('TEACHER_NOT_IN_GROUP', 'Ustoz bu guruhga biriktirilmagan');
   }
 

@@ -343,6 +343,75 @@ export const enrollmentDiscounts = pgTable(
   ],
 );
 
+// Muzlatish davri: [from_date, to_date). to_date NULL = hozir muzlatilgan. Davr boshi shu oraliqqa tushsa charge yaratilmaydi.
+export const enrollmentFreezes = pgTable(
+  'enrollment_freezes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    enrollmentId: uuid('enrollment_id').notNull(),
+    fromDate: date('from_date', { mode: 'string' }).notNull(),
+    toDate: date('to_date', { mode: 'string' }),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'enrollment_freezes_enrollment_center_fk', columns: [t.enrollmentId, t.centerId], foreignColumns: [enrollments.id, enrollments.centerId] }),
+    uniqueIndex('enrollment_freezes_open_uq').on(t.enrollmentId).where(sql`${t.toDate} is null`), // bir vaqtda bitta ochiq muzlatish
+    index('enrollment_freezes_enrollment_idx').on(t.enrollmentId),
+    index('enrollment_freezes_center_idx').on(t.centerId),
+    check('enrollment_freezes_dates_chk', sql`${t.toDate} is null or ${t.toDate} >= ${t.fromDate}`),
+  ],
+);
+
+// --- Hisob-kitob (ERD 2.3): davr hisobi. Pul `bigint` so'mda. Qator o'chirilmaydi: bekor qilish `CANCELLED` bilan. ---
+export const charges = pgTable(
+  'charges',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    enrollmentId: uuid('enrollment_id').notNull(),
+    studentId: uuid('student_id').notNull(), // yozilishdan nusxa (o'zgarmaydi): so'rovlarni soddalashtiradi
+    groupId: uuid('group_id').notNull(), // xuddi shunday
+    periodStart: date('period_start', { mode: 'string' }).notNull(),
+    periodEnd: date('period_end', { mode: 'string' }).notNull(), // shu kun kiradi
+    dueDate: date('due_date', { mode: 'string' }).notNull(),
+    baseAmount: bigint('base_amount', { mode: 'number' }).notNull(),
+    discountAmount: bigint('discount_amount', { mode: 'number' }).notNull().default(0), // yaratilganda qotiriladi
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    status: text('status').notNull().default('OPEN'), // OPEN | PARTIAL | PAID | CANCELLED
+    kind: text('kind').notNull(), // REGULAR | FIRST_PRORATED | MANUAL
+    note: text('note'),
+    cancelledAt: ts('cancelled_at'),
+    cancelReason: text('cancel_reason'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ name: 'charges_enrollment_center_fk', columns: [t.enrollmentId, t.centerId], foreignColumns: [enrollments.id, enrollments.centerId] }),
+    foreignKey({ name: 'charges_student_center_fk', columns: [t.studentId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    foreignKey({ name: 'charges_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    unique('charges_id_center_uq').on(t.id, t.centerId),
+    // Har yozilish va davr boshiga bitta avtomatik charge (bekor qilingani ham qayta yaratilmasligi uchun holatdan qat'i nazar)
+    uniqueIndex('charges_cycle_uq').on(t.enrollmentId, t.periodStart).where(sql`${t.kind} in ('REGULAR','FIRST_PRORATED')`),
+    index('charges_enrollment_idx').on(t.enrollmentId),
+    index('charges_student_idx').on(t.studentId),
+    index('charges_group_idx').on(t.groupId),
+    index('charges_center_due_idx').on(t.centerId, t.dueDate),
+    check('charges_status_chk', sql`${t.status} in ('OPEN','PARTIAL','PAID','CANCELLED')`),
+    check('charges_kind_chk', sql`${t.kind} in ('REGULAR','FIRST_PRORATED','MANUAL')`),
+    check('charges_amounts_chk', sql`${t.baseAmount} >= 0 and ${t.discountAmount} >= 0 and ${t.discountAmount} <= ${t.baseAmount} and ${t.amount} = ${t.baseAmount} - ${t.discountAmount}`),
+    check('charges_period_chk', sql`${t.periodEnd} >= ${t.periodStart}`),
+    check('charges_manual_note_chk', sql`${t.kind} <> 'MANUAL' or ${t.note} is not null`),
+    check('charges_cancel_chk', sql`(${t.status} = 'CANCELLED') = (${t.cancelledAt} is not null)`),
+  ],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

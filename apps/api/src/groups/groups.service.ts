@@ -4,8 +4,10 @@ import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { PermissionsService } from '../auth/permissions.service.js';
+import { BillingService } from '../billing/billing.service.js';
 import { type BranchScope, branchScope, inScope } from '../common/branch-scope.js';
 import { currentTeacher, groupVisibility } from '../common/group-access.js';
+import { todayLocal } from '../common/dates.js';
 import { pgErrorInfo } from '../common/pg-errors.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
 import { branches, centers, courses, enrollments, groupSchedules, groups, groupTeachers, userBranches, users } from '../db/schema.js';
@@ -23,7 +25,7 @@ const groupNotFound = () => new NotFoundException({ code: 'GROUP_NOT_FOUND', mes
 const bad = (code: string, message: string) => new BadRequestException({ code, message });
 const conflict = (code: string, message: string) => new ConflictException({ code, message });
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
-const today = () => new Date().toISOString().slice(0, 10);
+const today = todayLocal;
 
 type GroupRow = typeof groups.$inferSelect;
 @Injectable()
@@ -31,6 +33,7 @@ export class GroupsService {
   constructor(
     private readonly db: DbService,
     private readonly perms: PermissionsService,
+    private readonly billing: BillingService,
   ) {}
 
   private ctx(actor: AuthUser) {
@@ -101,7 +104,7 @@ export class GroupsService {
         q.status ? eq(groups.status, q.status) : undefined,
         q.q ? ilike(groups.name, `%${escapeLike(q.q)}%`) : undefined,
         q.teacherId
-          ? inArray(groups.id, tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.teacherId, q.teacherId), currentTeacher)))
+          ? inArray(groups.id, tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.teacherId, q.teacherId), currentTeacher())))
           : undefined,
       ];
       const rows = await tx.select().from(groups).where(and(...conds)).orderBy(asc(groups.name), asc(groups.id)).limit(q.limit).offset(q.offset);
@@ -130,6 +133,10 @@ export class GroupsService {
         if (patch.courseId) await this.activeCourse(tx, patch.courseId);
         this.assertDates(patch.startDate === undefined ? before.startDate : patch.startDate, patch.endDate === undefined ? before.endDate : patch.endDate);
 
+        // Narx o'zgarishi yoki guruh tugashidan oldin kelgan davrlar eski qiymatda hisoblanadi
+        if ((patch.priceMonthly !== undefined && patch.priceMonthly !== before.priceMonthly) || (patch.status === 'FINISHED' && before.status !== 'FINISHED')) {
+          await this.billing.generate(tx, actor.centerId!, { groupId: id });
+        }
         const set: Partial<typeof groups.$inferInsert> = { updatedAt: new Date() };
         if (patch.name !== undefined) set.name = patch.name;
         if (patch.courseId !== undefined) set.courseId = patch.courseId;
@@ -153,6 +160,9 @@ export class GroupsService {
           }
         }
 
+        if ((set.billingMode !== undefined && (set.billingMode !== before.billingMode || set.billingDay !== before.billingDay)) && (await this.billing.groupHasCharges(tx, id))) {
+          throw conflict('BILLING_HAS_CHARGES', "Guruhda hisob-kitob bor: sikl rejimi va to'lov kunini o'zgartirib bo'lmaydi");
+        }
         const [after] = await tx.update(groups).set(set).where(eq(groups.id, id)).returning();
         await this.audit(tx, actor, client, 'group.edit', id, this.auditView(before), this.auditView(after!));
         return (await this.present(tx, actor, [after!]))[0]!;
@@ -240,7 +250,7 @@ export class GroupsService {
           teacherId: teacher.id,
           centerId: actor.centerId!,
           kind: input.kind,
-          ...(input.fromDate ? { fromDate: input.fromDate } : {}),
+          fromDate: input.fromDate ?? today(),
         });
         await this.audit(tx, actor, client, 'group.teacher_assign', id, undefined, { teacherId: teacher.id, kind: input.kind, fromDate: input.fromDate ?? today() });
         return (await this.present(tx, actor, [g]))[0]!;
@@ -343,7 +353,7 @@ export class GroupsService {
         .select({ groupId: groupTeachers.groupId, teacherId: groupTeachers.teacherId, kind: groupTeachers.kind, fromDate: groupTeachers.fromDate, toDate: groupTeachers.toDate, fullName: users.fullName })
         .from(groupTeachers)
         .innerJoin(users, eq(users.id, groupTeachers.teacherId))
-        .where(and(inArray(groupTeachers.groupId, ids), currentTeacher))
+        .where(and(inArray(groupTeachers.groupId, ids), currentTeacher()))
         .orderBy(asc(groupTeachers.kind), asc(users.fullName)),
       tx
         .select({ groupId: enrollments.groupId, n: count() })

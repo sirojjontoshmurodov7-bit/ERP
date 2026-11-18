@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish) tayyor; keyingi: to'lov va qarzdorlik). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob) tayyor; keyingi 14: to'lovlar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -17,9 +17,10 @@ Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 10. Yozilish (`enrollments`) | tayyor | `apps/api/src/enrollments/`, `common/group-access.ts`, `drizzle/0007`, `test/enrollments.e2e-spec.ts` |
 | 11. Darslar va davomat belgilash | tayyor | `apps/api/src/lessons/`, `drizzle/0008`, `test/attendance.e2e-spec.ts` |
 | 12. Davomat qulfi va ko'rish (`GET /attendance`) | tayyor | `apps/api/src/lessons/`, `test/attendance-lock.e2e-spec.ts` |
-| **13. To'lov va qarzdorlik** | **keyingi** | hali yozilmagan |
+| 13. Hisob-kitob (`charges`, `enrollment_freezes`) | tayyor | `apps/api/src/billing/`, `common/dates.ts`, `drizzle/0009`, `test/billing.e2e-spec.ts` |
+| **14. To'lovlar (`payments`)** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`. 12-qadam va `.gitignore` (tsbuildinfo) o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`. 13-qadam o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -32,7 +33,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~50 s, 282 test
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~60 s, 317 test; unit 36 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -124,8 +125,22 @@ Reja (tasdiqlangan): 8 o'quvchilar, 9 kurs va guruhlar (`courses`, `groups`, `gr
 - **Ochiq:** qulf muddatini rahbar o'zgartiradigan sozlamalar endpointi (markaz sozlamalari moduli); qo'lda qulflash/ochish; davomatdan reyting ball va ustozning dars-boshiga maoshi (reyting va maosh bosqichlari bu jadvallar ustiga quriladi).
 - Test: `test/attendance-lock.e2e-spec.ts` (14 ta; qulf chegarasi, ruxsatlar, sozlama, audit, ko'rish/yig'ma, qamrov); `attendance.e2e-spec.ts` testlari uchun qulf muddati 365 ga uzaytirilgan. Umumiy 282 e2e + 14 unit.
 
-## Keyingi bosqich: to'lov va qarzdorlik (CLAUDE.md "Keyingi bosqichlar": to'lov va qarzdorlik, maosh, hisobotlar, Excel import, vazifa/reyting, Telegram bot)
-`charges`, `payments`, qarz hisobi (ERD 2.3), ikki rejim `GROUP_CYCLE`/`STUDENT_CYCLE`, `join_proration`, muzlatish davri sanalari (hozir saqlanmaydi: avval ERD yangilanadi). Boshlashdan oldin qisqa reja ko'rsatib tasdiqlat.
+### 13-qadam: hisob-kitob (`charges`) (tayyor)
+To'lov bosqichining 1-qadami (reja: 13 hisob-kitob, 14 to'lovlar, 15 qarzdorlar va chegirmalar). Qoidalar manbasi: ERD 2.3 ("Charge yaratish (implementatsiya, 13-qadam)").
+- **Migratsiya `0009`:** `charges` (yozilish, `student_id`/`group_id` nusxasi, `period_start/end`, `due_date`, `base_amount`, `discount_amount`, `amount`, `status` OPEN|PARTIAL|PAID|CANCELLED, `kind` REGULAR|FIRST_PRORATED|MANUAL, `note`, `cancelled_at/reason`) va `enrollment_freezes` (`[from_date, to_date)`, `to_date` NULL = hozir muzlatilgan). Bazada: davr boshiga bitta avtomatik charge (`charges_cycle_uq`; bekor qilingani ham qayta yaratilmaydi), `amount = base - discount`, qo'lda hisobga sabab majburiy, `CANCELLED <=> cancelled_at`, bitta ochiq muzlatish. DELETE huquqi yo'q. Oldin muzlatilgan yozilishlar uchun ochiq muzlatish yozuvi qo'shilgan (backfill). RLS, kompozit FK, `TENANT_TABLES` da.
+- **Hisoblash motori** `apps/api/src/billing/billing-engine.ts`: sof funksiya `planCharges()` (DB'ga tegmaydi, 22 ta unit test: sana, oy oxiri siljishi, proratsiya, muzlatish, chiqish, guruh holati, narx, chegirma). `BillingService.generate(tx, centerId, {asOf?, enrollmentIds?, groupId?, studentId?, leftAt?})` motorni DB bilan bog'laydi (partiyalab so'rov, `onConflictDoNothing`); faqat `ACTIVE` yozilishlar hisoblanadi.
+- **Qachon hisoblanadi (cron yo'q):** yozilish; muzlatishdan oldin (keyin muzlatish davri ochiladi); qaytarishdan keyin (davr yopiladi); chiqish/ko'chirishdan oldin (chiqish sanasi bilan chegaralab); o'quvchi arxivlanishidan oldin; guruh narxi o'zgarishi yoki `FINISHED` bo'lishidan oldin; `POST /billing/generate`; `GET /charges` va `GET /charges/:id` oldidan. `groups.billing_mode/billing_day` ni hisob bor guruhda o'zgartirib bo'lmaydi (409 `BILLING_HAS_CHARGES`; narx o'zgartirish mumkin).
+- **Endpointlar:** `POST /billing/generate` (`{asOf?}` <= bugun; `debtors.view`: rahbar, kassir f, admin ○; audit `billing.generate`; javob `{asOf, created}`), `GET /charges` (`studentId`, `groupId`, `enrollmentId`, `branchId`, `status`, `kind`, `dueFrom`, `dueTo`, `limit`, `offset`), `GET /charges/:id` (`payment.view`: rahbar, admin ○ f, kassir f, o'quvchi faqat o'zinikini; ustoz kirmaydi), `POST /charges` (qo'lda `MANUAL`, `{enrollmentId, amount, dueDate?, note}`, `charge.adjust`: faqat rahbar), `POST /charges/:id/cancel` (`{reason}`, `charge.adjust`; faqat `OPEN`; to'langan 409 `CHARGE_NOT_CANCELLABLE`, takror 409 `ALREADY_CANCELLED`). Audit: `charge.create_manual`, `charge.cancel`.
+- **Muhim xulq:** guruh sukut bo'yicha `PLANNED` yaratiladi va `PLANNED` guruhga (boshlanish sanasiz) hisob yozilmaydi: rahbar guruhni `ACTIVE` qilishi yoki `startDate` qo'yishi kerak. Chegirma (`enrollment_discounts`) charge yaratilganda qotiriladi (endpoint yo'q: 15-qadamda; hozir faqat jadval). Orqaga sanali yozilishda hamma o'tgan davrlar darrov yaratiladi; keyin sanani "oldinroq chiqish" ga o'zgartirish ularni o'chirmaydi (rahbar qo'lda bekor qiladi).
+- **Vaqt mintaqasi:** biznes sanasi Asia/Tashkent (UTC+5): `common/dates.ts` (`todayLocal`, `addDays`, `daysBetween`, `clampedDate` ...). Hamma servislar (guruh, yozilish, davomat, o'quvchi) va `currentTeacher()` shunga o'tkazildi; testlar ham `todayLocal()` ishlatadi (yarim tundan o'tish paytida bir marta ishga tushirilgan test sanasi farq qilishi mumkin, qayta yurgizish yetarli).
+- **13-qadamga kirmadi:** `GET /students/:id/balance` (to'lovlar bilan birga, 14-qadamda); to'lov taqsimoti va qarz (14-15).
+- Test: `test/billing.e2e-spec.ts` (23 ta) + `src/billing/billing-engine.spec.ts` (22 ta unit) + izolyatsiya testida 2 jadval va bazaviy qoidalar. Umumiy 317 e2e + 36 unit.
+
+### 14-qadam (keyingi): to'lovlar
+`payments`, `payment_allocations` (migratsiya 0010): `POST /payments` (`payment.create`, kassir o'z filialida, chek raqami markaz bo'yicha ketma-ket), eng eski ochiq charge'ga FIFO taqsimlash (`PARTIAL`/`PAID`), ortiqcha summa avans (keyingi charge'larga avtomatik), qaytarish `payment.reverse` (teskari yozuv, original faqat `CONFIRMED -> REVERSED`, trigger bilan), `GET /payments`, `GET /students/:id/balance`. To'langan charge'ni bekor qilish shu qadamda qayta ko'rib chiqiladi.
+
+### 15-qadam: qarzdorlar va chegirmalar
+`GET /debtors` (`debtors.view`, `today > due_date + grace_days`, filial/guruh filtrlari, o'quvchi o'z qarzi, ustoz (○) faqat "qarz bor/yo'q"), `enrollment_discounts` endpointlari (`discount.grant`: PERCENT/AMOUNT/FREE, muddat).
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).
