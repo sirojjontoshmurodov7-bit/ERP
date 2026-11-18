@@ -36,6 +36,13 @@
       "when": 1795024454200,
       "tag": "0004_teacher_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795025146485,
+      "tag": "0005_student_profiles",
+      "breakpoints": true
     }
   ]
 }

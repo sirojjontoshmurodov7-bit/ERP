@@ -7,10 +7,9 @@ import { hashPassword } from '../auth/password.js';
 import { PermissionsService } from '../auth/permissions.service.js';
 import { generateTempPassword } from '../auth/temp-password.js';
 import { type BranchScope, branchScope, inScope } from '../common/branch-scope.js';
-import { uniqueViolation } from '../common/pg-errors.js';
-import { slugify } from '../common/slug.js';
+import { generateLogin, isLoginConflict, MAX_LOGIN_TRIES } from '../common/login.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
-import { branches, centers, sessions, teacherProfiles, userBranches, users } from '../db/schema.js';
+import { branches, sessions, teacherProfiles, userBranches, users } from '../db/schema.js';
 import type { CreateStaffInput, ListStaffQuery, StaffRole, UpdateStaffInput } from './users.schemas.js';
 
 const forbidden = (message = "Bu amal uchun ruxsat yo'q") => new ForbiddenException({ code: 'FORBIDDEN', message });
@@ -21,7 +20,6 @@ const branchNotFound = () => new NotFoundException({ code: 'BRANCH_NOT_FOUND', m
 const manageableRoles = (actor: AuthUser): readonly StaffRole[] => (actor.role === 'OWNER' ? ['ADMIN', 'CASHIER', 'TEACHER'] : ['TEACHER']);
 const createCode = (role: StaffRole) => (role === 'TEACHER' ? 'teacher.create' : 'staff.create');
 const editCode = (role: string) => (role === 'TEACHER' ? 'teacher.edit' : 'staff.create');
-const MAX_LOGIN_TRIES = 6;
 
 type UserRow = typeof users.$inferSelect;
 
@@ -50,7 +48,7 @@ export class UsersService {
           const scope = await branchScope(tx, actor);
           await this.assertBranches(tx, scope, branchIds);
 
-          const loginName = input.login ?? (await this.generateLogin(tx, actor.centerId!, input.fullName, attempt));
+          const loginName = input.login ?? (await generateLogin(tx, actor.centerId!, input.fullName, attempt));
           const [user] = await tx
             .insert(users)
             .values({
@@ -88,8 +86,7 @@ export class UsersService {
           };
         });
       } catch (e) {
-        const constraint = uniqueViolation(e);
-        if (constraint === null || !constraint.includes('login')) throw e;
+        if (!isLoginConflict(e)) throw e;
         if (input.login || attempt === MAX_LOGIN_TRIES) {
           throw new ConflictException({ code: 'LOGIN_TAKEN', message: 'Bu login band, boshqasini kiriting' });
         }
@@ -244,12 +241,6 @@ export class UsersService {
     const rows = await tx.select({ id: branches.id }).from(branches).where(and(inArray(branches.id, ids), isNull(branches.archivedAt)));
     if (rows.length !== ids.length) throw branchNotFound();
     if (!ids.every((b) => inScope(scope, b))) throw forbidden("Bu filialga xodim biriktirish huquqingiz yo'q");
-  }
-
-  private async generateLogin(tx: Tx, centerId: string, fullName: string, attempt: number): Promise<string> {
-    const [center] = await tx.select({ slug: centers.slug }).from(centers).where(eq(centers.id, centerId));
-    const first = slugify(fullName.split(/\s+/)[0] ?? '', 20) || 'xodim';
-    return `${center!.slug}.${first}${attempt > 1 ? attempt : ''}`;
   }
 
   /** Foydalanuvchilarni filial ro'yxati (va ustoz profili) bilan boyitadi. Parol xeshi hech qachon chiqmaydi. */

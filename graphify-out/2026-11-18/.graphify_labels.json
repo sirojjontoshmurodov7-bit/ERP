@@ -8,19 +8,13 @@
   "11": "scripts",
   "12": "db",
   "13": "scripts",
-  "14": "@nestjs/common",
   "16": "dependencies",
   "22": "shared/package.json",
   "25": "compilerOptions",
-  "27": "seed.ts",
-  "28": "ProbeController",
   "32": "Buyruqlar ro'yxati",
   "37": ".oxlintrc.json",
-  "38": "main.ts",
   "39": "tsconfig.build.json",
   "41": "nest-cli.json",
   "43": "allowBuilds",
-  "45": "vitest",
-  "53": "oxlint-tsgolint@^7.0.2001",
-  "54": "source-map-support@^0.5.21"
+  "45": "vitest"
 }

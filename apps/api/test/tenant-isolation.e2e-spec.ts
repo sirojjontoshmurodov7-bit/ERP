@@ -17,6 +17,7 @@ const TENANT_TABLES = [
   'user_permissions',
   'sessions',
   'teacher_profiles',
+  'student_profiles',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -76,6 +77,9 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       case 'teacher_profiles':
         return sql`with u as (insert into users (center_id, role, login, password_hash, full_name) values (${f.center}, 'TEACHER', ${'tp-' + n}, 'h', 'x') returning id)
                    insert into teacher_profiles (user_id, center_id) select id, ${f.center}::uuid from u`;
+      case 'student_profiles':
+        return sql`with u as (insert into users (center_id, role, login, password_hash, full_name) values (${f.center}, 'STUDENT', ${'sp-' + n}, 'h', 'x') returning id)
+                   insert into student_profiles (user_id, center_id) select id, ${f.center}::uuid from u`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -101,6 +105,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.centerRolePermissions).values({ centerId: c!.id, role: 'OWNER', permissionCode: 'payment.create', allowed: true });
     await db.insert(s.userPermissions).values({ userId: admin!.id, centerId: c!.id, permissionCode: 'payment.create', allowed: true });
     await db.insert(s.teacherProfiles).values({ userId: admin!.id, centerId: c!.id });
+    await db.insert(s.studentProfiles).values({ userId: admin!.id, centerId: c!.id });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,

@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-18 (skelet bosqichi 1-7 tayyor). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-18 (skelet 1-7 va 8-qadam o'quvchilar tayyor; keyingi 9: kurs va guruhlar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -12,8 +12,10 @@ Oxirgi yangilanish: 2026-11-18 (skelet bosqichi 1-7 tayyor). Keyingi chatda **av
 | 5. Super admin: markaz yaratish/bloklash | tayyor | `apps/api/src/centers/`, `test/centers.e2e-spec.ts` |
 | 6. Rahbar: filial va xodim yaratish, ruxsatlarni sozlash | tayyor | `apps/api/src/{branches,users,permissions-admin}/`, `common/branch-scope.ts`, `drizzle/0004`, `test/staff.e2e-spec.ts` |
 | 7. Audit jurnali va ruxsat matritsasi avtomatik testi | tayyor | `apps/api/src/audit/`, `test/permission-matrix.e2e-spec.ts` |
+| 8. O'quvchilar (`student_profiles`, `/students`) | tayyor | `apps/api/src/students/`, `drizzle/0005`, `test/students.e2e-spec.ts` |
+| **9. Kurslar va guruhlar** | **keyingi** | hali yozilmagan |
 
-Hech narsa **commit qilinmagan** (git init qilingan, `main`, bo'sh tarix). Birinchi commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`. 8-qadam (o'quvchilar) o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -26,7 +28,7 @@ Hech narsa **commit qilinmagan** (git init qilingan, `main`, bo'sh tarix). Birin
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~20 s, 144 test
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~20 s, 164 test
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -66,8 +68,17 @@ Barcha marshrutlar `Authorization: Bearer`; xato javoblari `{ code, message }`. 
 - Audit testlari: boshqa markaz yozuvlari ko'rinmaydi, filtr va sahifalash, parol/xesh yo'qligi, append-only (UPDATE/DELETE rad).
 - **Eslatma:** moliyaviy amallar (to'lov, maosh) hali yo'q, ularning auditi o'sha modullar bilan yoziladi; yangi modul `writeAudit` ni ishlatsin va matritsa testi yangi kodlarni avtomatik qamraydi (kod `PERMISSIONS` ga qo'shilishi kifoya).
 
-## Skelet bosqichi tugadi. Keyingi bosqich: guruh, o'quvchi, yozilish (CLAUDE.md "Keyingi bosqichlar").
-Boshlashdan oldin: o'quvchi moduli `student_profiles`, filial qamrovi (`branchScope`) va admin o'quvchi parolini tiklashi (6-qadam cheklovi) bilan birga yoziladi. Birinchi commitni foydalanuvchi so'raganda qil.
+## Keyingi bosqich (guruh, o'quvchi, yozilish): 8, 9, 10-qadamlar
+Reja (tasdiqlangan): 8 o'quvchilar, 9 kurs va guruhlar (`courses`, `groups`, `group_schedules`, `group_teachers`; migratsiya 0006), 10 yozilish (`enrollments`, `enrollment_discounts`; 0007: qo'shish, muzlatish, chiqarish, ko'chirish; boshqa filial guruhiga yozilsa `user_branches` ga avtomatik qo'shiladi). Qarorlar: o'quvchi arxivlanganda yozilishlari `LEFT` bo'ladi; ustoz guruhga faqat o'z filialidan biriktiriladi. Qarz/to'lov keyingi bosqichda.
+
+### 8-qadam: o'quvchilar (tayyor)
+- `student_profiles` (migratsiya `0005`, RLS, kompozit FK, `TENANT_TABLES` da). Filial `user_branches` orqali (yaratishda bitta `branchId`; qo'shimcha filiallar yozilishda qo'shiladi).
+- `/students` (OWNER, ADMIN, CASHIER; `GET :id` ga STUDENT ham): `POST` (`student.create`; vaqtinchalik parol bir marta, login `markaz.ism[N]`), `GET` (`student.view`; `q` ism/login/telefon, `branchId`, `status` ACTIVE|ARCHIVED, `limit`, `offset`), `GET :id`, `PATCH :id` (`student.edit`; ism, telefon, tug'ilgan sana, ota-ona, izoh), `POST :id/archive|unarchive` (`student.archive`; admin uchun ○). Arxivlash sessiyalarni yopadi.
+- Qamrov: rahbar hammasi, admin/kassir `user_branches` bo'yicha (tashqarisi 404). O'quvchi faqat o'zini ko'radi (boshqasi 404). **Ustoz hozircha 403**: o'z guruhi o'quvchilarini ko'rishi yozilish modulidan keyin (`student.view` scope `o`).
+- `plans.max_students` faol o'quvchilarga (`PLAN_STUDENT_LIMIT`; arxivdan qaytarishda ham).
+- Admin o'quvchi parolini tiklashi endi ishlaydi (6-qadam cheklovi yopildi).
+- Umumiy yordamchi: `common/login.ts` (`generateLogin`, `isLoginConflict`), xodim va o'quvchi shuni ishlatadi.
+- Test: `test/students.e2e-spec.ts` (20 ta); umumiy 164 e2e + 14 unit. Audit: `student.create|edit|archive|unarchive`.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).

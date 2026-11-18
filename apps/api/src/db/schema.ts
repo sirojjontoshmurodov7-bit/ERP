@@ -9,6 +9,7 @@ import {
   bigserial,
   boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -144,6 +145,27 @@ export const teacherProfiles = pgTable(
   (t) => [
     foreignKey({ name: 'teacher_profiles_user_center_fk', columns: [t.userId, t.centerId], foreignColumns: [users.id, users.centerId] }),
     index('teacher_profiles_center_idx').on(t.centerId),
+  ],
+);
+
+// O'quvchi profili (ERD 2.1). Filial `user_branches` orqali, guruhga yozilish `enrollments` orqali belgilanadi.
+export const studentProfiles = pgTable(
+  'student_profiles',
+  {
+    userId: uuid('user_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    birthDate: date('birth_date', { mode: 'string' }),
+    parentName: text('parent_name'),
+    parentPhone: text('parent_phone'),
+    note: text('note'),
+  },
+  (t) => [
+    foreignKey({ name: 'student_profiles_user_center_fk', columns: [t.userId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    index('student_profiles_center_idx').on(t.centerId),
   ],
 );
 
