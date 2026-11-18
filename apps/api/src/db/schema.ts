@@ -621,6 +621,37 @@ export const payrollPayouts = pgTable(
   ],
 );
 
+// --- Xarajat (ERD 2.3): append-only. Summa/kategoriya o'zgarmaydi; xato ACTIVE -> VOIDED (sabab bilan) orqali tuzatiladi (trigger, 0012). ---
+export const expenses = pgTable(
+  'expenses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    branchId: uuid('branch_id').notNull(),
+    category: text('category').notNull(),
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    note: text('note'),
+    spentOn: date('spent_on', { mode: 'string' }).notNull(), // biznes sanasi (Asia/Tashkent)
+    status: text('status').notNull().default('ACTIVE'), // ACTIVE | VOIDED
+    voidReason: text('void_reason'),
+    voidedBy: uuid('voided_by').references(() => users.id),
+    voidedAt: ts('voided_at'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'expenses_branch_center_fk', columns: [t.branchId, t.centerId], foreignColumns: [branches.id, branches.centerId] }),
+    index('expenses_center_spent_idx').on(t.centerId, t.spentOn),
+    index('expenses_branch_idx').on(t.branchId),
+    check('expenses_amount_chk', sql`${t.amount} > 0`),
+    check('expenses_status_chk', sql`${t.status} in ('ACTIVE','VOIDED')`),
+    check('expenses_category_chk', sql`length(btrim(${t.category})) between 1 and 60`),
+    check('expenses_void_chk', sql`(${t.status} = 'VOIDED') = (${t.voidedAt} is not null and ${t.voidReason} is not null)`),
+  ],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

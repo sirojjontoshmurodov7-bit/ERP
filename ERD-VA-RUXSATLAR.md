@@ -357,8 +357,13 @@ erDiagram
         string category
         bigint amount
         string note
+        date spent_on "biznes sanasi (Asia/Tashkent)"
+        string status "ACTIVE|VOIDED"
+        string void_reason
+        uuid voided_by FK
+        timestamptz voided_at
         uuid created_by FK
-        timestamptz at
+        timestamptz created_at
     }
 ```
 
@@ -383,6 +388,8 @@ erDiagram
 - **To'lov va taqsimot (implementatsiya, 14-qadam):** `payment_allocations` faqat INSERT. Hisobning to'langani = uning taqsimotlari yig'indisi; holat (`OPEN/PARTIAL/PAID`) shundan qayta hisoblanadi. Avans = asl (CONFIRMED, qaytarilmagan) to'lovlarning taqsimlanmagan qoldig'i. Invariant: o'quvchida avans va ochiq hisob bir vaqtda bo'lmaydi: to'lov, hisob yaratilishi, qo'lda hisob, qaytarish va hisob bekor qilishdan keyin avans eng eski ochiq hisobga (`due_date`, `period_start`) qayta taqsimlanadi. O'quvchi bo'yicha pul amallari `pg_advisory_xact_lock` bilan ketma-ketlashtiriladi.
 - **Qaytarish (implementatsiya):** asl to'lov `CONFIRMED -> REVERSED` (trigger faqat shu o'tishga ruxsat beradi, boshqa ustun o'zgarmaydi), `reverses_payment_id` bilan **manfiy summali** yangi yozuv (`status=CONFIRMED`, o'z chek raqami, `note` = sabab) qo'shiladi, asl to'lovdan hisoblarga taqsimlangan summa manfiy taqsimotlar bilan qaytariladi. Bitta to'lov bir marta qaytariladi (unikal indeks); qaytarish yozuvining o'zi qaytarilmaydi.
 - **To'langan hisobni bekor qilish (implementatsiya):** `charge.adjust` egasi `PARTIAL/PAID` hisobni ham bekor qila oladi: unga taqsimlangan pul manfiy taqsimot bilan qaytib avansga o'tadi va boshqa ochiq hisoblarga avtomatik taqsimlanadi.
+- **Xarajat (implementatsiya, 17-qadam):** `expenses` append-only: summa, kategoriya, sana o'zgarmaydi; xato `ACTIVE -> VOIDED` (sabab, kim, qachon) bilan tuzatiladi (trigger), DELETE huquqi yo'q. `spent_on` — biznes sanasi (ERD'dagi `at` o'rniga: hisobotlar kun bo'yicha, kelajak sanasi rad etiladi). Kategoriya erkin matn (1-60 belgi), registrsiz guruhlanadi. Yozish `expense.manage` (rahbar, kassir ○ o'z filialida), ko'rish `expense.manage` yoki `finance.report`.
+- **Moliyaviy hisobot (implementatsiya, 17-qadam):** kassa asosida, faqat o'qiydi (SQL agregatsiya), `finance.report`. Tushum = to'lov sanasi (Asia/Tashkent) bo'yicha sof to'lovlar: qaytarish yozuvi o'z kunida manfiy. Xarajat = `ACTIVE` xarajatlar `spent_on` bo'yicha. Maosh to'lovlari (sof) faqat rahbar va filial filtrisiz ko'rinadi (filialga bog'lanmagan). Sof natija = tushum − xarajat − maosh to'lovi. Guruhlar bo'yicha tushum — oy ichida hisoblarga taqsimlangan sof summa; `unallocated` = tushum − guruh tushumlari (avans o'zgarishi), faqat butun markaz uchun. Qamrov: rahbar hammasi, kassir ✔/admin ○ faqat o'z filiallari (qamrovdan tashqari `branchId` bo'sh natija beradi).
 - **Chek raqami:** markaz bo'yicha `max + 1` (markaz kaliti bo'yicha advisory lock ichida), `(center_id, receipt_no)` unikal. Qaytarish yozuvi ham o'z raqamini oladi. Usullar hozircha `CASH|CARD|TRANSFER`; `CLICK|PAYME` (`external_txn_id`) provayder qo'shilganda ochiladi.
 
 ### 2.4. Maosh, bildirishnoma, import

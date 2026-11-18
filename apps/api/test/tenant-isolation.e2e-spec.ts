@@ -35,6 +35,7 @@ const TENANT_TABLES = [
   'payroll_items',
   'payroll_adjustments',
   'payroll_payouts',
+  'expenses',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -142,6 +143,8 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into payroll_adjustments (center_id, period_id, employee_id, amount, reason) values (${f.center}, ${f.payrollPeriod}, ${f.admin}, -5, 'jarima')`;
       case 'payroll_payouts':
         return sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method) values (${f.center}, ${f.payrollPeriod}, ${f.admin}, 100, 'CASH')`;
+      case 'expenses':
+        return sql`insert into expenses (center_id, branch_id, category, amount, spent_on) values (${f.center}, ${f.branch1}, 'Ijara', 1000, '2026-02-02')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -191,6 +194,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.payrollItems).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, ruleId: prule!.id, baseAmount: 1000, amount: 1000, description: 'seed' });
     await db.insert(s.payrollAdjustments).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 500, reason: 'seed' });
     await db.insert(s.payrollPayouts).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 300, method: 'CASH' });
+    await db.insert(s.expenses).values({ centerId: c!.id, branchId: b1!.id, category: 'Ijara', amount: 2000, spentOn: '2026-01-05' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -442,6 +446,25 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, sql`delete from payment_allocations where payment_id = ${A.payment}`))).toMatch(/permission denied/);
       expect(await failure(q(ctxA, sql`update payments set status = 'REVERSED' where id = ${A.payment}`))).toBeNull();
       expect(await failure(q(ctxA, sql`update payments set status = 'CONFIRMED' where id = ${A.payment}`))).toMatch(/append-only/);
+    });
+
+    it("expenses: kross-markaz filial, bazaviy qoidalar va append-only", async () => {
+      const ex = (cols: string, vals: unknown[]) => sql`insert into expenses (center_id, branch_id, ${sql.raw(cols)}) values (${A.center}, ${A.branch1}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      expect(await failure(q(ctxA, sql`insert into expenses (center_id, branch_id, category, amount, spent_on) values (${A.center}, ${B.branch1}, 'Ijara', 1, '2026-02-02')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, ex('category, amount, spent_on', ['Ijara', 0, '2026-02-02'])))).toMatch(/expenses_amount_chk/);
+      expect(await failure(q(ctxA, ex('category, amount, spent_on', ['Ijara', -5, '2026-02-02'])))).toMatch(/expenses_amount_chk/);
+      expect(await failure(q(ctxA, ex('category, amount, spent_on', ['   ', 5, '2026-02-02'])))).toMatch(/expenses_category_chk/);
+      expect(await failure(q(ctxA, ex('category, amount, spent_on', ['x'.repeat(61), 5, '2026-02-02'])))).toMatch(/expenses_category_chk/);
+      expect(await failure(q(ctxA, ex('category, amount, spent_on, status', ['Ijara', 5, '2026-02-02', 'WEIRD'])))).toMatch(/expenses_status_chk|expenses_void_chk/);
+      expect(await failure(q(ctxA, ex('category, amount, spent_on, status', ['Ijara', 5, '2026-02-02', 'VOIDED'])))).toMatch(/expenses_void_chk/); // sabab va vaqt yo'q
+      const [row] = await q<{ id: string }>(ctxA, sql`insert into expenses (center_id, branch_id, category, amount, spent_on) values (${A.center}, ${A.branch1}, 'Kommunal', 700, '2026-02-03') returning id`);
+      expect(await failure(q(ctxA, sql`update expenses set amount = 1 where id = ${row!.id}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`update expenses set category = 'Boshqa' where id = ${row!.id}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`update expenses set status = 'VOIDED' where id = ${row!.id}`))).toMatch(/expenses_void_chk/); // sabab yo'q
+      expect(await failure(q(ctxA, sql`update expenses set status = 'VOIDED', void_reason = 'x', voided_at = now(), amount = 9 where id = ${row!.id}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`delete from expenses where id = ${row!.id}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`update expenses set status = 'VOIDED', void_reason = 'Xato', voided_at = now() where id = ${row!.id}`))).toBeNull();
+      expect(await failure(q(ctxA, sql`update expenses set status = 'ACTIVE', void_reason = null, voided_at = null where id = ${row!.id}`))).toMatch(/append-only/);
     });
 
     it("maosh jadvallari: kross-markaz havola, bazaviy qoidalar, davr qulfi va append-only", async () => {
