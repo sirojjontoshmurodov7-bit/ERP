@@ -134,6 +134,36 @@ export class LessonsService {
     });
   }
 
+  // ------------------------------------------------------------ qo'lda qulflash
+
+  /** Darsni muddatidan oldin qulflaydi (`attendance.mark`): keyin tuzatish faqat `attendance.edit_past` bilan. */
+  lockLesson(actor: AuthUser, id: string, client: ClientInfo) {
+    return this.db.withContext(this.ctx(actor), async (tx) => {
+      if (!(await this.perms.hasIn(tx, actor, 'attendance.mark'))) throw forbidden();
+      const before = await this.loadLesson(tx, actor, await branchScope(tx, actor), id);
+      if (before.lockedAt !== null) throw conflict('ALREADY_LOCKED', "Dars allaqachon qo'lda qulflangan");
+      if (this.isLocked(before, await this.lockDays(tx, actor.centerId!))) throw conflict('ALREADY_LOCKED', 'Dars muddati bo\'yicha allaqachon qulflangan');
+      const [after] = await tx.update(lessons).set({ lockedAt: new Date(), updatedAt: new Date() }).where(eq(lessons.id, id)).returning();
+      await this.audit(tx, actor, client, 'lesson.lock', id, { locked: false }, { locked: true });
+      return this.detail(tx, actor, after!);
+    });
+  }
+
+  /** Qo'lda qo'yilgan qulfni olib tashlaydi (`attendance.edit_past`). Muddat bo'yicha qulfni olib bo'lmaydi: tuzatish `edit_past` bilan ishlaydi. */
+  unlockLesson(actor: AuthUser, id: string, client: ClientInfo) {
+    return this.db.withContext(this.ctx(actor), async (tx) => {
+      if (!(await this.perms.hasIn(tx, actor, 'attendance.edit_past'))) throw forbidden();
+      const before = await this.loadLesson(tx, actor, await branchScope(tx, actor), id);
+      if (before.lockedAt === null) throw conflict('NOT_LOCKED', "Dars qo'lda qulflanmagan");
+      if (daysBetween(before.lessonDate, today()) > (await this.lockDays(tx, actor.centerId!))) {
+        throw conflict('LOCKED_BY_DATE', "Dars muddati bo'yicha qulflangan: qulfni olib bo'lmaydi, tuzatish uchun attendance.edit_past yetarli");
+      }
+      const [after] = await tx.update(lessons).set({ lockedAt: null, updatedAt: new Date() }).where(eq(lessons.id, id)).returning();
+      await this.audit(tx, actor, client, 'lesson.unlock', id, { locked: true }, { locked: false });
+      return this.detail(tx, actor, after!);
+    });
+  }
+
   // ------------------------------------------------------------ davomat belgilash
 
   /**

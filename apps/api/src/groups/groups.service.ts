@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, count, eq, ilike, inArray, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNull, notInArray, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
@@ -103,6 +103,10 @@ export class GroupsService {
         q.courseId ? eq(groups.courseId, q.courseId) : undefined,
         q.status ? eq(groups.status, q.status) : undefined,
         q.q ? ilike(groups.name, `%${escapeLike(q.q)}%`) : undefined,
+        q.billingMode ? eq(groups.billingMode, q.billingMode) : undefined,
+        q.noTeacher === undefined
+          ? undefined
+          : (q.noTeacher ? notInArray : inArray)(groups.id, tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.kind, 'MAIN'), currentTeacher()))),
         q.teacherId
           ? inArray(groups.id, tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.teacherId, q.teacherId), currentTeacher())))
           : undefined,

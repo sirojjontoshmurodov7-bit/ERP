@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Query, Req } from '@nestjs/common';
+import { Body, HttpCode, Controller, Get, Param, Patch, Post, Put, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
 import type { z } from 'zod';
 import type { ClientInfo } from '../auth/auth.service.js';
@@ -52,6 +52,18 @@ export class LessonsController {
     @Req() req: Request,
   ) {
     return this.lessons.updateLesson(actor, lessonId, body, clientOf(req));
+  }
+
+  @HttpCode(200)
+  @Post('lessons/:id/lock')
+  lockLesson(@CurrentUser() actor: AuthUser, @Param('id', id()) lessonId: string, @Req() req: Request) {
+    return this.lessons.lockLesson(actor, lessonId, clientOf(req));
+  }
+
+  @HttpCode(200)
+  @Post('lessons/:id/unlock')
+  unlockLesson(@CurrentUser() actor: AuthUser, @Param('id', id()) lessonId: string, @Req() req: Request) {
+    return this.lessons.unlockLesson(actor, lessonId, clientOf(req));
   }
 
   /** Bir so'rovda ko'p o'quvchi; qayta yuborilsa yangilaydi. */

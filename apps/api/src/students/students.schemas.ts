@@ -34,6 +34,11 @@ export const listStudentsSchema = z.object({
   q: z.string().trim().min(1).max(100).optional(), // ism, login yoki telefon bo'yicha qidiruv
   branchId: z.uuid().optional(),
   status: z.enum(['ACTIVE', 'ARCHIVED']).optional(),
+  groupId: z.uuid().optional(), // shu guruhda tugallanmagan yozilishi bor o'quvchilar
+  enrolled: z.enum(['true', 'false']).transform((v) => v === 'true').optional(), // true: kamida bitta tugallanmagan yozilish; false: hech qayerga yozilmagan
+  createdFrom: z.iso.date().optional(), // ro'yxatga olingan sana (Toshkent) dan
+  createdTo: z.iso.date().optional(), // gacha (shu kun ham)
+  sort: z.enum(['name', 'newest']).default('name'),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
 });

@@ -1,43 +1,44 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { createHmac } from 'node:crypto';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { sql } from 'drizzle-orm';
+import { APP_CONFIG, type AppConfig } from '../config/app-config.js';
+import { DbService, NO_CONTEXT } from '../db/db.service.js';
+
+export const LOGIN_MAX_FAILURES = 5;
+export const LOGIN_WINDOW_SECONDS = 15 * 60;
 
 /**
- * Xotirada ishlovchi oddiy cheklov: (ip + login) uchun oynada MAX_FAILURES xatodan keyin bloklaydi.
- * Bitta nusxali deploy uchun yetarli; ko'p nusxaga o'tilganda umumiy xotiraga (Redis/baza) ko'chiriladi.
+ * (ip + login) uchun oynada `LOGIN_MAX_FAILURES` xatodan keyin bloklaydi. Holat bazada (`login_throttle`), shuning uchun
+ * ko'p nusxada ham umumiy. Kalit HMAC xesh (xom login/IP saqlanmaydi); jadvalga faqat tor SECURITY DEFINER funksiyalar tegadi.
+ * Oyna birinchi xatodan boshlanadi va `LOGIN_WINDOW_SECONDS` dan keyin tozalanadi. Muvaffaqiyatli kirish hisoblagichni nolga tushiradi.
  */
 @Injectable()
 export class LoginThrottle {
-  private readonly failures = new Map<string, { count: number; resetAt: number }>();
-
-  private readonly maxFailures = 5;
-  private readonly windowMs = 15 * 60_000;
+  constructor(
+    private readonly db: DbService,
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
+  ) {}
 
   private key(ip: string | undefined, login: string): string {
-    return `${ip ?? '-'}|${login.toLowerCase()}`;
+    return createHmac('sha256', this.config.accessSecret).update(`login-throttle:${ip ?? '-'}|${login.toLowerCase()}`).digest('hex');
   }
 
-  assertAllowed(ip: string | undefined, login: string, now = Date.now()): void {
-    const entry = this.failures.get(this.key(ip, login));
-    if (entry && entry.resetAt > now && entry.count >= this.maxFailures) {
-      throw new HttpException(
-        { code: 'TOO_MANY_ATTEMPTS', message: "Juda ko'p urinish. Keyinroq qayta urinib ko'ring" },
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+  async assertAllowed(ip: string | undefined, login: string): Promise<void> {
+    const blocked = await this.db.withContext(NO_CONTEXT, async (tx) => {
+      const res = (await tx.execute(sql`select app_login_throttle_blocked(${this.key(ip, login)}, ${LOGIN_MAX_FAILURES}, ${LOGIN_WINDOW_SECONDS}) as blocked`)) as unknown;
+      const rows = Array.isArray(res) ? res : ((res as { rows?: unknown[] }).rows ?? []);
+      return (rows[0] as { blocked?: boolean } | undefined)?.blocked === true;
+    });
+    if (blocked) {
+      throw new HttpException({ code: 'TOO_MANY_ATTEMPTS', message: "Juda ko'p urinish. Keyinroq qayta urinib ko'ring" }, HttpStatus.TOO_MANY_REQUESTS);
     }
   }
 
-  recordFailure(ip: string | undefined, login: string, now = Date.now()): void {
-    const k = this.key(ip, login);
-    const entry = this.failures.get(k);
-    if (!entry || entry.resetAt <= now) this.failures.set(k, { count: 1, resetAt: now + this.windowMs });
-    else entry.count += 1;
-    if (this.failures.size > 10_000) this.prune(now);
+  async recordFailure(ip: string | undefined, login: string): Promise<void> {
+    await this.db.withContext(NO_CONTEXT, (tx) => tx.execute(sql`select app_login_throttle_fail(${this.key(ip, login)}, ${LOGIN_WINDOW_SECONDS})`));
   }
 
-  reset(ip: string | undefined, login: string): void {
-    this.failures.delete(this.key(ip, login));
-  }
-
-  private prune(now: number): void {
-    for (const [k, v] of this.failures) if (v.resetAt <= now) this.failures.delete(k);
+  async reset(ip: string | undefined, login: string): Promise<void> {
+    await this.db.withContext(NO_CONTEXT, (tx) => tx.execute(sql`select app_login_throttle_reset(${this.key(ip, login)})`));
   }
 }

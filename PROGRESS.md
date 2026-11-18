@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar) tayyor; keyingi: kichik backend bo'shliqlari). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi) tayyor; keyingi: haqiqiy Postgres'da sinash). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -26,8 +26,9 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 19. Excel/CSV import (o'quvchilar) (`/imports`) | tayyor | `apps/api/src/imports/`, `common/spreadsheet.ts`, `drizzle/0013`, `test/imports.e2e-spec.ts` |
 | 20. Vazifa va reyting (`/assignments`, `/ratings`) | tayyor | `apps/api/src/academic/`, `drizzle/0014`, `test/academic.e2e-spec.ts` |
 | 21. Telegram bot va bildirishnomalar (`/notifications`, `/telegram/webhook`) | tayyor | `apps/api/src/notifications/`, `drizzle/0015`, `test/notifications.e2e-spec.ts` |
+| 22. Kichik backend bo'shliqlari (`/center/settings`, `/admin/plans`, dars qulfi, filtrlar, `login_throttle`) | tayyor | `apps/api/src/{centers/center-settings.*,plans}/`, `auth/login-throttle.ts`, `drizzle/0016`, `test/settings-plans.e2e-spec.ts` |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`. Commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 hali commitlanmagan. Commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -40,7 +41,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~80 s, 517 test; unit 65 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~80 s, 534 test; unit 65 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -222,15 +223,23 @@ Qoidalar manbasi: ERD 2.4 ("Telegram va bildirishnomalar (implementatsiya, 21-qa
 - **Ochiq:** haqiqiy Telegram botida sinash (token, webhook, cron-job.org); alohida ota-ona chati/roli; til tanlash; SMS kanali; bildirishnoma sozlamalari (turni o'chirish, jim soatlar); jurnalni tozalash/arxiv; ikki jarayonli ishga tushirishda qulf bazada emas, xotirada.
 - Test: `test/notifications.e2e-spec.ts` (24 ta: ulash, kod muddati/bir martaligi, webhook himoyasi, urinish cheklovi, ruxsat va qamrov, qo'lda xabar, jurnal, qarz/dars/vazifa/maosh eslatmalari, takror yo'q, xato/to'silish, cron, markaz izolyatsiyasi) + `src/notifications/messages.spec.ts` (3) + izolyatsiya testida 2 jadval. Umumiy 517 e2e + 65 unit.
 
+### 22-qadam: kichik backend bo'shliqlari (tayyor)
+Qoidalar manbasi: ERD 2.4 ("Sozlamalar, tariflar, qulf, login cheklovi (implementatsiya, 22-qadam)").
+- **Markaz sozlamalari** (`centers/center-settings.*`): `GET /center/settings` (rahbar, admin: nom, holat, sinov muddati, tarif va chegaralari, `settings`), `PATCH /center/settings` (faqat rahbar; `billingMode`, `graceDays` 0-60, `joinProration`, `attendanceLockDays` 0-365, `locale`; `strict`, bo'sh tana 400). `effectiveSettings()` bazadagi buzilgan qiymat o'rniga sukut qaytaradi. Audit `center.settings` (before/after). `rounding` hali amalda yo'q, shuning uchun ochilmagan.
+- **Tariflar** (`plans/`): `GET|POST /admin/plans`, `GET|PATCH /admin/plans/:id` (`plan.manage`, faqat super admin): `name` noyob (409 `PLAN_NAME_TAKEN`), `priceMonthly`, `maxStudents`/`maxBranches` (null = cheksiz), `features` (<= 30 kalit, oddiy qiymatlar). Ro'yxatda markazlar soni. O'chirish yo'q. Audit `plan.create|edit` (`center_id` null). Markazga biriktirish avvaldan bor (`PATCH /admin/centers/:id` `planId`).
+- **Davomat qulfi:** `POST /lessons/:id/lock` (`attendance.mark`: ustoz o'z darsini, admin ○, rahbar) muddatidan oldin qulflaydi (409 `ALREADY_LOCKED`); `POST /lessons/:id/unlock` (`attendance.edit_past`) faqat qo'lda qo'yilgan qulfni oladi (409 `NOT_LOCKED`, `LOCKED_BY_DATE`). Audit `lesson.lock|unlock`. Migratsiyasiz (`lessons.locked_at` bor edi).
+- **Filtrlar:** `GET /students`: `groupId` (tugallanmagan yozilish), `enrolled` true|false, `createdFrom`/`createdTo` (Toshkent sanasi), `sort` name|newest. `GET /groups`: `billingMode`, `noTeacher` (true: amaldagi asosiy ustozi yo'q, false: bor). Qamrov o'zgarmaydi.
+- **Login cheklovi bazada** (migratsiya `0016`): `login_throttle` (kalit HMAC, `failures`, `window_start`), RLS yoqilgan + siyosat va huquq yo'q; ilova faqat `app_login_throttle_blocked|fail|reset` (SECURITY DEFINER) orqali. 15 daqiqada 5 xato, birinchi xatodan oyna; muvaffaqiyatli kirish nolga tushiradi; eski qatorlar har xatoda ozgina tozalanadi. Ko'p nusxada umumiy (testda ikkinchi ilova nusxasi bilan tekshirilgan).
+- **Ochiq:** `rounding` sozlamasi; tarif imkoniyatlari (`features`) hali hech narsani yoqmaydi/o'chirmaydi; tarifni arxivlash; SaaS to'lov (obuna hisobi) yo'q; IP faqat `req.ip` (proksi ortida `trust proxy` sozlanishi kerak).
+- Test: `test/settings-plans.e2e-spec.ts` (17 ta: sozlamalar o'qish/yozish/tekshiruv/ta'siri, tariflar CRUD va chegaralar, qo'lda qulf, o'quvchi va guruh filtrlari, bazadagi login cheklovi ikki nusxada, oyna, nolga tushirish, parallel urinishlar). Umumiy 534 e2e + 65 unit.
+
 ## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
-Backend asosiy funksiyalar (1-21) tayyor. Qolgani, tavsiya etilgan tartibda:
-1. **Kichik backend bo'shliqlari** (hammasi migratsiyasiz yoki kichik): markaz sozlamalari endpointi (`centers.settings`: `attendance_lock_days`, `join_proration`, `grace_days`, til; hozir faqat bazada), tariflar (`plans`) yaratish va markazga biriktirish (super admin, SaaS minimum), davomatni qo'lda qulflash/ochish, rahbar uchun guruh/o'quvchi ro'yxatidagi qo'shimcha filtrlar, login cheklovini umumiy xotiraga (baza) ko'chirish (ko'p nusxa).
-2. **Haqiqiy Postgres'da sinash (va haqiqiy Telegram bot bilan):** hozir hamma test PGlite'da; `db:migrate`, `db:seed`, `db:create-super-admin` va `erp_app` roli haqiqiy bazada hali sinalmagan (Docker uchun WSL kerak yoki Neon bepul bazasi). Deploydan oldin majburiy.
-3. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
-4. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
+Backend asosiy funksiyalar (1-22) tayyor. Qolgani, tavsiya etilgan tartibda:
+1. **Haqiqiy Postgres'da sinash (va haqiqiy Telegram bot bilan):** hozir hamma test PGlite'da; `db:migrate`, `db:seed`, `db:create-super-admin` va `erp_app` roli haqiqiy bazada hali sinalmagan (Docker uchun WSL kerak yoki Neon bepul bazasi). Deploydan oldin majburiy.
+2. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
+3. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
 Kod konvensiyalari yangi chat uchun: migratsiya = drizzle-kit (jadvallar) + qo'lda SQL (RLS, trigger, huquq); har yangi tenant jadvali `TENANT_TABLES` ga va izolyatsiya testiga qo'shiladi; pul yozuvi append-only; yangi ruxsat kodi `packages/shared` da; har qadam oxirida testlar, lint, build, PROGRESS.md + ERD, `graphify update .`.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).
-- Tariflar (`plans`) yaratish endpointi hali yo'q (SaaS billing minimumi keyinroq).
-- Login cheklovi ko'p nusxaga o'tganda umumiy xotiraga (Redis/baza) ko'chirilishi kerak.
+- SaaS obuna to'lovi (markaz tarif uchun to'lashi) hali yo'q; tariflar faqat chegara beradi.

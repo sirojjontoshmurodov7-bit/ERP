@@ -37,7 +37,7 @@ export class AuthService {
   ) {}
 
   async login(input: { login: string; password: string } & ClientInfo): Promise<LoginResult> {
-    this.throttle.assertAllowed(input.ip, input.login);
+    await this.throttle.assertAllowed(input.ip, input.login);
 
     // Kirishdan oldin tenant noma'lum: faqat tor SECURITY DEFINER funksiya orqali qidiramiz.
     const found = rowsOf<UserRow>(
@@ -46,14 +46,14 @@ export class AuthService {
 
     if (!found) {
       await verifyAgainstDummy(input.password);
-      this.throttle.recordFailure(input.ip, input.login);
+      await this.throttle.recordFailure(input.ip, input.login);
       throw invalidCredentials();
     }
 
     const ctx = contextOf(found.center_id, found.role);
 
     if (!(await verifyPassword(found.password_hash, input.password))) {
-      this.throttle.recordFailure(input.ip, input.login);
+      await this.throttle.recordFailure(input.ip, input.login);
       await this.db.withContext(ctx, (tx) =>
         writeAudit(tx, {
           centerId: found.center_id,
@@ -87,7 +87,7 @@ export class AuthService {
     });
     if (!result) throw centerBlocked();
 
-    this.throttle.reset(input.ip, input.login);
+    await this.throttle.reset(input.ip, input.login);
     return {
       ...result,
       mustChangePassword: found.must_change_password,

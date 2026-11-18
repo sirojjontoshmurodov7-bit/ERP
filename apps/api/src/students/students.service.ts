@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, count, eq, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, ilike, inArray, isNull, notInArray, or, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
@@ -115,11 +115,18 @@ export class StudentsService {
         if (!scope.branchIds.length) return empty;
         conds.push(inArray(users.id, tx.select({ id: userBranches.userId }).from(userBranches).where(inArray(userBranches.branchId, scope.branchIds))));
       }
+      if (query.groupId) conds.push(inArray(users.id, tx.select({ id: enrollments.studentId }).from(enrollments).where(and(eq(enrollments.groupId, query.groupId), sql`${enrollments.status} <> 'LEFT'`))));
+      if (query.enrolled !== undefined) {
+        const open = tx.select({ id: enrollments.studentId }).from(enrollments).where(sql`${enrollments.status} <> 'LEFT'`);
+        conds.push(query.enrolled ? inArray(users.id, open) : notInArray(users.id, open));
+      }
+      if (query.createdFrom) conds.push(sql`(${users.createdAt} at time zone 'Asia/Tashkent')::date >= ${query.createdFrom}::date`);
+      if (query.createdTo) conds.push(sql`(${users.createdAt} at time zone 'Asia/Tashkent')::date <= ${query.createdTo}::date`);
       const rows = await tx
         .select()
         .from(users)
         .where(and(...conds))
-        .orderBy(asc(users.fullName), asc(users.id))
+        .orderBy(...(query.sort === 'newest' ? [desc(users.createdAt), asc(users.id)] : [asc(users.fullName), asc(users.id)]))
         .limit(query.limit)
         .offset(query.offset);
       return { items: await this.present(tx, rows, scope), limit: query.limit, offset: query.offset };

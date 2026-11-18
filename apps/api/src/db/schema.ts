@@ -824,6 +824,18 @@ export const telegramLinkCodes = pgTable(
   ],
 );
 
+// --- Kirish urinishlari cheklovi (22-qadam): tenantga bog'liq emas, kalit = HMAC(ip|login). Ilova bevosita o'qimaydi/yozmaydi:
+// faqat SECURITY DEFINER funksiyalar (`app_login_throttle_*`) orqali, shuning uchun ko'p nusxada ham ishlaydi. ---
+export const loginThrottle = pgTable(
+  'login_throttle',
+  {
+    key: text('key').primaryKey(),
+    failures: integer('failures').notNull().default(1),
+    windowStart: ts('window_start').notNull().defaultNow(),
+  },
+  (t) => [index('login_throttle_window_idx').on(t.windowStart), check('login_throttle_failures_chk', sql`${t.failures} > 0`)],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

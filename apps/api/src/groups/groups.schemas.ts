@@ -66,6 +66,8 @@ export const listGroupsSchema = z.object({
   courseId: z.uuid().optional(),
   teacherId: z.uuid().optional(),
   status: z.enum(['PLANNED', 'ACTIVE', 'FINISHED']).optional(),
+  billingMode: billingMode.optional(),
+  noTeacher: z.enum(['true', 'false']).transform((v) => v === 'true').optional(), // true: amaldagi asosiy ustozi yo'q; false: bor
   includeArchived: z.enum(['true', 'false']).default('false').transform((v) => v === 'true'),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0),
