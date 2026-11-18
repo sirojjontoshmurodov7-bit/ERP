@@ -412,6 +412,67 @@ export const charges = pgTable(
   ],
 );
 
+// --- To'lov (ERD 2.3): append-only. Asl to'lov faqat CONFIRMED -> REVERSED bo'ladi (trigger); qaytarish manfiy summali alohida qator. ---
+export const payments = pgTable(
+  'payments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    branchId: uuid('branch_id').notNull(), // to'lov qabul qilingan filial
+    studentId: uuid('student_id').notNull(),
+    amount: bigint('amount', { mode: 'number' }).notNull(), // asl to'lov > 0, qaytarish yozuvi < 0
+    method: text('method').notNull(), // CASH | CARD | TRANSFER (CLICK | PAYME keyin)
+    status: text('status').notNull().default('CONFIRMED'), // CONFIRMED | REVERSED
+    reversesPaymentId: uuid('reverses_payment_id'),
+    receivedBy: uuid('received_by').references(() => users.id),
+    paidAt: ts('paid_at').notNull().defaultNow(),
+    receiptNo: bigint('receipt_no', { mode: 'number' }).notNull(), // markaz bo'yicha ketma-ket
+    externalTxnId: text('external_txn_id'),
+    note: text('note'), // qaytarish yozuvida sabab
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'payments_branch_center_fk', columns: [t.branchId, t.centerId], foreignColumns: [branches.id, branches.centerId] }),
+    foreignKey({ name: 'payments_student_center_fk', columns: [t.studentId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    foreignKey({ name: 'payments_reverses_center_fk', columns: [t.reversesPaymentId, t.centerId], foreignColumns: [t.id, t.centerId] }),
+    unique('payments_id_center_uq').on(t.id, t.centerId),
+    uniqueIndex('payments_receipt_uq').on(t.centerId, t.receiptNo),
+    uniqueIndex('payments_reverses_uq').on(t.reversesPaymentId).where(sql`${t.reversesPaymentId} is not null`), // bitta to'lov bir marta qaytariladi
+    index('payments_student_idx').on(t.studentId),
+    index('payments_center_paid_idx').on(t.centerId, t.paidAt),
+    index('payments_branch_idx').on(t.branchId),
+    check('payments_method_chk', sql`${t.method} in ('CASH','CARD','TRANSFER','CLICK','PAYME')`),
+    check('payments_status_chk', sql`${t.status} in ('CONFIRMED','REVERSED')`),
+    check('payments_amount_chk', sql`(${t.reversesPaymentId} is null and ${t.amount} > 0) or (${t.reversesPaymentId} is not null and ${t.amount} < 0)`),
+    check('payments_reversal_status_chk', sql`${t.reversesPaymentId} is null or ${t.status} = 'CONFIRMED'`),
+  ],
+);
+
+// To'lovni hisobga biriktirish: musbat = taqsimlash, manfiy = qaytarish (to'lov qaytarilganda yoki to'langan hisob bekor qilinganda). Faqat INSERT.
+export const paymentAllocations = pgTable(
+  'payment_allocations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    paymentId: uuid('payment_id').notNull(),
+    chargeId: uuid('charge_id').notNull(),
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'payment_allocations_payment_center_fk', columns: [t.paymentId, t.centerId], foreignColumns: [payments.id, payments.centerId] }),
+    foreignKey({ name: 'payment_allocations_charge_center_fk', columns: [t.chargeId, t.centerId], foreignColumns: [charges.id, charges.centerId] }),
+    index('payment_allocations_payment_idx').on(t.paymentId),
+    index('payment_allocations_charge_idx').on(t.chargeId),
+    index('payment_allocations_center_idx').on(t.centerId),
+    check('payment_allocations_amount_chk', sql`${t.amount} <> 0`),
+  ],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

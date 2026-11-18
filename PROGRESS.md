@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob) tayyor; keyingi 14: to'lovlar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar) tayyor; keyingi 15: qarzdorlar va chegirmalar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -18,9 +18,10 @@ Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 11. Darslar va davomat belgilash | tayyor | `apps/api/src/lessons/`, `drizzle/0008`, `test/attendance.e2e-spec.ts` |
 | 12. Davomat qulfi va ko'rish (`GET /attendance`) | tayyor | `apps/api/src/lessons/`, `test/attendance-lock.e2e-spec.ts` |
 | 13. Hisob-kitob (`charges`, `enrollment_freezes`) | tayyor | `apps/api/src/billing/`, `common/dates.ts`, `drizzle/0009`, `test/billing.e2e-spec.ts` |
-| **14. To'lovlar (`payments`)** | **keyingi** | hali yozilmagan |
+| 14. To'lovlar (`payments`, `payment_allocations`) | tayyor (commitsiz) | `apps/api/src/billing/{allocator,payments.*}`, `drizzle/0010`, `test/payments.e2e-spec.ts` |
+| **15. Qarzdorlar va chegirmalar** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`. Ish daraxti toza; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`. 14-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -33,7 +34,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~60 s, 317 test; unit 36 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~70 s, 347 test; unit 36 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -136,8 +137,17 @@ To'lov bosqichining 1-qadami (reja: 13 hisob-kitob, 14 to'lovlar, 15 qarzdorlar 
 - **13-qadamga kirmadi:** `GET /students/:id/balance` (to'lovlar bilan birga, 14-qadamda); to'lov taqsimoti va qarz (14-15).
 - Test: `test/billing.e2e-spec.ts` (23 ta) + `src/billing/billing-engine.spec.ts` (22 ta unit) + izolyatsiya testida 2 jadval va bazaviy qoidalar. Umumiy 317 e2e + 36 unit.
 
-### 14-qadam (keyingi): to'lovlar
-`payments`, `payment_allocations` (migratsiya 0010): `POST /payments` (`payment.create`, kassir o'z filialida, chek raqami markaz bo'yicha ketma-ket), eng eski ochiq charge'ga FIFO taqsimlash (`PARTIAL`/`PAID`), ortiqcha summa avans (keyingi charge'larga avtomatik), qaytarish `payment.reverse` (teskari yozuv, original faqat `CONFIRMED -> REVERSED`, trigger bilan), `GET /payments`, `GET /students/:id/balance`. To'langan charge'ni bekor qilish shu qadamda qayta ko'rib chiqiladi.
+### 14-qadam: to'lovlar (tayyor, commitsiz)
+Qoidalar manbasi: ERD 2.3 ("To'lov va taqsimot", "Qaytarish", "To'langan hisobni bekor qilish", "Chek raqami").
+- **Migratsiya `0010`:** `payments` (`branch_id`, `student_id`, `amount`, `method`, `status` CONFIRMED|REVERSED, `reverses_payment_id`, `received_by`, `paid_at`, `receipt_no`, `note`) va `payment_allocations` (`payment_id`, `charge_id`, `amount` != 0). RLS, kompozit FK, `TENANT_TABLES` da. Bazada: asl to'lov summasi > 0, qaytarish yozuvi < 0, qaytarish yozuvi doim CONFIRMED, bitta to'lov bir marta qaytariladi (qisman UNIQUE), chek raqami markazda unikal. Trigger `payments_guard`: UPDATE faqat `CONFIRMED -> REVERSED` (qolgan ustunlar o'zgarmasa). DELETE huquqi yo'q; `payment_allocations`: faqat SELECT/INSERT.
+- **Taqsimlash** `billing/allocator.ts` (`AllocatorService`): FIFO (`due_date`, `period_start`), avans = asl to'lovlarning taqsimlanmagan qoldig'i; invariant: avans va ochiq hisob birga bo'lmaydi. `BillingService.generate` yangi hisob yaratsa avtomatik avans taqsimlaydi; qo'lda hisob, qaytarish va hisob bekor qilishdan keyin ham. O'quvchi bo'yicha pul amallari `pg_advisory_xact_lock` bilan ketma-ket.
+- **Endpointlar** (`billing/payments.controller.ts`): `POST /payments` (`{studentId, amount, method: CASH|CARD|TRANSFER, branchId?, paidAt?, note?}`, `payment.create`), `GET /payments` (`studentId`, `branchId`, `method`, `status`, `from`, `to` (Asia/Tashkent sanasi), `limit`, `offset`; yangisi birinchi), `GET /payments/:id` (taqsimotlar bilan; `payment.view`), `POST /payments/:id/reverse` (`{reason}`, `payment.reverse`), `GET /students/:id/balance` (`charged, allocated, debt, advance, paymentsTotal, openCharges`; `payment.view`).
+- **Qoidalar/xatolar:** to'lov filiali: `branchId` berilmasa o'quvchining qamrovdagi yagona filiali, bir nechta bo'lsa 400 `BRANCH_REQUIRED`; qamrovdan tashqari filial 403; admin/kassir uchun o'quvchi o'z filiali qamrovida bo'lishi shart (aks holda 404 `STUDENT_NOT_FOUND`); kelajak sanasi 400 `DATE_IN_FUTURE`; qaytarish: takror 409 `ALREADY_REVERSED`, qaytarish yozuvi 409 `NOT_REVERSIBLE`. To'lovdan oldin o'quvchining hisoblari yangilanadi (`generate`).
+- **Qamrov:** rahbar hammasi; admin (○) / kassir to'lov filiali bo'yicha; o'quvchi faqat o'zinikini (to'lov va balans); ustoz kirmaydi (403). Qaytarish: rahbar ✔, kassir ○, admin yo'q.
+- **To'langan hisobni bekor qilish:** `POST /charges/:id/cancel` endi `PARTIAL/PAID` hisobni ham bekor qiladi (taqsimot manfiy yozuv bilan qaytadi, pul avansga o'tadi va boshqa ochiq hisobga ketadi); 409 `CHARGE_NOT_CANCELLABLE` olib tashlandi, takror 409 `ALREADY_CANCELLED` qoldi. Audit `charge.cancel` da `refunded`.
+- **Audit:** `payment.create` (`amount, method, receiptNo, allocated`), `payment.reverse` (`reason, reversalId, returnedToCharges`), `charge.cancel`.
+- **Ochiq:** `CLICK/PAYME` provayderlari (DB'da usul bor, API rad etadi); kassa smenasi/kunlik yopilish; chek PDF/chop etish; to'lov sanasini orqaga surish (`paidAt`) taqsimot tartibiga ta'sir qilmaydi (taqsimot `paid_at` bo'yicha emas, hisob `due_date` bo'yicha FIFO, havza `paid_at` bo'yicha).
+- Test: `test/payments.e2e-spec.ts` (19 ta: FIFO, avans, oldindan to'lov, parallel to'lov, qaytarish, hisob bekor qilish, qamrov/ruxsat, audit) + izolyatsiya testida 2 jadval va bazaviy qoidalar/append-only. Umumiy 347 e2e + 36 unit.
 
 ### 15-qadam: qarzdorlar va chegirmalar
 `GET /debtors` (`debtors.view`, `today > due_date + grace_days`, filial/guruh filtrlari, o'quvchi o'z qarzi, ustoz (○) faqat "qarz bor/yo'q"), `enrollment_discounts` endpointlari (`discount.grant`: PERCENT/AMOUNT/FREE, muddat).

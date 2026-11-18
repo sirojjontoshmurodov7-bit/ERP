@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, desc, eq, gte, inArray, lte, type SQL } from 'drizzle-orm';
+import { and, desc, eq, gte, inArray, lte, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
@@ -7,7 +7,8 @@ import { PermissionsService } from '../auth/permissions.service.js';
 import { type BranchScope, branchFilter, branchScope, inScope } from '../common/branch-scope.js';
 import { todayLocal } from '../common/dates.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
-import { branches, charges, enrollments, groups, users } from '../db/schema.js';
+import { branches, charges, enrollments, groups, paymentAllocations, users } from '../db/schema.js';
+import { AllocatorService } from './allocator.js';
 import { BillingService } from './billing.service.js';
 import type { CreateManualChargeInput, ListChargesQuery } from './charges.schemas.js';
 
@@ -36,6 +37,7 @@ export class ChargesService {
     private readonly db: DbService,
     private readonly perms: PermissionsService,
     private readonly billing: BillingService,
+    private readonly allocator: AllocatorService,
   ) {}
 
   private ctx(actor: AuthUser) {
@@ -118,27 +120,40 @@ export class ChargesService {
           createdBy: actor.id,
         })
         .returning();
+      await this.allocator.allocate(tx, actor.centerId!, e.studentId); // avans bo'lsa yangi hisobga o'tadi
       await writeAudit(tx, { centerId: actor.centerId, actorId: actor.id, action: 'charge.create_manual', entity: 'charge', entityId: c!.id, after: { ...audited(c!), note: input.note }, ip: client.ip });
-      return (await this.present(tx, [c!]))[0]!;
+      const [fresh] = await tx.select().from(charges).where(eq(charges.id, c!.id));
+      return (await this.present(tx, [fresh!]))[0]!;
     });
   }
 
   /**
-   * Bekor qilish (`charge.adjust`): faqat to'lanmagan (OPEN) hisob. Qator o'chirilmaydi va avtomatik hisob qayta yaratilmaydi.
-   * To'langan (PARTIAL/PAID) hisobni bekor qilish to'lov qaytarilgandan keyingina mumkin (to'lovlar bosqichida).
+   * Bekor qilish (`charge.adjust`): qator o'chirilmaydi va avtomatik hisob qayta yaratilmaydi.
+   * To'langan (PARTIAL/PAID) hisobda unga taqsimlangan pul manfiy taqsimot bilan qaytariladi va avans bo'ladi
+   * (so'ng o'quvchining boshqa ochiq hisoblariga avtomatik taqsimlanadi).
    */
   async cancel(actor: AuthUser, id: string, reason: string, client: ClientInfo) {
     return this.db.withContext(this.ctx(actor), async (tx) => {
       if (!(await this.perms.hasIn(tx, actor, 'charge.adjust'))) throw forbidden();
-      const [before] = await tx.select().from(charges).where(eq(charges.id, id));
-      if (!before) throw chargeNotFound();
-      if (before.status === 'CANCELLED') throw new ConflictException({ code: 'ALREADY_CANCELLED', message: 'Hisob allaqachon bekor qilingan' });
-      if (before.status !== 'OPEN') {
-        throw new ConflictException({ code: 'CHARGE_NOT_CANCELLABLE', message: "To'langan hisobni bekor qilib bo'lmaydi: avval to'lovni qaytaring" });
-      }
+      const [found] = await tx.select().from(charges).where(eq(charges.id, id));
+      if (!found) throw chargeNotFound();
+      await this.allocator.lockStudent(tx, found.studentId);
+      const [before] = await tx.select().from(charges).where(eq(charges.id, id)); // qulfdan keyingi holat
+      if (before!.status === 'CANCELLED') throw new ConflictException({ code: 'ALREADY_CANCELLED', message: 'Hisob allaqachon bekor qilingan' });
+
+      const net = await tx
+        .select({ paymentId: paymentAllocations.paymentId, amount: sql<string>`sum(${paymentAllocations.amount})` })
+        .from(paymentAllocations)
+        .where(eq(paymentAllocations.chargeId, id))
+        .groupBy(paymentAllocations.paymentId);
+      const back = net.filter((n) => Number(n.amount) > 0);
+      if (back.length) await tx.insert(paymentAllocations).values(back.map((n) => ({ centerId: actor.centerId!, paymentId: n.paymentId, chargeId: id, amount: -Number(n.amount) })));
+      const refunded = back.reduce((s, n) => s + Number(n.amount), 0);
+
       const now = new Date();
       const [after] = await tx.update(charges).set({ status: 'CANCELLED', cancelledAt: now, cancelReason: reason, updatedAt: now }).where(eq(charges.id, id)).returning();
-      await writeAudit(tx, { centerId: actor.centerId, actorId: actor.id, action: 'charge.cancel', entity: 'charge', entityId: id, before: audited(before), after: { ...audited(after!), reason }, ip: client.ip });
+      if (refunded > 0) await this.allocator.allocate(tx, actor.centerId!, before!.studentId);
+      await writeAudit(tx, { centerId: actor.centerId, actorId: actor.id, action: 'charge.cancel', entity: 'charge', entityId: id, before: audited(before!), after: { ...audited(after!), reason, refunded }, ip: client.ip });
       return (await this.present(tx, [after!]))[0]!;
     });
   }

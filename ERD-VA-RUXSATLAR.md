@@ -336,17 +336,19 @@ erDiagram
         bigint amount
         string method "CASH|CARD|TRANSFER|CLICK|PAYME"
         string status "CONFIRMED|REVERSED"
-        uuid reverses_payment_id FK
+        uuid reverses_payment_id FK "qaytarish yozuvida asl to'lov; summa manfiy"
         uuid received_by FK
         timestamptz paid_at
-        string receipt_no
+        bigint receipt_no "markaz bo'yicha ketma-ket, unikal"
         string external_txn_id
         string note
     }
     payment_allocations {
+        uuid id PK
+        uuid center_id FK
         uuid payment_id FK
         uuid charge_id FK
-        bigint amount
+        bigint amount "musbat = taqsimlash, manfiy = qaytarish"
     }
     expenses {
         uuid id PK
@@ -376,7 +378,10 @@ erDiagram
 - `groups.grace_days` guruh yaratilganda markaz sozlamasidan nusxalanadi (NULL emas): keyingi o'zgarishda faqat guruh qiymati o'zgaradi.
 - Chegirma `charges.discount_amount` ga **charge yaratilgan paytda** qotiriladi (keyingi chegirma o'zgarishi eski hisobni o'zgartirmaydi).
 - To'lov `payment_allocations` orqali eng eski ochiq charge'ga taqsimlanadi; ortiqcha summa avans bo'lib qoladi (taqsimlanmagan qoldiq).
-- Qaytarish: `payments` da `status=REVERSED` va teskari yozuv (`reverses_payment_id`), taqsimot bekor qilinadi.
+- **To'lov va taqsimot (implementatsiya, 14-qadam):** `payment_allocations` faqat INSERT. Hisobning to'langani = uning taqsimotlari yig'indisi; holat (`OPEN/PARTIAL/PAID`) shundan qayta hisoblanadi. Avans = asl (CONFIRMED, qaytarilmagan) to'lovlarning taqsimlanmagan qoldig'i. Invariant: o'quvchida avans va ochiq hisob bir vaqtda bo'lmaydi: to'lov, hisob yaratilishi, qo'lda hisob, qaytarish va hisob bekor qilishdan keyin avans eng eski ochiq hisobga (`due_date`, `period_start`) qayta taqsimlanadi. O'quvchi bo'yicha pul amallari `pg_advisory_xact_lock` bilan ketma-ketlashtiriladi.
+- **Qaytarish (implementatsiya):** asl to'lov `CONFIRMED -> REVERSED` (trigger faqat shu o'tishga ruxsat beradi, boshqa ustun o'zgarmaydi), `reverses_payment_id` bilan **manfiy summali** yangi yozuv (`status=CONFIRMED`, o'z chek raqami, `note` = sabab) qo'shiladi, asl to'lovdan hisoblarga taqsimlangan summa manfiy taqsimotlar bilan qaytariladi. Bitta to'lov bir marta qaytariladi (unikal indeks); qaytarish yozuvining o'zi qaytarilmaydi.
+- **To'langan hisobni bekor qilish (implementatsiya):** `charge.adjust` egasi `PARTIAL/PAID` hisobni ham bekor qila oladi: unga taqsimlangan pul manfiy taqsimot bilan qaytib avansga o'tadi va boshqa ochiq hisoblarga avtomatik taqsimlanadi.
+- **Chek raqami:** markaz bo'yicha `max + 1` (markaz kaliti bo'yicha advisory lock ichida), `(center_id, receipt_no)` unikal. Qaytarish yozuvi ham o'z raqamini oladi. Usullar hozircha `CASH|CARD|TRANSFER`; `CLICK|PAYME` (`external_txn_id`) provayder qo'shilganda ochiladi.
 
 ### 2.4. Maosh, bildirishnoma, import
 

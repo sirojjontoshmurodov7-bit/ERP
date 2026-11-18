@@ -28,6 +28,8 @@ const TENANT_TABLES = [
   'attendance_records',
   'charges',
   'enrollment_freezes',
+  'payments',
+  'payment_allocations',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -39,6 +41,8 @@ interface Fixture {
   course: string;
   group: string;
   enrollment: string;
+  charge: string;
+  payment: string;
   lesson: string;
   branch1: string;
   branch2: string;
@@ -117,6 +121,10 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
                    values (${f.center}, ${f.enrollment}, ${f.admin}, ${f.group}, '2026-05-05', '2026-06-04', '2026-05-05', 1000, 0, 1000, 'REGULAR')`;
       case 'enrollment_freezes':
         return sql`insert into enrollment_freezes (center_id, enrollment_id, from_date, to_date) values (${f.center}, ${f.enrollment}, '2026-02-01', '2026-02-10')`;
+      case 'payments':
+        return sql`insert into payments (center_id, branch_id, student_id, amount, method, receipt_no) values (${f.center}, ${f.branch1}, ${f.admin}, 5000, 'CASH', ${Math.floor(Math.random() * 1e9) + 1000})`;
+      case 'payment_allocations':
+        return sql`insert into payment_allocations (center_id, payment_id, charge_id, amount) values (${f.center}, ${f.payment}, ${f.charge}, 100)`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -154,10 +162,12 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.enrollmentDiscounts).values({ enrollmentId: enrollment!.id, centerId: c!.id, type: 'PERCENT', value: 10 });
     const [lesson] = await db.insert(s.lessons).values({ centerId: c!.id, groupId: group!.id, lessonDate: '2026-01-01', teacherId: admin!.id }).returning();
     await db.insert(s.attendanceRecords).values({ lessonId: lesson!.id, studentId: admin!.id, centerId: c!.id, status: 'ABSENT' });
-    await db.insert(s.charges).values({
+    const [charge] = await db.insert(s.charges).values({
       centerId: c!.id, enrollmentId: enrollment!.id, studentId: admin!.id, groupId: group!.id,
       periodStart: '2026-04-05', periodEnd: '2026-05-04', dueDate: '2026-04-05', baseAmount: 400000, discountAmount: 0, amount: 400000, kind: 'REGULAR',
-    });
+    }).returning();
+    const [payment] = await db.insert(s.payments).values({ centerId: c!.id, branchId: b1!.id, studentId: admin!.id, amount: 100000, method: 'CASH', receiptNo: 1 }).returning();
+    await db.insert(s.paymentAllocations).values({ centerId: c!.id, paymentId: payment!.id, chargeId: charge!.id, amount: 50000 });
     await db.insert(s.enrollmentFreezes).values({ centerId: c!.id, enrollmentId: enrollment!.id, fromDate: '2026-01-01', toDate: '2026-01-05' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
@@ -166,7 +176,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
     await db.insert(s.auditLogs).values({ centerId: c!.id, actorId: owner!.id, action: 'seed', entity: 'user' });
-    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
+    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, charge: charge!.id, payment: payment!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
   }
 
   beforeAll(async () => {
@@ -380,6 +390,36 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(bad).toMatch(/attendance_status_chk/);
       const twice = await failure(q(ctxA, sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${A.lesson}, ${A.admin}, ${A.center}, 'PRESENT')`));
       expect(twice).toMatch(/duplicate|attendance_records_pkey/);
+    });
+
+    it("payments va payment_allocations: kross-markaz havola, bazaviy qoidalar va append-only", async () => {
+      const pay = (cols: string, vals: unknown[]) => sql`insert into payments (center_id, branch_id, student_id, ${sql.raw(cols)}) values (${A.center}, ${A.branch1}, ${A.admin}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      // boshqa markaz filiali / o'quvchisi
+      expect(await failure(q(ctxA, sql`insert into payments (center_id, branch_id, student_id, amount, method, receipt_no) values (${A.center}, ${B.branch1}, ${A.admin}, 1, 'CASH', 777001)`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into payments (center_id, branch_id, student_id, amount, method, receipt_no) values (${A.center}, ${A.branch1}, ${B.admin}, 1, 'CASH', 777002)`))).toMatch(/foreign key/);
+      // boshqa markaz hisobi va to'lovi taqsimotda
+      expect(await failure(q(ctxA, sql`insert into payment_allocations (center_id, payment_id, charge_id, amount) values (${A.center}, ${A.payment}, ${B.charge}, 1)`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into payment_allocations (center_id, payment_id, charge_id, amount) values (${A.center}, ${B.payment}, ${A.charge}, 1)`))).toMatch(/foreign key/);
+      // qoidalar
+      expect(await failure(q(ctxA, pay('amount, method, receipt_no', [0, 'CASH', 777003])))).toMatch(/payments_amount_chk/);
+      expect(await failure(q(ctxA, pay('amount, method, receipt_no', [-5, 'CASH', 777004])))).toMatch(/payments_amount_chk/);
+      expect(await failure(q(ctxA, pay('amount, method, receipt_no', [5, 'BITCOIN', 777005])))).toMatch(/payments_method_chk/);
+      expect(await failure(q(ctxA, pay('amount, method, receipt_no, status', [5, 'CASH', 777006, 'WEIRD'])))).toMatch(/payments_status_chk/);
+      expect(await failure(q(ctxA, pay('amount, method, receipt_no', [5, 'CASH', 1])))).toMatch(/payments_receipt_uq|duplicate/);
+      expect(await failure(q(ctxA, sql`insert into payment_allocations (center_id, payment_id, charge_id, amount) values (${A.center}, ${A.payment}, ${A.charge}, 0)`))).toMatch(/payment_allocations_amount_chk/);
+      // qaytarish yozuvi: manfiy summa, bitta to'lovga bitta
+      const rev = (n: number, amount: number) => sql`insert into payments (center_id, branch_id, student_id, amount, method, receipt_no, reverses_payment_id) values (${A.center}, ${A.branch1}, ${A.admin}, ${amount}, 'CASH', ${n}, ${A.payment})`;
+      expect(await failure(q(ctxA, rev(777007, 100)))).toMatch(/payments_amount_chk/);
+      expect(await failure(q(ctxA, rev(777008, -100000)))).toBeNull();
+      expect(await failure(q(ctxA, rev(777009, -100000)))).toMatch(/payments_reverses_uq|duplicate/);
+      // append-only: summa o'zgarmaydi, o'chirib bo'lmaydi, faqat CONFIRMED -> REVERSED
+      expect(await failure(q(ctxA, sql`update payments set amount = 1 where id = ${A.payment}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`update payments set status = 'REVERSED', note = 'x' where id = ${A.payment}`))).toMatch(/append-only/);
+      expect(await failure(q(ctxA, sql`delete from payments where id = ${A.payment}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`update payment_allocations set amount = 1 where payment_id = ${A.payment}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from payment_allocations where payment_id = ${A.payment}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`update payments set status = 'REVERSED' where id = ${A.payment}`))).toBeNull();
+      expect(await failure(q(ctxA, sql`update payments set status = 'CONFIRMED' where id = ${A.payment}`))).toMatch(/append-only/);
     });
 
     it("charges va enrollment_freezes: boshqa markaz yozilishi, o'quvchisi va guruhiga bog'lab bo'lmaydi", async () => {

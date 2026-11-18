@@ -442,7 +442,7 @@ describe('Hisob-kitob (charges) (PGlite, RLS yoqilgan)', () => {
       await B.owner.post('/charges', { enrollmentId: e, amount: 1000, note: 'Hack' }).expect(404);
     });
 
-    it("bekor qilish: sabab bilan, qator saqlanadi va avtomatik hisob qayta yaratilmaydi; ikkinchi marta va to'langan 409", async () => {
+    it("bekor qilish: sabab bilan, qator saqlanadi va avtomatik hisob qayta yaratilmaydi; ikkinchi marta 409 (to'langan hisob: payments.e2e-spec)", async () => {
       const [auto] = await chargesOf(A.owner, `enrollmentId=${e}&kind=REGULAR`);
       await A.owner.post(`/charges/${auto!.id}/cancel`, {}).expect(400); // sabab majburiy
       const done = (await A.owner.post(`/charges/${auto!.id}/cancel`, { reason: 'Xato hisob' }).expect(200)).body;
@@ -455,8 +455,6 @@ describe('Hisob-kitob (charges) (PGlite, RLS yoqilgan)', () => {
       expect(again.find((c) => c.periodStart === auto!.periodStart)).toMatchObject({ id: auto!.id, status: 'CANCELLED' }); // qayta yaratilmadi
       expect(again.filter((c) => c.periodStart === auto!.periodStart)).toHaveLength(1);
 
-      await db.update(s.charges).set({ status: 'PAID' }).where(eq(s.charges.id, again[1]!.id)); // to'langan holatni taqlid
-      expect((await A.owner.post(`/charges/${again[1]!.id}/cancel`, { reason: "To'langan" }).expect(409)).body.code).toBe('CHARGE_NOT_CANCELLABLE');
       const actionsList = await actions(auto!.id);
       expect(actionsList).toContain('charge.cancel');
     });

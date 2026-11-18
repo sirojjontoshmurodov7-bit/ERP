@@ -3,6 +3,7 @@ import { and, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm';
 import { todayLocal } from '../common/dates.js';
 import type { Tx } from '../db/db.service.js';
 import { centers, charges, enrollmentDiscounts, enrollmentFreezes, enrollments, groups, groupSchedules } from '../db/schema.js';
+import { AllocatorService } from './allocator.js';
 import { type BillingMode, type ChargeDraft, type EngineDiscount, type JoinProration, planCharges } from './billing-engine.js';
 
 export interface GenerateOptions {
@@ -30,6 +31,8 @@ const chunks = <T>(xs: T[]): T[][] => {
  */
 @Injectable()
 export class BillingService {
+  constructor(private readonly allocator: AllocatorService) {}
+
   /** Yaratilgan charge'lar soni. */
   async generate(tx: Tx, centerId: string, opts: GenerateOptions = {}): Promise<number> {
     const asOf = opts.asOf ?? todayLocal();
@@ -114,10 +117,14 @@ export class BillingService {
     }
 
     let created = 0;
+    const students: string[] = [];
     for (const part of chunks(inserts)) {
-      const res = await tx.insert(charges).values(part).onConflictDoNothing().returning({ id: charges.id });
+      const res = await tx.insert(charges).values(part).onConflictDoNothing().returning({ id: charges.id, studentId: charges.studentId });
       created += res.length;
+      students.push(...res.map((r) => r.studentId));
     }
+    // Avans bo'lsa yangi hisobga avtomatik taqsimlanadi (ERD 6.6).
+    if (students.length) await this.allocator.allocateMany(tx, centerId, students);
     return created;
   }
 
