@@ -1,0 +1,6 @@
+apps/*/README.md
+apps/*/AGENTS.md
+apps/web/public/
+drizzle/meta/
+apps/api/drizzle/meta/
+pnpm-lock.yaml

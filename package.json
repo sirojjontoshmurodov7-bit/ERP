@@ -1,0 +1,20 @@
+{
+  "name": "erp",
+  "private": true,
+  "version": "0.0.0",
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter @erp/api start:dev",
+    "dev:web": "pnpm --filter @erp/web dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter @erp/api db:migrate",
+    "db:seed": "pnpm --filter @erp/api db:seed",
+    "db:create-super-admin": "pnpm --filter @erp/api db:create-super-admin"
+  }
+}
