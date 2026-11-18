@@ -28,7 +28,7 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 21. Telegram bot va bildirishnomalar (`/notifications`, `/telegram/webhook`) | tayyor | `apps/api/src/notifications/`, `drizzle/0015`, `test/notifications.e2e-spec.ts` |
 | 22. Kichik backend bo'shliqlari (`/center/settings`, `/admin/plans`, dars qulfi, filtrlar, `login_throttle`) | tayyor | `apps/api/src/{centers/center-settings.*,plans}/`, `auth/login-throttle.ts`, `drizzle/0016`, `test/settings-plans.e2e-spec.ts` |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 hali commitlanmagan. Commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`. Commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
