@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { BillingModule } from './billing/billing.module.js';
 import { FinanceModule } from './finance/finance.module.js';
 import { PayrollModule } from './payroll/payroll.module.js';
+import { ReportsModule } from './reports/reports.module.js';
 import { BranchesModule } from './branches/branches.module.js';
 import { CentersModule } from './centers/centers.module.js';
 import { ConfigModule } from './config/app-config.js';
@@ -19,7 +20,7 @@ import { GroupsModule } from './groups/groups.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
-  imports: [ConfigModule, DbModule, AuthModule, AuditModule, CentersModule, BranchesModule, UsersModule, StudentsModule, CoursesModule, GroupsModule, EnrollmentsModule, LessonsModule, BillingModule, PayrollModule, FinanceModule, PermissionsAdminModule],
+  imports: [ConfigModule, DbModule, AuthModule, AuditModule, CentersModule, BranchesModule, UsersModule, StudentsModule, CoursesModule, GroupsModule, EnrollmentsModule, LessonsModule, BillingModule, PayrollModule, FinanceModule, ReportsModule, PermissionsAdminModule],
   controllers: [AppController],
   providers: [AppService],
 })

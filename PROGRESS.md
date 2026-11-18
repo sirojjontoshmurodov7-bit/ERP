@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot) tayyor; keyingi: umumiy hisobotlar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar) tayyor; keyingi: Excel import). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -21,10 +21,11 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 14. To'lovlar (`payments`, `payment_allocations`) | tayyor | `apps/api/src/billing/{allocator,payments.*}`, `drizzle/0010`, `test/payments.e2e-spec.ts` |
 | 15. Chegirmalar va qarzdorlar (`/enrollments/:id/discounts`, `/debtors`) | tayyor | `apps/api/src/billing/{discounts,debtors}.*`, `test/discounts-debtors.e2e-spec.ts` |
 | 16. Maosh (`payroll_*`) | tayyor | `apps/api/src/payroll/`, `drizzle/0011`, `test/payroll.e2e-spec.ts` |
-| 17. Xarajat va moliyaviy hisobotlar | tayyor (commitsiz) | `apps/api/src/finance/`, `drizzle/0012`, `test/finance.e2e-spec.ts` |
-| **18. Umumiy hisobotlar (`report.overview`, `report.branch_compare`)** | **keyingi** | hali yozilmagan |
+| 17. Xarajat va moliyaviy hisobotlar | tayyor | `apps/api/src/finance/`, `drizzle/0012`, `test/finance.e2e-spec.ts` |
+| 18. Umumiy hisobotlar (`/reports/overview`, `/reports/branches`) | tayyor (commitsiz) | `apps/api/src/reports/`, `test/reports.e2e-spec.ts` |
+| **19. Excel import** | **keyingi** | hali yozilmagan (`import_jobs`, `import.run`) |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`. 17-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`. 18-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -37,7 +38,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~85 s, 421 test; unit 43 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~70 s, 431 test; unit 45 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -173,13 +174,22 @@ Qoidalar manbasi: ERD 2.4 ("Maosh (implementatsiya, 16-qadam)").
 - **Ochiq:** markaz/filial tushumidan foiz; guruhsiz xodimga PERCENT; maoshni Telegram orqali xabarlash; davr oxirida avtomatik hisoblash (cron yo'q, qo'lda); "boshqa oyga o'tkazish" tuzatishlari (tasdiqlangan davrni keyingi davrdagi bonus/jarima bilan tuzatish; avtomatik o'tkazish yo'q); `payroll.view_all` kassirga filial qamrovi qo'llanmaydi (ERD: ✔ bez 'f').
 - Test: `test/payroll.e2e-spec.ts` (14 ta: qoidalar, hisoblash va summalar, qayta hisoblash, bonus/jarima, tasdiq qulfi, to'lov va qoldiq, qaytarish, o'z maoshi, ruxsat) + `src/payroll/payroll-engine.spec.ts` (7 unit) + izolyatsiya testida 5 jadval va bazaviy qoidalar. Umumiy 403 e2e + 43 unit.
 
-### 17-qadam: xarajat va moliyaviy hisobotlar (tayyor, commitsiz)
+### 17-qadam: xarajat va moliyaviy hisobotlar (tayyor)
 Qoidalar manbasi: ERD 2.3 ("Xarajat" va "Moliyaviy hisobot (implementatsiya, 17-qadam)").
 - **Migratsiya `0012`:** `expenses` (`branch_id`, `category` 1-60 belgi, `amount` > 0, `note`, `spent_on`, `status` ACTIVE|VOIDED, `void_reason/by/at`, `created_by`). RLS, kompozit FK, `TENANT_TABLES` da. Trigger `expenses_guard`: UPDATE faqat `ACTIVE -> VOIDED` (boshqa ustunlar o'zgarmasa), `expenses_void_chk` VOIDED <=> sabab va vaqt bor. DELETE huquqi yo'q.
 - **Xarajat** (`finance/expenses.service.ts`): `POST /expenses` (`{branchId?, category, amount, note?, spentOn?}`; `expense.manage`: rahbar, kassir ○; `branchId` berilmasa qamrovdagi yagona faol filial, aks holda 400 `BRANCH_REQUIRED`; kelajak 400 `DATE_IN_FUTURE`; qamrovdan tashqari filial 403), `GET /expenses` (`branchId`, `category` registrsiz, `status`, `from`, `to`, sahifalash; yangi sana birinchi), `GET /expenses/:id`, `GET /expenses/categories` (registrsiz birlashgan, faqat ACTIVE), `POST /expenses/:id/void` (`{reason}`; takror 409 `ALREADY_VOIDED`). Ko'rish `expense.manage` yoki `finance.report` + filial qamrovi (tashqarisi 404). Audit: `expense.create`, `expense.void`.
 - **Hisobotlar** (`finance/finance-report.service.ts`, `finance.report`: rahbar ✔, kassir ✔, admin ○; filial qamrovi): `GET /reports/finance/summary` va `GET /reports/finance/daily`, parametrlar `from`, `to` (Asia/Tashkent; sukut shu oyning boshidan bugungacha; `from <= to`, <= 366 kun), `branchId`. Summary: `income {total, byMethod}`, `expenses {total, byCategory}`, `payouts` (faqat rahbar va filial filtrisiz, aks holda `null`), `net`, `byBranch`, `byGroup`, `unallocated` (faqat butun markaz). Daily: har kun (bo'sh kunlar ham) `income, expenses, net` va `totals` (maoshsiz). Tushum to'lov kunida sof (qaytarish o'z kunida manfiy), bekor qilingan xarajat hisobga olinmaydi.
-- **Ochiq:** `report.overview` / `report.branch_compare` (o'quvchi, davomat, qarz umumiy hisobotlari, filiallarni solishtirish) 18-qadamga; kassa smenasi va kun yopish (naqd topshirish) yo'q; maosh to'lovi filialga bog'lanmagan (filial kesimida ko'rinmaydi); xarajat kategoriyalari erkin matn (markaz ro'yxati keyin); Excel/PDF eksport yo'q.
+- **Ochiq:** kassa smenasi va kun yopish (naqd topshirish) yo'q; maosh to'lovi filialga bog'lanmagan (filial kesimida ko'rinmaydi); xarajat kategoriyalari erkin matn (markaz ro'yxati keyin); Excel/PDF eksport yo'q.
 - Test: `test/finance.e2e-spec.ts` (12 ta: tekshiruvlar, ruxsat, hisobot summalari qo'lda hisoblangan qiymatlar bilan, filial qamrovi, sana oralig'i, kassa kitobi, ro'yxat, bekor qilish, kategoriyalar) + izolyatsiya testida `expenses` va bazaviy qoidalar/append-only. Umumiy 421 e2e + 43 unit.
+
+### 18-qadam: umumiy hisobotlar (tayyor, commitsiz)
+Migratsiya yo'q (faqat o'qish). Qoidalar: ERD 2.4 ("Umumiy hisobotlar (implementatsiya, 18-qadam)").
+- **`GET /reports/overview`** (`report.overview`, faqat rahbar; `from`, `to`: Asia/Tashkent, sukut shu oyning boshidan bugungacha, <= 366 kun): `students {active, archived, new}`, `staff {admins, cashiers, teachers}`, `groups {active, planned, finished}` (arxivlanmagan), `enrollments {active, frozen, joined, left}` (`joined/left` oraliqda, qolgani joriy holat), `attendance {lessons, present, absent, late, excused, total, rate}`, `finance {income, expenses, payouts, net}` (kassa asosida, 17-qadam qoidalari), `debt {amount, debtors, overdueCharges}` (muddati o'tgan, joriy holat).
+- **`GET /reports/branches`** (`report.branch_compare`, faqat rahbar; `from`, `to`, `sort` = name|income|net|students|groups|debt|attendance, name o'sish, qolganlari kamayish): har filial uchun `students`, `groups`, `enrollments {active, joined, left}`, `attendance`, `income`, `expenses`, `net`, `debt`, `debtors`; `totals` (o'quvchi markazda bir marta sanaladi). Ko'rsatkichsiz arxivlangan filial chiqmaydi, faol bo'sh filial chiqadi.
+- **Atributsiya:** o'quvchi soni `user_branches` bo'yicha (ikki filialli o'quvchi ikkala filialda); guruh, yozilish, davomat, qarz — guruh filiali; tushum — to'lov filiali; xarajat — o'z filiali. Maosh to'lovi filialga bog'lanmagan: faqat `overview.finance.payouts` da.
+- **Ruxsat:** faqat OWNER (`@Roles('OWNER')` + servisda kod tekshiruvi); `report.*` kodlari – (sozlanmaydi), admin/kassir/ustoz/o'quvchi 403. Har so'rovdan oldin `generate` (qarz yangi bo'ladi).
+- **Ochiq:** o'quvchi/davomat/qarz kesimida kunlik trend (grafik uchun); reyting (`rating.view`) hisobotlari reyting bosqichida; Excel/PDF eksport; katta markazda agregatsiya indekslari/keshi.
+- Test: `test/reports.e2e-spec.ts` (10 ta: qo'lda hisoblangan qiymatlar, ikki filialli o'quvchi, arxivlangan o'quvchi/yozilish, muzlatilgan, qarz va qaytarish, oraliq, saralash, ruxsat) + `src/reports/reports.spec.ts` (2 unit). Umumiy 431 e2e + 45 unit.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).

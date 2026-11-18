@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795031818.7504466,
-    "seen": 1795031829.75298,
-    "ast_hash": "4f89e3ba1c9efaa319f567c360d2f0ee",
+    "mtime": 1795032656.070972,
+    "seen": 1795032668.737878,
+    "ast_hash": "b5b05004f29ca3c1b2b2e9bf4d7fcb5d",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,9 +48,9 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795031370.8554456,
-    "seen": 1795031829.7322502,
-    "ast_hash": "fcb3ab6cce2aa92e1f102461c7f57c04",
+    "mtime": 1795032366.109928,
+    "seen": 1795032668.7101505,
+    "ast_hash": "dda9059ed762349850754179a1e51d2a",
     "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
@@ -276,9 +276,9 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795031447.2633553,
-    "seen": 1795031829.7429988,
-    "ast_hash": "501d4c8c6917c6dcfd2234ddad90b18c",
+    "mtime": 1795032295.1575625,
+    "seen": 1795032668.7235243,
+    "ast_hash": "5e072e85ecc84d4a8c55aef88b78eab0",
     "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
@@ -306,9 +306,9 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795031479.25076,
-    "seen": 1795031829.749874,
-    "ast_hash": "89f33135b52de0d10be1600665589a9d",
+    "mtime": 1795032390.9054973,
+    "seen": 1795032668.7345402,
+    "ast_hash": "404134f31b33b522152469c01ab4a7d2",
     "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795031818.7528586,
-    "seen": 1795031829.7529824,
-    "ast_hash": "6f89f01e947a0c9f923cb28e61629c19",
+    "mtime": 1795032656.0729175,
+    "seen": 1795032668.7378812,
+    "ast_hash": "2886678c279b71c0e1dddc871cc87ada",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -879,6 +879,42 @@
     "mtime": 1795031762.1748278,
     "seen": 1795031829.7493842,
     "ast_hash": "ca3496a6c0133fea4c201caea771d8bc",
+    "semantic_hash": ""
+  },
+  "apps/api/src/finance/expenses.service.ts": {
+    "mtime": 1795032362.136025,
+    "seen": 1795032668.7250335,
+    "ast_hash": "6fa9db8b396c579312fa1befac49cba5",
+    "semantic_hash": ""
+  },
+  "apps/api/src/finance/finance-report.service.ts": {
+    "mtime": 1795032362.347567,
+    "seen": 1795032668.7250378,
+    "ast_hash": "aa56da520d351310bfdd63b4b7378eb5",
+    "semantic_hash": ""
+  },
+  "apps/api/src/finance/finance.controller.ts": {
+    "mtime": 1795032362.4758441,
+    "seen": 1795032668.7250414,
+    "ast_hash": "38aa0e09284856e83ce06b7dd8886988",
+    "semantic_hash": ""
+  },
+  "apps/api/src/finance/finance.module.ts": {
+    "mtime": 1795032362.5984547,
+    "seen": 1795032668.7250445,
+    "ast_hash": "1c9bc2f45de58755785a3b73ad56cf82",
+    "semantic_hash": ""
+  },
+  "apps/api/src/finance/finance.schemas.ts": {
+    "mtime": 1795032332.0174708,
+    "seen": 1795032668.725048,
+    "ast_hash": "70de4fe4118398e570f84eb4d594daf4",
+    "semantic_hash": ""
+  },
+  "apps/api/test/finance.e2e-spec.ts": {
+    "mtime": 1795032607.4258032,
+    "seen": 1795032668.7333555,
+    "ast_hash": "c8fe8c40014a774aa58d1c3be7fe25f3",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

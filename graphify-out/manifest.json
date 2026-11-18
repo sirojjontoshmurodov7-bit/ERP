@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795032656.070972,
-    "seen": 1795032668.737878,
-    "ast_hash": "b5b05004f29ca3c1b2b2e9bf4d7fcb5d",
+    "mtime": 1795033023.4564137,
+    "seen": 1795033030.2187355,
+    "ast_hash": "2cd46a2960e33ccd630ad6e9cc9f03c1",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,9 +48,9 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795032366.109928,
-    "seen": 1795032668.7101505,
-    "ast_hash": "dda9059ed762349850754179a1e51d2a",
+    "mtime": 1795032830.4070375,
+    "seen": 1795033030.1967835,
+    "ast_hash": "bd76b710d58b60b80342adc399eceb8c",
     "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795032656.0729175,
-    "seen": 1795032668.7378812,
-    "ast_hash": "2886678c279b71c0e1dddc871cc87ada",
+    "mtime": 1795033023.4592865,
+    "seen": 1795033030.2187376,
+    "ast_hash": "f41681cfd2acf9b62330b21bbe46fd80",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -915,6 +915,42 @@
     "mtime": 1795032607.4258032,
     "seen": 1795032668.7333555,
     "ast_hash": "c8fe8c40014a774aa58d1c3be7fe25f3",
+    "semantic_hash": ""
+  },
+  "apps/api/src/reports/reports.controller.ts": {
+    "mtime": 1795032830.3040535,
+    "seen": 1795033030.2120783,
+    "ast_hash": "381e2b53bebad4706c4d3a44c719833a",
+    "semantic_hash": ""
+  },
+  "apps/api/src/reports/reports.module.ts": {
+    "mtime": 1795032830.3372426,
+    "seen": 1795033030.2120805,
+    "ast_hash": "f89b238b9fc6f48f2a9fb77d85c908cd",
+    "semantic_hash": ""
+  },
+  "apps/api/src/reports/reports.schemas.ts": {
+    "mtime": 1795032822.2730525,
+    "seen": 1795033030.2120821,
+    "ast_hash": "983a028bdd41a3dda9b607bebe8322ae",
+    "semantic_hash": ""
+  },
+  "apps/api/src/reports/reports.service.ts": {
+    "mtime": 1795032830.2606685,
+    "seen": 1795033030.2120838,
+    "ast_hash": "fa11316d4323e2a1c76aa49aaea9f9ed",
+    "semantic_hash": ""
+  },
+  "apps/api/src/reports/reports.spec.ts": {
+    "mtime": 1795032902.0401707,
+    "seen": 1795033030.2120855,
+    "ast_hash": "cef44ec3ecd1ed60684bcbbf75208481",
+    "semantic_hash": ""
+  },
+  "apps/api/test/reports.e2e-spec.ts": {
+    "mtime": 1795032902.1534135,
+    "seen": 1795033030.2156935,
+    "ast_hash": "c5738cecb261a836a04f6602947d867f",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {
