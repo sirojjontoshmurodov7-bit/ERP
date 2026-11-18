@@ -43,6 +43,13 @@
       "when": 1795025146485,
       "tag": "0005_student_profiles",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795025468504,
+      "tag": "0006_courses_groups",
+      "breakpoints": true
     }
   ]
 }

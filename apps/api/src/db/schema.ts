@@ -16,6 +16,7 @@ import {
   pgTable,
   primaryKey,
   text,
+  time,
   timestamp,
   uniqueIndex,
   uuid,
@@ -166,6 +167,113 @@ export const studentProfiles = pgTable(
   (t) => [
     foreignKey({ name: 'student_profiles_user_center_fk', columns: [t.userId, t.centerId], foreignColumns: [users.id, users.centerId] }),
     index('student_profiles_center_idx').on(t.centerId),
+  ],
+);
+
+// --- O'quv jarayoni (ERD 2.2): kurs, guruh, jadval, ustoz ---
+export const courses = pgTable(
+  'courses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    name: text('name').notNull(),
+    defaultPrice: bigint('default_price', { mode: 'number' }),
+    archivedAt: ts('archived_at'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('courses_center_name_uq').on(t.centerId, sql`lower(${t.name})`),
+    unique('courses_id_center_uq').on(t.id, t.centerId),
+    check('courses_price_chk', sql`${t.defaultPrice} is null or ${t.defaultPrice} >= 0`),
+  ],
+);
+
+export const groups = pgTable(
+  'groups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    branchId: uuid('branch_id').notNull(),
+    courseId: uuid('course_id').notNull(),
+    name: text('name').notNull(),
+    priceMonthly: bigint('price_monthly', { mode: 'number' }).notNull(),
+    billingMode: text('billing_mode').notNull(), // GROUP_CYCLE | STUDENT_CYCLE
+    billingDay: integer('billing_day'), // faqat GROUP_CYCLE, 1-28
+    graceDays: integer('grace_days').notNull().default(0),
+    startDate: date('start_date', { mode: 'string' }),
+    endDate: date('end_date', { mode: 'string' }),
+    status: text('status').notNull().default('PLANNED'), // PLANNED | ACTIVE | FINISHED
+    archivedAt: ts('archived_at'),
+    createdAt: createdAt(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ name: 'groups_branch_center_fk', columns: [t.branchId, t.centerId], foreignColumns: [branches.id, branches.centerId] }),
+    foreignKey({ name: 'groups_course_center_fk', columns: [t.courseId, t.centerId], foreignColumns: [courses.id, courses.centerId] }),
+    unique('groups_id_center_uq').on(t.id, t.centerId),
+    uniqueIndex('groups_branch_name_uq').on(t.branchId, sql`lower(${t.name})`),
+    index('groups_center_branch_idx').on(t.centerId, t.branchId),
+    index('groups_course_idx').on(t.courseId),
+    check('groups_price_chk', sql`${t.priceMonthly} >= 0`),
+    check('groups_billing_mode_chk', sql`${t.billingMode} in ('GROUP_CYCLE','STUDENT_CYCLE')`),
+    check(
+      'groups_billing_day_chk',
+      sql`(${t.billingMode} = 'GROUP_CYCLE' and ${t.billingDay} is not null and ${t.billingDay} between 1 and 28) or (${t.billingMode} = 'STUDENT_CYCLE' and ${t.billingDay} is null)`,
+    ),
+    check('groups_grace_chk', sql`${t.graceDays} between 0 and 60`),
+    check('groups_status_chk', sql`${t.status} in ('PLANNED','ACTIVE','FINISHED')`),
+    check('groups_dates_chk', sql`${t.endDate} is null or ${t.startDate} is null or ${t.endDate} >= ${t.startDate}`),
+  ],
+);
+
+export const groupSchedules = pgTable(
+  'group_schedules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    groupId: uuid('group_id').notNull(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    weekday: integer('weekday').notNull(), // 1 = dushanba ... 7 = yakshanba
+    startTime: time('start_time').notNull(),
+    endTime: time('end_time').notNull(),
+    room: text('room'),
+  },
+  (t) => [
+    foreignKey({ name: 'group_schedules_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    uniqueIndex('group_schedules_slot_uq').on(t.groupId, t.weekday, t.startTime),
+    index('group_schedules_center_idx').on(t.centerId),
+    check('group_schedules_weekday_chk', sql`${t.weekday} between 1 and 7`),
+    check('group_schedules_time_chk', sql`${t.endTime} > ${t.startTime}`),
+  ],
+);
+
+export const groupTeachers = pgTable(
+  'group_teachers',
+  {
+    groupId: uuid('group_id').notNull(),
+    teacherId: uuid('teacher_id').notNull(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    kind: text('kind').notNull(), // MAIN | ASSISTANT
+    fromDate: date('from_date', { mode: 'string' }).notNull().default(sql`current_date`),
+    toDate: date('to_date', { mode: 'string' }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.groupId, t.teacherId, t.fromDate] }),
+    foreignKey({ name: 'group_teachers_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    foreignKey({ name: 'group_teachers_teacher_center_fk', columns: [t.teacherId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    // Guruhda bir vaqtda bitta asosiy ustoz
+    uniqueIndex('group_teachers_one_main_uq').on(t.groupId).where(sql`${t.kind} = 'MAIN' and ${t.toDate} is null`),
+    index('group_teachers_teacher_idx').on(t.teacherId),
+    index('group_teachers_center_idx').on(t.centerId),
+    check('group_teachers_kind_chk', sql`${t.kind} in ('MAIN','ASSISTANT')`),
+    check('group_teachers_dates_chk', sql`${t.toDate} is null or ${t.toDate} >= ${t.fromDate}`),
   ],
 );
 

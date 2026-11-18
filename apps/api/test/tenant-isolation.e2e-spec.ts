@@ -18,6 +18,10 @@ const TENANT_TABLES = [
   'sessions',
   'teacher_profiles',
   'student_profiles',
+  'courses',
+  'groups',
+  'group_schedules',
+  'group_teachers',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -25,6 +29,9 @@ type TenantTable = (typeof TENANT_TABLES)[number];
 interface Fixture {
   center: string;
   admin: string;
+  owner: string;
+  course: string;
+  group: string;
   branch1: string;
   branch2: string;
 }
@@ -80,6 +87,15 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       case 'student_profiles':
         return sql`with u as (insert into users (center_id, role, login, password_hash, full_name) values (${f.center}, 'STUDENT', ${'sp-' + n}, 'h', 'x') returning id)
                    insert into student_profiles (user_id, center_id) select id, ${f.center}::uuid from u`;
+      case 'courses':
+        return sql`insert into courses (center_id, name) values (${f.center}, ${'course-' + n})`;
+      case 'groups':
+        return sql`insert into groups (center_id, branch_id, course_id, name, price_monthly, billing_mode, billing_day)
+                   values (${f.center}, ${f.branch1}, ${f.course}, ${'group-' + n}, 100000, 'GROUP_CYCLE', 5)`;
+      case 'group_schedules':
+        return sql`insert into group_schedules (group_id, center_id, weekday, start_time, end_time) values (${f.group}, ${f.center}, 2, '10:00', '11:00')`;
+      case 'group_teachers':
+        return sql`insert into group_teachers (group_id, teacher_id, center_id, kind) values (${f.group}, ${f.owner}, ${f.center}, 'ASSISTANT')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -106,6 +122,13 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.userPermissions).values({ userId: admin!.id, centerId: c!.id, permissionCode: 'payment.create', allowed: true });
     await db.insert(s.teacherProfiles).values({ userId: admin!.id, centerId: c!.id });
     await db.insert(s.studentProfiles).values({ userId: admin!.id, centerId: c!.id });
+    const [course] = await db.insert(s.courses).values({ centerId: c!.id, name: 'Ingliz tili', defaultPrice: 300000 }).returning();
+    const [group] = await db
+      .insert(s.groups)
+      .values({ centerId: c!.id, branchId: b1!.id, courseId: course!.id, name: 'IELTS 1', priceMonthly: 300000, billingMode: 'GROUP_CYCLE', billingDay: 1 })
+      .returning();
+    await db.insert(s.groupSchedules).values({ groupId: group!.id, centerId: c!.id, weekday: 1, startTime: '09:00', endTime: '10:30' });
+    await db.insert(s.groupTeachers).values({ groupId: group!.id, teacherId: admin!.id, centerId: c!.id, kind: 'MAIN' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -113,7 +136,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
     await db.insert(s.auditLogs).values({ centerId: c!.id, actorId: owner!.id, action: 'seed', entity: 'user' });
-    return { center: c!.id, admin: admin!.id, branch1: b1!.id, branch2: b2!.id };
+    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, branch1: b1!.id, branch2: b2!.id };
   }
 
   beforeAll(async () => {
@@ -249,6 +272,37 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         q(ctxA, sql`insert into sessions (user_id, center_id, refresh_hash, expires_at) values (${B.admin}, ${A.center}, 'x-cross', now() + interval '1 hour')`),
       );
       expect(se).toMatch(/foreign key/);
+    });
+
+    it("groups: A guruhini B filiali yoki B kursiga bog'lab bo'lmaydi", async () => {
+      const mk = (branch: string, course: string, n: string) =>
+        sql`insert into groups (center_id, branch_id, course_id, name, price_monthly, billing_mode, billing_day)
+            values (${A.center}, ${branch}, ${course}, ${n}, 1, 'GROUP_CYCLE', 1)`;
+      expect(await failure(q(ctxA, mk(B.branch1, A.course, 'x-branch')))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, mk(A.branch1, B.course, 'x-course')))).toMatch(/foreign key/);
+    });
+
+    it("group_schedules va group_teachers: boshqa markaz guruhi yoki ustoziga bog'lab bo'lmaydi", async () => {
+      const sch = await failure(
+        q(ctxA, sql`insert into group_schedules (group_id, center_id, weekday, start_time, end_time) values (${B.group}, ${A.center}, 3, '10:00', '11:00')`),
+      );
+      expect(sch).toMatch(/foreign key/);
+      const t1 = await failure(q(ctxA, sql`insert into group_teachers (group_id, teacher_id, center_id, kind) values (${B.group}, ${A.admin}, ${A.center}, 'ASSISTANT')`));
+      expect(t1).toMatch(/foreign key/);
+      const t2 = await failure(q(ctxA, sql`insert into group_teachers (group_id, teacher_id, center_id, kind) values (${A.group}, ${B.admin}, ${A.center}, 'ASSISTANT')`));
+      expect(t2).toMatch(/foreign key/);
+    });
+
+    it("guruh qoidalari bazada: bitta asosiy ustoz, billing_day faqat GROUP_CYCLE'da 1-28", async () => {
+      const second = await failure(q(ctxA, sql`insert into group_teachers (group_id, teacher_id, center_id, kind) values (${A.group}, ${A.owner}, ${A.center}, 'MAIN')`));
+      expect(second).toMatch(/group_teachers_one_main_uq|duplicate/);
+      const bad = (mode: string, day: string) =>
+        sql`insert into groups (center_id, branch_id, course_id, name, price_monthly, billing_mode, billing_day)
+            values (${A.center}, ${A.branch1}, ${A.course}, ${'bad-' + mode + day}, 1, ${mode}, ${day === 'null' ? null : Number(day)})`;
+      expect(await failure(q(ctxA, bad('GROUP_CYCLE', '29')))).toMatch(/groups_billing_day_chk/);
+      expect(await failure(q(ctxA, bad('GROUP_CYCLE', 'null')))).toMatch(/groups_billing_day_chk/);
+      expect(await failure(q(ctxA, bad('STUDENT_CYCLE', '5')))).toMatch(/groups_billing_day_chk/);
+      expect(await failure(q(ctxA, bad('STUDENT_CYCLE', 'null')))).toBeNull();
     });
 
     it("superuser ulanishi bilan ham kross-markaz bog'lash rad etiladi (baza darajasida)", async () => {

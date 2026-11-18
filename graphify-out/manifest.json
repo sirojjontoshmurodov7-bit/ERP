@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795025316.387153,
-    "seen": 1795025324.9057608,
-    "ast_hash": "433c75b485867e62567ee4d72631be3b",
+    "mtime": 1795025829.307151,
+    "seen": 1795025839.1288188,
+    "ast_hash": "281c4feb65ee9a7881c97d82eaeba177",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,9 +48,9 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795025212.2704391,
-    "seen": 1795025324.8901043,
-    "ast_hash": "42f03255bc3527b1eb08c9b94d1e7671",
+    "mtime": 1795025666.8948812,
+    "seen": 1795025839.105702,
+    "ast_hash": "bc433557aff3a71097a13b6eec81d05c",
     "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
@@ -276,9 +276,9 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795025144.390958,
-    "seen": 1795025324.8958945,
-    "ast_hash": "76137b04c46a762266572dafa80cdc23",
+    "mtime": 1795025534.7107725,
+    "seen": 1795025839.1173918,
+    "ast_hash": "656f307421839aed2a85eea719f4f083",
     "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
@@ -306,9 +306,9 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795025152.6474514,
-    "seen": 1795025324.8982666,
-    "ast_hash": "4df295416b2d73831999b6319a8966fa",
+    "mtime": 1795025495.9291496,
+    "seen": 1795025839.1236362,
+    "ast_hash": "0b51d1a16ea2e59d2949dd6556c17a91",
     "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795025316.2786543,
-    "seen": 1795025324.90577,
-    "ast_hash": "e643f216e0f6e1f18d2eb52c672c4577",
+    "mtime": 1795025829.2114668,
+    "seen": 1795025839.1288226,
+    "ast_hash": "75f10a90d566f7c1f03f6631588b5a21",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -549,6 +549,60 @@
     "mtime": 1795025265.7352295,
     "seen": 1795025324.8982637,
     "ast_hash": "6017e5cc77ce464e2975538bbb2e72eb",
+    "semantic_hash": ""
+  },
+  "apps/api/src/courses/courses.controller.ts": {
+    "mtime": 1795025592.4911005,
+    "seen": 1795025839.1158748,
+    "ast_hash": "0cf710461b7d552e188367a7ab282ee8",
+    "semantic_hash": ""
+  },
+  "apps/api/src/courses/courses.module.ts": {
+    "mtime": 1795025592.633242,
+    "seen": 1795025839.1158776,
+    "ast_hash": "9fbb08756545f8af4ad4cd54d81ed7a0",
+    "semantic_hash": ""
+  },
+  "apps/api/src/courses/courses.schemas.ts": {
+    "mtime": 1795025592.1865692,
+    "seen": 1795025839.1158798,
+    "ast_hash": "8128da9f2b92b59bfa73fc497c295914",
+    "semantic_hash": ""
+  },
+  "apps/api/src/courses/courses.service.ts": {
+    "mtime": 1795025592.3526704,
+    "seen": 1795025839.1158817,
+    "ast_hash": "15ad99d3c11ef6c65e6374f0d5cb5734",
+    "semantic_hash": ""
+  },
+  "apps/api/src/groups/groups.controller.ts": {
+    "mtime": 1795025666.378361,
+    "seen": 1795025839.1176932,
+    "ast_hash": "054349a849c6652012493977915d63a0",
+    "semantic_hash": ""
+  },
+  "apps/api/src/groups/groups.module.ts": {
+    "mtime": 1795025666.4878805,
+    "seen": 1795025839.1176977,
+    "ast_hash": "3436e17b235ec2fa7e8f8e81fcac0ead",
+    "semantic_hash": ""
+  },
+  "apps/api/src/groups/groups.schemas.ts": {
+    "mtime": 1795025603.438352,
+    "seen": 1795025839.1177013,
+    "ast_hash": "4d674a6ff0b519eb6e2ebe56921a685e",
+    "semantic_hash": ""
+  },
+  "apps/api/src/groups/groups.service.ts": {
+    "mtime": 1795025666.2407773,
+    "seen": 1795025839.1177049,
+    "ast_hash": "8b3b7ec23cca75d94b44b6af0339779a",
+    "semantic_hash": ""
+  },
+  "apps/api/test/groups.e2e-spec.ts": {
+    "mtime": 1795025765.146775,
+    "seen": 1795025839.1224403,
+    "ast_hash": "545b0d8b67ff26cc95341fdce7331d63",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-18 (skelet 1-7 va 8-qadam o'quvchilar tayyor; keyingi 9: kurs va guruhlar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar) tayyor; keyingi 10: yozilish). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -13,9 +13,10 @@ Oxirgi yangilanish: 2026-11-18 (skelet 1-7 va 8-qadam o'quvchilar tayyor; keying
 | 6. Rahbar: filial va xodim yaratish, ruxsatlarni sozlash | tayyor | `apps/api/src/{branches,users,permissions-admin}/`, `common/branch-scope.ts`, `drizzle/0004`, `test/staff.e2e-spec.ts` |
 | 7. Audit jurnali va ruxsat matritsasi avtomatik testi | tayyor | `apps/api/src/audit/`, `test/permission-matrix.e2e-spec.ts` |
 | 8. O'quvchilar (`student_profiles`, `/students`) | tayyor | `apps/api/src/students/`, `drizzle/0005`, `test/students.e2e-spec.ts` |
-| **9. Kurslar va guruhlar** | **keyingi** | hali yozilmagan |
+| 9. Kurslar va guruhlar | tayyor | `apps/api/src/{courses,groups}/`, `drizzle/0006`, `test/groups.e2e-spec.ts` |
+| **10. Yozilish (`enrollments`)** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`. 8-qadam (o'quvchilar) o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8-qadam `b332eda`. 9-qadam o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -28,7 +29,7 @@ Commitlar: skelet 1-7 `6e73b51`. 8-qadam (o'quvchilar) o'zgarishlari **commit qi
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~20 s, 164 test
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~30 s, 208 test
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -79,6 +80,17 @@ Reja (tasdiqlangan): 8 o'quvchilar, 9 kurs va guruhlar (`courses`, `groups`, `gr
 - Admin o'quvchi parolini tiklashi endi ishlaydi (6-qadam cheklovi yopildi).
 - Umumiy yordamchi: `common/login.ts` (`generateLogin`, `isLoginConflict`), xodim va o'quvchi shuni ishlatadi.
 - Test: `test/students.e2e-spec.ts` (20 ta); umumiy 164 e2e + 14 unit. Audit: `student.create|edit|archive|unarchive`.
+
+### 9-qadam: kurslar va guruhlar (tayyor)
+- Migratsiya `0006`: `courses`, `groups`, `group_schedules`, `group_teachers` (RLS, kompozit FK `(branch_id|course_id|group_id|teacher_id, center_id)`, `TENANT_TABLES` da). Bazada qoidalar: `billing_day` faqat GROUP_CYCLE'da 1-28 (CHECK; NULL tuzog'i `is not null` bilan yopilgan), guruh nomi filial ichida noyob (registrsiz), kurs nomi markazda noyob, bitta vaqtda bitta MAIN ustoz (qisman UNIQUE). `courses`/`groups`/`group_teachers` dan DELETE huquqi yo'q (arxiv, tarix saqlanadi); `group_schedules` dan bor (jadval almashtiriladi).
+- `/courses` (OWNER, ADMIN, CASHIER, TEACHER; ruxsat servisda): `POST` (`group.create`), `GET`, `GET :id` (`group.view`), `PATCH`, `POST :id/archive|unarchive` (`group.edit`). Kurs markaz darajasida (filialsiz), admin ham boshqaradi. Arxivlash: kursda arxivlanmagan guruh bo'lsa 409 `COURSE_IN_USE`.
+- `/groups`: `POST` (`group.create`; admin faqat o'z filialida), `GET` (`q`, `branchId`, `courseId`, `teacherId`, `status`, `includeArchived`, `limit`, `offset`), `GET :id`, `PATCH :id` (`group.edit`; filial o'zgarmaydi), `POST :id/archive|unarchive`, `PUT :id/schedule` (jadvalni to'liq almashtiradi; bir kunda darslar kesishmaydi), `POST :id/teachers` (`{teacherId, kind: MAIN|ASSISTANT, fromDate?}`), `POST :id/teachers/:teacherId/end` (`{toDate?}`).
+- **Moliyaviy maydonlar** (`priceMonthly`, `billingMode`, `billingDay`, `graceDays`) berilsa `group.billing_settings` kerak (admin uchun ○). Berilmasa: narx kursning `default_price`'idan (u ham yo'q bo'lsa 400 `PRICE_REQUIRED`; 0 = bepul ruxsat), rejim va grace markaz `settings`'idan, to'lov kuni boshlanish sanasining kuni (28 dan oshmasin) yoki 1. Rejim almashganda `billingDay` avtomatik tozalanadi/talab qilinadi.
+- **Ustoz** guruhga: TEACHER roli, ACTIVE va guruh filialiga biriktirilgan bo'lishi shart (`TEACHER_NOT_IN_BRANCH`); asosiy ustoz bor bo'lsa avval uni tugatish kerak (`MAIN_TEACHER_EXISTS`). "Amaldagi" = `to_date` yo'q yoki bugundan oldin emas.
+- **Qamrov:** rahbar hammasi, admin/kassir `user_branches` bo'yicha, **ustoz faqat amaldagi biriktirilgan guruhlari** (tashqarisi 404). **Ustozga narx va sikl maydonlari ko'rsatilmaydi** (kurs `defaultPrice` ham). O'quvchi (`group.view` scope `o`) yozilish modulidan keyin; hozir 403.
+- **Ochiq:** guruhni arxivlashda faol yozilishlar tekshiruvi (10-qadamda); guruh narxi/rejimi o'zgarganda mavjud `charges` ga ta'siri (to'lov bosqichida hal qilinadi); ustoz jadvali to'qnashuvi tekshirilmaydi.
+- Audit: `course.create|edit|archive|unarchive`, `group.create|edit|archive|unarchive|schedule_update|teacher_assign|teacher_end`.
+- Test: `test/groups.e2e-spec.ts` (22 ta) + izolyatsiya testida 4 yangi jadval va kross-markaz/qoida testlari; umumiy 208 e2e + 14 unit.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).
