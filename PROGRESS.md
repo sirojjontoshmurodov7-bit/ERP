@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting) tayyor; keyingi: Telegram bot). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar) tayyor; keyingi: kichik backend bo'shliqlari). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -25,9 +25,9 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 18. Umumiy hisobotlar (`/reports/overview`, `/reports/branches`) | tayyor | `apps/api/src/reports/`, `test/reports.e2e-spec.ts` |
 | 19. Excel/CSV import (o'quvchilar) (`/imports`) | tayyor | `apps/api/src/imports/`, `common/spreadsheet.ts`, `drizzle/0013`, `test/imports.e2e-spec.ts` |
 | 20. Vazifa va reyting (`/assignments`, `/ratings`) | tayyor | `apps/api/src/academic/`, `drizzle/0014`, `test/academic.e2e-spec.ts` |
-| **21. Telegram bot va bildirishnomalar** | **keyingi** | hali yozilmagan (`notification_log`, `telegram.settings`, `notification.send`) |
+| 21. Telegram bot va bildirishnomalar (`/notifications`, `/telegram/webhook`) | tayyor | `apps/api/src/notifications/`, `drizzle/0015`, `test/notifications.e2e-spec.ts` |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`. Ish daraxti toza; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 hali commitlanmagan. Commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -40,7 +40,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~80 s, 482 test; unit 62 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~80 s, 517 test; unit 65 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -212,13 +212,22 @@ Qoidalar manbasi: ERD 2.2 va 3.3 ("Vazifa va reyting (implementatsiya, 20-qadam)
 - **Ochiq:** fayl yuklash (hozir faqat havola; `assets`/blob saqlash keyin); vazifa eslatmalari (Telegram bot bosqichida); muddatdan keyin topshirishni taqiqlash sozlamasi; markaz sozlamasi "boshqa filial ismlarini yashirish"; reytingga mukofot/yutuqlar (badge); davomat ballini markaz sozlamasidan o'zgartirish; katta markazda reyting agregatsiyasi uchun indeks/kesh.
 - Test: `test/academic.e2e-spec.ts` (16 ta: vazifa yaratish/ko'rish qamrovi, topshirish, baholash va ball farqi, qo'lda ball, davomat balli, guruh/filial/markaz reytingi, teng o'rinlar, davr, ruxsat, o'quvchi voqealari, arxiv) + `src/academic/homework-points.spec.ts` (1) + izolyatsiya testida 3 jadval va bazaviy qoidalar. Umumiy 482 e2e + 62 unit.
 
+### 21-qadam: Telegram bot va bildirishnomalar (tayyor)
+Qoidalar manbasi: ERD 2.4 ("Telegram va bildirishnomalar (implementatsiya, 21-qadam)").
+- **Migratsiya `0015`:** `notification_log` (append-only; `type` DEBT|LESSON|HOMEWORK|PAYROLL|MANUAL, `status` SENT|FAILED, `dedupe_key`: SENT uchun (user, kalit) noyob; xabar matni saqlanmaydi), `telegram_link_codes` (HMAC xesh, 15 daqiqa), RLS, kompozit FK, `TENANT_TABLES` da. SECURITY DEFINER: `app_telegram_redeem(hash, chat)`, `app_telegram_unlink(chat)` (webhook'da tenant noma'lum).
+- **Bot:** kutubxonasiz (`fetch` bilan Bot API; grammY o'rniga: bizga faqat `sendMessage` va webhook kerak, ta'minot zanjiri xavfi kamroq). `TelegramSender` abstrakt klass (testda soxta). `POST /telegram/webhook` (`x-telegram-bot-api-secret-token`; `TELEGRAM_WEBHOOK_SECRET` yo'q bo'lsa 404), faqat shaxsiy chat, `/start KOD`, `/stop`, yordam; chat bo'yicha 5 xato urinishdan keyin 15 daqiqa jim.
+- **Endpointlar:** `POST /notifications/link-code`, `GET|DELETE /notifications/link` (o'zi), `POST /users/:userId/telegram/link-code`, `DELETE /users/:userId/telegram` (`telegram.settings`), `POST /notifications/send` (`{userId, message}`), `GET /notifications` (`notification.send`; admin faqat o'z filiali foydalanuvchilari), `POST /notifications/run` (faqat rahbar, o'z markazi), `POST /notifications/cron` (`x-cron-secret` = `CRON_SECRET`, hamma TRIAL/ACTIVE markaz; sozlanmagan bo'lsa 404). Bot sozlanmagan bo'lsa yuborish 503 `TELEGRAM_NOT_CONFIGURED`.
+- **Avtomatik turlar** (`dispatch.service.ts`; faqat Telegram ulangan faol foydalanuvchi): qarz (`debtGapDays` sukut 7), ertangi dars, 24 soatdagi vazifa (topshirmaganga), tasdiqlangan maosh (14 kun). Yuborish tranzaksiyadan tashqarida, har natija alohida yoziladi; markaz bo'yicha bir vaqtda ikki ishga tushirish himoyasi (xotirada).
+- **Muhit:** `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET`, `CRON_SECRET` (hammasi ixtiyoriy; `.env.example` da). Webhook'ni Telegram'da qo'lda o'rnatish kerak (`setWebhook`, `secret_token`); haqiqiy bot bilan hali sinalmagan.
+- **Ochiq:** haqiqiy Telegram botida sinash (token, webhook, cron-job.org); alohida ota-ona chati/roli; til tanlash; SMS kanali; bildirishnoma sozlamalari (turni o'chirish, jim soatlar); jurnalni tozalash/arxiv; ikki jarayonli ishga tushirishda qulf bazada emas, xotirada.
+- Test: `test/notifications.e2e-spec.ts` (24 ta: ulash, kod muddati/bir martaligi, webhook himoyasi, urinish cheklovi, ruxsat va qamrov, qo'lda xabar, jurnal, qarz/dars/vazifa/maosh eslatmalari, takror yo'q, xato/to'silish, cron, markaz izolyatsiyasi) + `src/notifications/messages.spec.ts` (3) + izolyatsiya testida 2 jadval. Umumiy 517 e2e + 65 unit.
+
 ## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
-Backend asosiy funksiyalar (1-20) tayyor. Qolgani, tavsiya etilgan tartibda:
-1. **21-qadam: Telegram bot va bildirishnomalar** (`notification_log`, `telegram.settings`, `notification.send`; `users.telegram_chat_id` ustuni bor): grammY yoki Telegraf; o'quvchini/ota-onani bog'lash (bir martalik kod), qarz eslatmasi, dars va vazifa eslatmalari, maosh xabari. Cron yo'q: bepul hostingda fon jarayoni kafolatsiz, shuning uchun yuborish "so'rov bilan" yoki tashqi cron-trigger bilan.
-2. **Kichik backend bo'shliqlari** (hammasi migratsiyasiz yoki kichik): markaz sozlamalari endpointi (`centers.settings`: `attendance_lock_days`, `join_proration`, `grace_days`, til; hozir faqat bazada), tariflar (`plans`) yaratish va markazga biriktirish (super admin, SaaS minimum), davomatni qo'lda qulflash/ochish, rahbar uchun guruh/o'quvchi ro'yxatidagi qo'shimcha filtrlar, login cheklovini umumiy xotiraga (baza) ko'chirish (ko'p nusxa).
-3. **Haqiqiy Postgres'da sinash:** hozir hamma test PGlite'da; `db:migrate`, `db:seed`, `db:create-super-admin` va `erp_app` roli haqiqiy bazada hali sinalmagan (Docker uchun WSL kerak yoki Neon bepul bazasi). Deploydan oldin majburiy.
-4. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
-5. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
+Backend asosiy funksiyalar (1-21) tayyor. Qolgani, tavsiya etilgan tartibda:
+1. **Kichik backend bo'shliqlari** (hammasi migratsiyasiz yoki kichik): markaz sozlamalari endpointi (`centers.settings`: `attendance_lock_days`, `join_proration`, `grace_days`, til; hozir faqat bazada), tariflar (`plans`) yaratish va markazga biriktirish (super admin, SaaS minimum), davomatni qo'lda qulflash/ochish, rahbar uchun guruh/o'quvchi ro'yxatidagi qo'shimcha filtrlar, login cheklovini umumiy xotiraga (baza) ko'chirish (ko'p nusxa).
+2. **Haqiqiy Postgres'da sinash (va haqiqiy Telegram bot bilan):** hozir hamma test PGlite'da; `db:migrate`, `db:seed`, `db:create-super-admin` va `erp_app` roli haqiqiy bazada hali sinalmagan (Docker uchun WSL kerak yoki Neon bepul bazasi). Deploydan oldin majburiy.
+3. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
+4. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
 Kod konvensiyalari yangi chat uchun: migratsiya = drizzle-kit (jadvallar) + qo'lda SQL (RLS, trigger, huquq); har yangi tenant jadvali `TENANT_TABLES` ga va izolyatsiya testiga qo'shiladi; pul yozuvi append-only; yangi ruxsat kodi `packages/shared` da; har qadam oxirida testlar, lint, build, PROGRESS.md + ERD, `graphify update .`.
 
 ## Ochiq savollar

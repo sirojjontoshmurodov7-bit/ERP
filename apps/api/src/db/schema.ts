@@ -772,6 +772,58 @@ export const ratingPoints = pgTable(
   ],
 );
 
+// --- Telegram bildirishnomalar (ERD 2.4, 21-qadam). Jurnal append-only; xabar matni saqlanmaydi, faqat minimal payload. ---
+export const notificationLog = pgTable(
+  'notification_log',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    userId: uuid('user_id').notNull(),
+    channel: text('channel').notNull().default('TELEGRAM'), // TELEGRAM | SMS
+    type: text('type').notNull(), // DEBT | LESSON | HOMEWORK | PAYROLL | MANUAL
+    dedupeKey: text('dedupe_key'), // takror yuborishni oldini oladi (faqat SENT uchun noyob)
+    payload: jsonb('payload').notNull().default(sql`'{}'::jsonb`),
+    status: text('status').notNull(), // SENT | FAILED
+    error: text('error'), // faqat xato kodi
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'notification_log_user_center_fk', columns: [t.userId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    index('notification_log_center_created_idx').on(t.centerId, t.createdAt),
+    index('notification_log_user_type_idx').on(t.userId, t.type, t.createdAt),
+    uniqueIndex('notification_log_dedupe_uq').on(t.userId, t.dedupeKey).where(sql`${t.status} = 'SENT' and ${t.dedupeKey} is not null`),
+    check('notification_log_channel_chk', sql`${t.channel} in ('TELEGRAM','SMS')`),
+    check('notification_log_type_chk', sql`${t.type} in ('DEBT','LESSON','HOMEWORK','PAYROLL','MANUAL')`),
+    check('notification_log_status_chk', sql`${t.status} in ('SENT','FAILED')`),
+  ],
+);
+
+// Bir martalik bog'lash kodi: bazada faqat HMAC xesh. `app_telegram_redeem` (SECURITY DEFINER) webhook'da ishlatadi.
+export const telegramLinkCodes = pgTable(
+  'telegram_link_codes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    userId: uuid('user_id').notNull(),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: ts('expires_at').notNull(),
+    usedAt: ts('used_at'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'telegram_link_codes_user_center_fk', columns: [t.userId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    uniqueIndex('telegram_link_codes_hash_uq').on(t.codeHash),
+    index('telegram_link_codes_user_idx').on(t.userId),
+    check('telegram_link_codes_expiry_chk', sql`${t.expiresAt} > ${t.createdAt}`),
+  ],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

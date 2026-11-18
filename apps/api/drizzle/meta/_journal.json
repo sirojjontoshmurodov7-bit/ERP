@@ -106,6 +106,13 @@
       "when": 1795040441114,
       "tag": "0014_homework_rating",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1795041533965,
+      "tag": "0015_notifications",
+      "breakpoints": true
     }
   ]
 }

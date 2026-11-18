@@ -40,6 +40,8 @@ const TENANT_TABLES = [
   'assignments',
   'submissions',
   'rating_points',
+  'notification_log',
+  'telegram_link_codes',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -159,6 +161,10 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
                    insert into submissions (center_id, assignment_id, student_id, text) select ${f.center}::uuid, id, ${f.admin}::uuid, 'javob' from a`;
       case 'rating_points':
         return sql`insert into rating_points (center_id, branch_id, group_id, student_id, source, points, reason) values (${f.center}, ${f.branch1}, ${f.group}, ${f.admin}, 'MANUAL', 5, 'sinov')`;
+      case 'notification_log':
+        return sql`insert into notification_log (center_id, user_id, type, status, dedupe_key) values (${f.center}, ${f.admin}, 'DEBT', 'SENT', ${'k-' + n})`;
+      case 'telegram_link_codes':
+        return sql`insert into telegram_link_codes (center_id, user_id, code_hash, expires_at) values (${f.center}, ${f.admin}, ${'h-' + n}, now() + interval '15 minutes')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -213,6 +219,8 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     const [asg] = await db.insert(s.assignments).values({ centerId: c!.id, groupId: group!.id, teacherId: admin!.id, title: 'Seed vazifa' }).returning();
     await db.insert(s.submissions).values({ centerId: c!.id, assignmentId: asg!.id, studentId: admin!.id, text: 'seed' });
     await db.insert(s.ratingPoints).values({ centerId: c!.id, branchId: b1!.id, groupId: group!.id, studentId: admin!.id, source: 'MANUAL', points: 3, reason: 'seed' });
+    await db.insert(s.notificationLog).values({ centerId: c!.id, userId: admin!.id, type: 'DEBT', status: 'SENT', dedupeKey: 'seed' });
+    await db.insert(s.telegramLinkCodes).values({ centerId: c!.id, userId: admin!.id, codeHash: 'seed-' + slug, expiresAt: new Date(Date.now() + 60_000) });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -502,6 +510,25 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, rp('source, points, reason', ['MANUAL', -7, 'jarima'])))).toBeNull();
       expect(await failure(q(ctxA, sql`update rating_points set points = 100 where center_id = ${A.center}`))).toMatch(/permission denied/);
       expect(await failure(q(ctxA, sql`delete from rating_points where center_id = ${A.center}`))).toMatch(/permission denied/);
+    });
+
+    it("notification_log va telegram_link_codes: kross-markaz FK, bazaviy qoidalar, append-only va kod funksiyalari", async () => {
+      const nl = (cols: string, vals: unknown[]) => sql`insert into notification_log (center_id, user_id, ${sql.raw(cols)}) values (${A.center}, ${A.admin}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      expect(await failure(q(ctxA, sql`insert into notification_log (center_id, user_id, type, status) values (${A.center}, ${B.admin}, 'DEBT', 'SENT')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, nl('type, status', ['WEIRD', 'SENT'])))).toMatch(/notification_log_type_chk/);
+      expect(await failure(q(ctxA, nl('type, status', ['DEBT', 'WEIRD'])))).toMatch(/notification_log_status_chk/);
+      expect(await failure(q(ctxA, nl('type, status, channel', ['DEBT', 'SENT', 'FAX'])))).toMatch(/notification_log_channel_chk/);
+      // bir xil dedupe_key bilan ikkinchi SENT rad etiladi, FAILED esa mumkin
+      expect(await failure(q(ctxA, nl('type, status, dedupe_key', ['DEBT', 'SENT', 'dup-1'])))).toBeNull();
+      expect(await failure(q(ctxA, nl('type, status, dedupe_key', ['DEBT', 'SENT', 'dup-1'])))).toMatch(/notification_log_dedupe_uq/);
+      expect(await failure(q(ctxA, nl('type, status, dedupe_key', ['DEBT', 'FAILED', 'dup-1'])))).toBeNull();
+      expect(await failure(q(ctxA, sql`update notification_log set status = 'FAILED' where center_id = ${A.center}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from notification_log where center_id = ${A.center}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`insert into telegram_link_codes (center_id, user_id, code_hash, expires_at) values (${A.center}, ${B.admin}, 'x1', now() + interval '1 minute')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`delete from telegram_link_codes where center_id = ${A.center}`))).toMatch(/permission denied/);
+      // funksiyalar tenant kontekstisiz ishlaydi, lekin faqat xeshlangan haqiqiy kod bilan
+      const none = await q(NO_CONTEXT, sql`select * from app_telegram_redeem('nope', 111)`);
+      expect(none).toHaveLength(0);
     });
 
     it("import_jobs: bazaviy qoidalar va append-only (faqat INSERT)", async () => {

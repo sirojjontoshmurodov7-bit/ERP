@@ -396,6 +396,7 @@ erDiagram
 - **Umumiy hisobotlar (implementatsiya, 18-qadam):** `report.overview` va `report.branch_compare` faqat rahbarda (–: boshqa rolga berib bo'lmaydi), faqat o'qiydi (SQL agregatsiya). Atributsiya: o'quvchi, guruh, yozilish, davomat va qarz — guruh filialiga; tushum — to'lov qabul qilingan filialga; xarajat — o'z filialiga; o'quvchi soni `user_branches` bo'yicha (ikki filialli o'quvchi ikkala filialda, markaz jamisida bir marta). Qarz = muddati o'tgan (`bugun > due_date + grace_days`) hisoblar qoldig'i. Davomat: (kelgan + kech qolgan) / (kelgan + kech qolgan + kelmagan), sababli hisobga olinmaydi.
 - **Import (implementatsiya, 19-qadam):** `import_jobs` append-only (faqat SELECT/INSERT). Hozir faqat `STUDENTS` (jadvalda `GROUPS`, `PAYMENTS` turlari rezerv). Fayl saqlanmaydi (`file_url` o'rniga `file_name`); hisobotda qiymat yo'q. `import.run`: rahbar ✔, admin ○ o'z filialida. Sukut: bitta xato bo'lsa hech narsa yaratilmaydi (`REJECTED`); `skipInvalid` bilan to'g'ri qatorlar yaratiladi. Vaqtinchalik parollar faqat javobda (`no-store`), auditga tushmaydi.
 - **Vazifa va reyting (implementatsiya, 20-qadam):** vazifani faqat ustoz o'z amaldagi guruhida yaratadi, tahrirlaydi, arxivlaydi va baholaydi (`homework.create|grade`; rahbar/admin faqat ko'radi). O'quvchi faqat faol yozilishda topshiradi (muzlatilgan 409), baholangunga qadar qayta topshirishi mumkin; muddatdan keyingi topshiriq `late` belgilanadi, rad etilmaydi. Baholangan topshiriq o'zgarmaydi; vazifaning maksimal balli baholar bo'lgach o'zgarmaydi. O'quvchi faqat o'z topshirig'ini ko'radi.
+- **Telegram va bildirishnomalar (implementatsiya, 21-qadam):** bot bitta (platforma darajasida, token `.env` da), markazlar uni baham ko'radi. Ulash: foydalanuvchi (yoki `telegram.settings` bilan rahbar/admin) bir martalik kod oladi (10 belgi, 15 daqiqa, bazada HMAC xesh, yangi kod eskisini bekor qiladi), botga `/start KOD` yuboradi; `/stop` uzadi. Bir chatga bir nechta foydalanuvchi ulanishi mumkin (ota-ona bir nechta farzand kodini kiritadi; alohida ota-ona roli yo'q). Webhook tenant'siz: faqat `app_telegram_redeem` / `app_telegram_unlink` (SECURITY DEFINER); `secret_token` sarlavhasi majburiy; chat bo'yicha 5 xato urinishdan keyin 15 daqiqa bloklanadi. `notification_log` append-only (SELECT/INSERT); bot to'silsa (403) chat avtomatik uziladi. Avtomatik turlar (`POST /notifications/run` rahbar, `POST /notifications/cron` tashqi cron + `x-cron-secret`): qarz (har o'quvchiga `debtGapDays`=7 kunda bir, qarz qoidasi `/debtors` bilan bir xil), ertangi dars (ustoz va o'quvchi, bekor qilingan dars yo'q), 24 soat ichida tugaydigan vazifa (topshirmaganga), tasdiqlangan maosh (oxirgi 14 kun). Qo'lda xabar `notification.send` (rahbar ✔, admin ○ o'z filiallaridagi foydalanuvchilarga). Bot Bot API'ga kutubxonasiz (`fetch`) ulanadi.
 - **Reyting balli:** vazifa bahosi 10 ballik shkalada (`round(10 * baho / maksimal)`), qayta baholashda `rating_points` ga faqat farq yoziladi; qo'lda ball `rating.adjust` (rahbar, ustoz o'z guruhida; sabab majburiy, +/- 1000 gacha); **davomat balli saqlanmaydi** (ERD'dagi `ATTENDANCE` manbasi o'rniga): so'rovda `attendance_records` dan hisoblanadi: kelgan 2, kech qolgan 1, kelmagan va sababli 0 (davomat tuzatilsa reyting o'zi to'g'rilanadi). `rating_points` append-only.
 - **Reyting kesimlari:** guruh, filial (voqea guruh filialiga; ikki filialli o'quvchi har filialda alohida), markaz; davr oy (sukut joriy oy) yoki umumiy. Faqat faol o'quvchilar, teng ball bir xil o'rin. Ko'rish: rahbar hammasi; admin faqat o'z filiallari (markaz kesimi yo'q); ustoz faqat o'z guruhi; o'quvchi o'z guruhi, o'z filiali va markaz (to'liq ism, filiallar va o'z o'rni `my`), ERD 6.5.
 - **Chek raqami:** markaz bo'yicha `max + 1` (markaz kaliti bo'yicha advisory lock ichida), `(center_id, receipt_no)` unikal. Qaytarish yozuvi ham o'z raqamini oladi. Usullar hozircha `CASH|CARD|TRANSFER`; `CLICK|PAYME` (`external_txn_id`) provayder qo'shilganda ochiladi.
@@ -414,6 +415,7 @@ erDiagram
     users ||--o{ payroll_payouts : ""
     payroll_periods ||--o{ payroll_payouts : ""
     users ||--o{ notification_log : ""
+    users ||--o{ telegram_link_codes : ""
     centers ||--o{ import_jobs : ""
 
     payroll_rules {
@@ -473,10 +475,23 @@ erDiagram
         uuid center_id FK
         uuid user_id FK
         string channel "TELEGRAM|SMS"
-        string type "DEBT|LESSON|HOMEWORK|..."
-        jsonb payload
-        string status
-        timestamptz sent_at
+        string type "DEBT|LESSON|HOMEWORK|PAYROLL|MANUAL"
+        string dedupe_key "takror yuborishni to'sadi; SENT uchun (user, kalit) noyob"
+        jsonb payload "minimal (summa, id); xabar matni saqlanmaydi"
+        string status "SENT|FAILED"
+        string error "faqat xato kodi"
+        uuid created_by FK "qo'lda yuborganda"
+        timestamptz created_at
+    }
+    telegram_link_codes {
+        uuid id PK
+        uuid center_id FK
+        uuid user_id FK
+        string code_hash "HMAC; kodning o'zi saqlanmaydi"
+        timestamptz expires_at "15 daqiqa"
+        timestamptz used_at
+        uuid created_by FK
+        timestamptz created_at
     }
     import_jobs {
         uuid id PK
