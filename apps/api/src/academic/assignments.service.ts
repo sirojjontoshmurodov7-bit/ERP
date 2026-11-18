@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, count, desc, eq, inArray, isNull, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gt, inArray, isNull, lt, or, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
@@ -150,8 +150,8 @@ export class AssignmentsService {
         this.visible(tx, actor, scope),
         q.includeArchived && actor.role !== 'STUDENT' ? undefined : isNull(assignments.archivedAt),
         q.groupId ? eq(assignments.groupId, q.groupId) : undefined,
-        q.status === 'open' ? sql`(${assignments.dueAt} is null or ${assignments.dueAt} > ${now})` : undefined,
-        q.status === 'overdue' ? sql`${assignments.dueAt} < ${now}` : undefined,
+        q.status === 'open' ? or(isNull(assignments.dueAt), gt(assignments.dueAt, now)) : undefined, // Date ustun orqali o'giriladi (xom sql'da postgres-js Date'ni qabul qilmaydi)
+        q.status === 'overdue' ? lt(assignments.dueAt, now) : undefined,
       ];
       const rows = await tx.select().from(assignments).where(and(...conds)).orderBy(desc(assignments.createdAt), desc(assignments.id)).limit(q.limit).offset(q.offset);
       return { items: await this.present(tx, actor, rows), limit: q.limit, offset: q.offset };

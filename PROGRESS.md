@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi) tayyor; keyingi: haqiqiy Postgres'da sinash). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi), 23 (haqiqiy Postgres'da sinash) tayyor; keyingi: frontend). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -27,13 +27,14 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 20. Vazifa va reyting (`/assignments`, `/ratings`) | tayyor | `apps/api/src/academic/`, `drizzle/0014`, `test/academic.e2e-spec.ts` |
 | 21. Telegram bot va bildirishnomalar (`/notifications`, `/telegram/webhook`) | tayyor | `apps/api/src/notifications/`, `drizzle/0015`, `test/notifications.e2e-spec.ts` |
 | 22. Kichik backend bo'shliqlari (`/center/settings`, `/admin/plans`, dars qulfi, filtrlar, `login_throttle`) | tayyor | `apps/api/src/{centers/center-settings.*,plans}/`, `auth/login-throttle.ts`, `drizzle/0016`, `test/settings-plans.e2e-spec.ts` |
+| 23. Haqiqiy Postgres'da sinash (embedded PG 17, smoke, e2e ikki rejimda) | tayyor | `apps/api/scripts/{pg-local.ts,smoke.mjs}`, `test/helpers/test-db.ts` |
 
 Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`. Commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
 - `localhost:5432` da **boshqa** Postgres ishlayapti (parol rad etadi, bizniki emas); unga tegma.
-- Shuning uchun **hamma testlar PGlite'da** (xotiradagi Postgres, haqiqiy migratsiyalar, `erp_app` roliga `SET LOCAL ROLE` bilan RLS yoqilgan). `db:migrate`, `db:seed`, `db:create-super-admin` skriptlari **haqiqiy Postgres'da hali sinalmagan**.
+- Docker o'rniga **`pnpm --filter @erp/api pg:local`** (embedded Postgres 17, 23-qadam); e2e `TEST_DATABASE_URL` bilan haqiqiy bazada ham yuradi. Sukut: **testlar PGlite'da** (xotiradagi Postgres, haqiqiy migratsiyalar, `erp_app` roliga `SET LOCAL ROLE` bilan RLS yoqilgan). `db:migrate`, `db:seed`, `db:create-super-admin` lokal haqiqiy Postgres 17'da superuser bo'lmagan egasi bilan sinalgan (23-qadam); Neon'da hali yo'q.
 - Boshqa yo'l: Neon bepul bazasi; `.env` da `DATABASE_URL` (erp_app roli) va `DATABASE_MIGRATION_URL` (egasi), `erp_app` rolini o'zing yarat (`docker/initdb/01-app-role.sql` ga qara).
 - Windows, Git Bash + PowerShell. Python yo'q. Node 24, pnpm 12. Katta heredoc'li bash buyruqlari ba'zan buziladi: fayllarni Write bilan yoz.
 
@@ -233,9 +234,16 @@ Qoidalar manbasi: ERD 2.4 ("Sozlamalar, tariflar, qulf, login cheklovi (implemen
 - **Ochiq:** `rounding` sozlamasi; tarif imkoniyatlari (`features`) hali hech narsani yoqmaydi/o'chirmaydi; tarifni arxivlash; SaaS to'lov (obuna hisobi) yo'q; IP faqat `req.ip` (proksi ortida `trust proxy` sozlanishi kerak).
 - Test: `test/settings-plans.e2e-spec.ts` (17 ta: sozlamalar o'qish/yozish/tekshiruv/ta'siri, tariflar CRUD va chegaralar, qo'lda qulf, o'quvchi va guruh filtrlari, bazadagi login cheklovi ikki nusxada, oyna, nolga tushirish, parallel urinishlar). Umumiy 534 e2e + 65 unit.
 
+### 23-qadam: haqiqiy Postgres'da sinash (tayyor)
+- **Lokal Postgres 17 Docker'siz:** `pnpm --filter @erp/api pg:local` (`scripts/pg-local.ts`, `embedded-postgres@17.11.0-beta.19` dev bog'liqlik; ma'lumot `apps/api/.pg-data`, gitignore'da; port 54329). Rollar production'ga yaqin: `postgres` (klaster superuser'i, faqat skript/testlar), `erp` (baza egasi, superuser EMAS), `erp_app` (ilova, NOSUPERUSER NOBYPASSRLS). Skript ulanish satrlarini chiqaradi. `localhost:5432` dagi begona Postgres'ga tegilmaydi.
+- **Production oqimi sinaldi:** `db:migrate` (0000-0016), `db:seed`, `db:create-super-admin` superuser bo'lmagan egasi bilan PG 17'da xatosiz o'tdi; API `erp_app` bilan ishga tushirildi va `scripts/smoke.mjs` (30 qadam: tarif, markaz, sozlamalar, filial, kurs, ustoz, guruh+jadval, o'quvchi, yozilish, hisob, qarzdorlar, to'lov va qaytarish, dars/davomat/qulf, hisobotlar, reyting, Telegram kodi, audit, bazadagi login cheklovi, refresh) to'liq o'tdi.
+- **E2e testlar haqiqiy bazada:** `TEST_DATABASE_URL=<superuser url> pnpm --filter @erp/api test:e2e` — har test fayli uchun alohida baza (`erp_test_*`), migratsiya `erp` nomidan (`role=erp` startup parametri), fayl oxirida `DROP DATABASE ... WITH (FORCE)`. Sukut (o'zgaruvchisiz) avvalgidek PGlite. Natija: ikkala rejimda 534/534.
+- **Topilgan va tuzatilgan xato:** `GET /assignments?status=open|overdue` production drayverida (postgres-js) 500 berardi: xom `sql` shabloniga `Date` uzatilgan (PGlite buni qabul qiladi, postgres-js yo'q). Drizzle operatorlariga (`gt/lt/isNull`) o'tkazildi. **Qoida:** xom `sql\`\`` ichiga `Date` uzatma — ustun operatori yoki `iso::timestamptz` ishlat.
+- **Sinalmagan:** haqiqiy Telegram bot (token kerak), Neon (akkaunt kerak). CI'da e2e haqiqiy Postgres xizmat konteynerida ham yuradi (25-qadam).
+
 ## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
-Backend asosiy funksiyalar (1-22) tayyor. Qolgani, tavsiya etilgan tartibda:
-1. **Haqiqiy Postgres'da sinash (va haqiqiy Telegram bot bilan):** hozir hamma test PGlite'da; `db:migrate`, `db:seed`, `db:create-super-admin` va `erp_app` roli haqiqiy bazada hali sinalmagan (Docker uchun WSL kerak yoki Neon bepul bazasi). Deploydan oldin majburiy.
+Backend asosiy funksiyalar (1-23) tayyor. Qolgani, tavsiya etilgan tartibda:
+1. **Haqiqiy Telegram bot va Neon bilan sinash** (token va akkaunt kerak; lokal haqiqiy Postgres 23-qadamda sinalgan).
 2. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
 3. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
 Kod konvensiyalari yangi chat uchun: migratsiya = drizzle-kit (jadvallar) + qo'lda SQL (RLS, trigger, huquq); har yangi tenant jadvali `TENANT_TABLES` ga va izolyatsiya testiga qo'shiladi; pul yozuvi append-only; yangi ruxsat kodi `packages/shared` da; har qadam oxirida testlar, lint, build, PROGRESS.md + ERD, `graphify update .`.

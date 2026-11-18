@@ -23,7 +23,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file=../../.env src/db/migrate.ts",
     "db:seed": "tsx --env-file=../../.env src/db/seed.ts",
-    "db:create-super-admin": "tsx --env-file=../../.env src/db/create-super-admin.ts"
+    "db:create-super-admin": "tsx --env-file=../../.env src/db/create-super-admin.ts",
+    "pg:local": "tsx scripts/pg-local.ts"
   },
   "dependencies": {
     "@erp/shared": "workspace:*",
@@ -49,6 +50,7 @@
     "@types/supertest": "^7.0.0",
     "@vitest/coverage-v8": "^4.1.2",
     "drizzle-kit": "^0.31.11",
+    "embedded-postgres": "17.11.0-beta.19",
     "oxlint": "^1.58.0",
     "oxlint-tsgolint": "^7.0.2001",
     "prettier": "^3.4.2",

@@ -5,3 +5,10 @@ packages:
 allowBuilds:
   sharp: false
   unrs-resolver: false
+  esbuild: false
+  # Linux/macOS'da Postgres binarlari uchun symlink tiklaydi (Windows'da bo'sh); faqat testlarda ishlatiladi
+  "@embedded-postgres/windows-x64": true
+  "@embedded-postgres/linux-x64": true
+  "@embedded-postgres/linux-arm64": true
+  "@embedded-postgres/darwin-x64": true
+  "@embedded-postgres/darwin-arm64": true

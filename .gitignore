@@ -7,3 +7,4 @@ dist/
 coverage/
 graphify-out/cache/
 *.tsbuildinfo
+apps/api/.pg-data/
