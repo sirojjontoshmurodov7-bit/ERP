@@ -20,7 +20,7 @@ Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 13. Hisob-kitob (`charges`, `enrollment_freezes`) | tayyor | `apps/api/src/billing/`, `common/dates.ts`, `drizzle/0009`, `test/billing.e2e-spec.ts` |
 | **14. To'lovlar (`payments`)** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`. 13-qadam o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`. Ish daraxti toza; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
