@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat) tayyor; keyingi 12: qulflash va ko'rish). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish) tayyor; keyingi: to'lov va qarzdorlik). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -16,9 +16,10 @@ Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 9. Kurslar va guruhlar | tayyor | `apps/api/src/{courses,groups}/`, `drizzle/0006`, `test/groups.e2e-spec.ts` |
 | 10. Yozilish (`enrollments`) | tayyor | `apps/api/src/enrollments/`, `common/group-access.ts`, `drizzle/0007`, `test/enrollments.e2e-spec.ts` |
 | 11. Darslar va davomat belgilash | tayyor | `apps/api/src/lessons/`, `drizzle/0008`, `test/attendance.e2e-spec.ts` |
-| **12. Davomat qulfi va ko'rish (`GET /attendance`)** | **keyingi** | hali yozilmagan |
+| 12. Davomat qulfi va ko'rish (`GET /attendance`) | tayyor | `apps/api/src/lessons/`, `test/attendance-lock.e2e-spec.ts` |
+| **13. To'lov va qarzdorlik** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`. 11-qadam o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`. 12-qadam va `.gitignore` (tsbuildinfo) o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -31,7 +32,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`. 11-qada
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~45 s, 268 test
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~50 s, 282 test
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -111,11 +112,20 @@ Reja (tasdiqlangan): 8 o'quvchilar, 9 kurs va guruhlar (`courses`, `groups`, `gr
 - **Qoidalar:** dars qo'lda ochiladi (jadvaldan avtomatik emas), kelajak sanasi 400 `LESSON_IN_FUTURE`, takror sana 409 `LESSON_EXISTS`, arxivlangan guruhda 409. Ustoz sukut: ochgan ustoz (o'zi), rahbar/admin ochsa guruhning amaldagi asosiy ustozi (yo'q bo'lsa NULL); ko'rsatilsa guruhga amalda biriktirilgan bo'lishi shart (`TEACHER_NOT_IN_GROUP`); ustoz boshqa ustoz nomidan ocha olmaydi. Belgilanadiganlar: dars kuni guruhda bo'lgan o'quvchilar = `joined_at <= dars sanasi` va (`ACTIVE` yoki `LEFT` va `left_at >= dars sanasi`); **muzlatilganlar chiqarib tashlanadi** (`STUDENT_NOT_IN_LESSON`, `studentIds` bilan; so'rov to'liq rad etiladi). Davomat belgilangan darsni bekor qilib bo'lmaydi (`LESSON_HAS_ATTENDANCE`); bekor qilinganga belgilanmaydi (`LESSON_CANCELLED`); qayta HELD qilish mumkin. Keyin muzlatilgan/chiqqan o'quvchining eski yozuvi ro'yxatda saqlanadi.
 - **Ruxsat/qamrov:** yozish (dars ochish, tahrirlash, belgilash) `attendance.mark` (rahbar, ustoz o'z amaldagi guruhida, admin uchun ○ o'z filialida); ko'rish `attendance.view` (rahbar, admin f, ustoz o'z guruhi, o'quvchi faqat o'z qatori: yig'ma va boshqalar yashirin, `myStatus`); kassir davomatga kirmaydi. Qamrovdan tashqari/boshqa markaz: 404. Ustoz guruhdan olib tashlangach kirish huquqi yo'qoladi. Umumiy yordamchi: `groupVisibility()` (`common/group-access.ts`), `GroupsService` ham shuni ishlatadi.
 - Audit: `lesson.create|edit`, `attendance.mark` (har belgilashda `before/after` yozuvlar).
-- **Qulflash hali yo'q (12-qadam):** hozir davomat istalgan vaqtda tuzatiladi. `lessons.locked_at` ustuni tayyor.
+- **Qulflash:** 12-qadamda qo'shildi (pastga qarang).
 - Test: `test/attendance.e2e-spec.ts` (15 ta) + izolyatsiya testida 2 jadval va bazaviy qoidalar; umumiy 268 e2e + 14 unit.
 
-### 12-qadam (keyingi): qulflash va ko'rish
-`attendance_lock_days` (markaz sozlamasi, sukut 3): dars sanasidan keyin shuncha kun o'tgach dars qulflanadi (hisoblanadi, `locked_at` qo'lda qulflash uchun); qulflangan darsni faqat `attendance.edit_past` egasi tuzatadi (rahbar, admin ○) va har safar audit; `GET /attendance?groupId&studentId&from&to` (+ guruh bo'yicha yig'ma: kelgan/kelmagan/kech/sababli). Reyting ballari (`rating_points`) va ustoz dars-boshiga maoshi keyingi bosqichlarda shu jadvallar ustiga quriladi. `lessons/:id` javobida `lockedAt` bor, 12-qadamda effektiv qulf holati qo'shiladi.
+### 12-qadam: davomat qulfi va ko'rish (tayyor)
+- **Qulf qoidasi:** dars qulflangan, agar `locked_at` qo'yilgan bo'lsa yoki `bugun - dars sanasi > attendance_lock_days`. Sozlama `centers.settings.attendance_lock_days` (butun 0-365; yo'q yoki yaroqsiz bo'lsa sukut **3**, `DEFAULT_ATTENDANCE_LOCK_DAYS`); sozlamani o'zgartiruvchi endpoint hali yo'q (super admin / to'g'ridan-to'g'ri baza). Chegara: aniq `lock_days` kun oldingi dars hali ochiq.
+- **Qulflangan darsga** belgilash, tahrirlash (`PATCH`, bekor qilish) va **eski (qulflangan) sanaga dars ochish** faqat `attendance.edit_past` egasiga (rahbar ✔, admin ○; ikkala holatda admin uchun `attendance.mark` ham kerak); aks holda 403 `LESSON_LOCKED`. Qulflangan darsdagi tuzatish alohida audit amali bilan yoziladi: `attendance.edit_past`, `lesson.edit_past` (before/after bilan), oddiy `attendance.mark`/`lesson.edit` emas.
+- Dars javobida `locked` (effektiv) va `lockedAt` bor (o'quvchiga ham). Qo'lda qulflash/ochish endpointi yo'q (`locked_at` faqat bazada).
+- **`GET /attendance`** (`attendance.view`; OWNER, ADMIN, TEACHER, STUDENT): `groupId`, `studentId`, `from`, `to`, `status`, `limit` (<=500, sukut 100), `offset`; yozuvlar sana kamayishi va ism bo'yicha. Qamrov: rahbar hammasi, admin filiali, ustoz o'z guruhi; o'quvchi faqat o'zi (`studentId` filtri e'tiborsiz). Qamrovdan tashqari guruh filtri bo'sh natija beradi (404 emas).
+- **`GET /attendance/summary`**: `totals` (`present, absent, late, excused, total, rate`); `groupId` berilsa `byStudent` (ism bo'yicha), aks holda `byGroup`; o'quvchi uchun doim faqat o'zi va faqat `byGroup`. `rate` = (kelgan + kech qolgan) / (kelgan + kech qolgan + kelmagan) * 100, 1 xona, sababli (EXCUSED) hisobga olinmaydi, maxraj 0 bo'lsa `null`.
+- **Ochiq:** qulf muddatini rahbar o'zgartiradigan sozlamalar endpointi (markaz sozlamalari moduli); qo'lda qulflash/ochish; davomatdan reyting ball va ustozning dars-boshiga maoshi (reyting va maosh bosqichlari bu jadvallar ustiga quriladi).
+- Test: `test/attendance-lock.e2e-spec.ts` (14 ta; qulf chegarasi, ruxsatlar, sozlama, audit, ko'rish/yig'ma, qamrov); `attendance.e2e-spec.ts` testlari uchun qulf muddati 365 ga uzaytirilgan. Umumiy 282 e2e + 14 unit.
+
+## Keyingi bosqich: to'lov va qarzdorlik (CLAUDE.md "Keyingi bosqichlar": to'lov va qarzdorlik, maosh, hisobotlar, Excel import, vazifa/reyting, Telegram bot)
+`charges`, `payments`, qarz hisobi (ERD 2.3), ikki rejim `GROUP_CYCLE`/`STUDENT_CYCLE`, `join_proration`, muzlatish davri sanalari (hozir saqlanmaydi: avval ERD yangilanadi). Boshlashdan oldin qisqa reja ko'rsatib tasdiqlat.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).

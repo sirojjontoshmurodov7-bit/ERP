@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, count, desc, eq, gte, inArray, isNull, lte, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, desc, eq, gte, inArray, isNull, lte, or, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
@@ -8,8 +8,8 @@ import { branchScope, type BranchScope } from '../common/branch-scope.js';
 import { currentTeacher, groupVisibility } from '../common/group-access.js';
 import { uniqueViolation } from '../common/pg-errors.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
-import { attendanceRecords, enrollments, groups, groupTeachers, lessons, users } from '../db/schema.js';
-import type { CreateLessonInput, ListLessonsQuery, MarkAttendanceInput, UpdateLessonInput } from './lessons.schemas.js';
+import { attendanceRecords, centers, enrollments, groups, groupTeachers, lessons, users } from '../db/schema.js';
+import type { AttendanceQuery, CreateLessonInput, ListLessonsQuery, MarkAttendanceInput, UpdateLessonInput } from './lessons.schemas.js';
 
 const forbidden = (message = "Bu amal uchun ruxsat yo'q") => new ForbiddenException({ code: 'FORBIDDEN', message });
 const conflict = (code: string, message: string) => new ConflictException({ code, message });
@@ -18,6 +18,11 @@ const groupNotFound = () => new NotFoundException({ code: 'GROUP_NOT_FOUND', mes
 const lessonNotFound = () => new NotFoundException({ code: 'LESSON_NOT_FOUND', message: 'Dars topilmadi' });
 const today = () => new Date().toISOString().slice(0, 10);
 
+/** Markaz sozlamasi `attendance_lock_days` yo'q bo'lsa: dars sanasidan keyin shuncha kun davomat tuzatiladi. */
+export const DEFAULT_ATTENDANCE_LOCK_DAYS = 3;
+const daysBetween = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+const rate = (present: number, late: number, absent: number) => (present + late + absent > 0 ? Math.round(((present + late) / (present + late + absent)) * 1000) / 10 : null);
+
 type LessonRow = typeof lessons.$inferSelect;
 type GroupRow = typeof groups.$inferSelect;
 
@@ -25,6 +30,8 @@ type GroupRow = typeof groups.$inferSelect;
  * Dars va davomat. Dars qo'lda ochiladi (jadvaldan avtomatik emas: dars ko'chishi mumkin), bir guruhda bir sanada bitta.
  * Belgilash `attendance.mark` (ustoz o'z guruhida, admin ○ o'z filialida, rahbar), ko'rish `attendance.view`
  * (o'quvchi faqat o'zinikini). Davomat yozuvi o'chirilmaydi: tuzatish audit jurnaliga before/after bilan yoziladi.
+ * Qulf: dars sanasidan `attendance_lock_days` kun o'tgach (yoki `locked_at` qo'yilgan bo'lsa) dars qulflanadi; qulflangan darsni
+ * faqat `attendance.edit_past` egasi tuzatadi (alohida audit amali bilan).
  */
 @Injectable()
 export class LessonsService {
@@ -46,6 +53,10 @@ export class LessonsService {
         const group = await this.visibleGroup(tx, actor, await branchScope(tx, actor), groupId);
         if (group.archivedAt) throw conflict('GROUP_ARCHIVED', 'Guruh arxivlangan');
         if (input.lessonDate > today()) throw bad('LESSON_IN_FUTURE', "Kelajakdagi dars uchun davomat ochib bo'lmaydi");
+        // Qulf muddatidan eski sanaga dars ochish ham o'tmishni tuzatish hisoblanadi (qulfni aylanib o'tish yo'li yopiq)
+        if (daysBetween(input.lessonDate, today()) > (await this.lockDays(tx, actor.centerId!)) && !(await this.perms.hasIn(tx, actor, 'attendance.edit_past'))) {
+          throw new ForbiddenException({ code: 'LESSON_LOCKED', message: 'Bu sana qulflangan: eski sanaga dars ochish uchun attendance.edit_past ruxsati kerak' });
+        }
 
         let teacherId: string | null;
         if (actor.role === 'TEACHER') {
@@ -106,6 +117,7 @@ export class LessonsService {
     return this.db.withContext(this.ctx(actor), async (tx) => {
       if (!(await this.perms.hasIn(tx, actor, 'attendance.mark'))) throw forbidden();
       const before = await this.loadLesson(tx, actor, await branchScope(tx, actor), id);
+      const pastEdit = await this.assertEditable(tx, actor, before);
       if (patch.teacherId !== undefined && actor.role === 'TEACHER') throw forbidden("Dars ustozini faqat rahbar yoki admin o'zgartiradi");
       if (patch.teacherId) await this.assertGroupTeacher(tx, before.groupId, patch.teacherId);
       if (patch.status === 'CANCELLED' && before.status !== 'CANCELLED') {
@@ -117,7 +129,7 @@ export class LessonsService {
       if (patch.teacherId !== undefined) set.teacherId = patch.teacherId;
       if (patch.status !== undefined) set.status = patch.status;
       const [after] = await tx.update(lessons).set(set).where(eq(lessons.id, id)).returning();
-      await this.audit(tx, actor, client, 'lesson.edit', id, this.auditView(before), this.auditView(after!));
+      await this.audit(tx, actor, client, pastEdit ? 'lesson.edit_past' : 'lesson.edit', id, this.auditView(before), this.auditView(after!));
       return this.detail(tx, actor, after!);
     });
   }
@@ -133,6 +145,7 @@ export class LessonsService {
       if (!(await this.perms.hasIn(tx, actor, 'attendance.mark'))) throw forbidden();
       const lesson = await this.loadLesson(tx, actor, await branchScope(tx, actor), id);
       if (lesson.status !== 'HELD') throw conflict('LESSON_CANCELLED', 'Bekor qilingan darsga davomat belgilanmaydi');
+      const pastEdit = await this.assertEditable(tx, actor, lesson);
 
       const ids = input.records.map((r) => r.studentId);
       if (new Set(ids).size !== ids.length) throw bad('DUPLICATE_STUDENT', "Bir o'quvchi so'rovda ikki marta berilgan");
@@ -161,12 +174,127 @@ export class LessonsService {
       }
       const after: Record<string, { status: string; note: string | null }> = {};
       for (const r of input.records) after[r.studentId] = { status: r.status, note: r.note ?? null };
-      await this.audit(tx, actor, client, 'attendance.mark', id, { records: before }, { records: after });
+      await this.audit(tx, actor, client, pastEdit ? 'attendance.edit_past' : 'attendance.mark', id, { records: before }, { records: after });
       return this.detail(tx, actor, lesson);
     });
   }
 
+  // ------------------------------------------------- davomatni ko'rish va yig'ma
+
+  /** Davomat yozuvlari (qamrov bo'yicha): guruh, o'quvchi, sana oralig'i, holat. O'quvchi faqat o'zinikini ko'radi. */
+  listAttendance(actor: AuthUser, q: AttendanceQuery) {
+    return this.db.withContext(this.ctx(actor), async (tx) => {
+      if (!(await this.perms.hasIn(tx, actor, 'attendance.view'))) throw forbidden();
+      const scope = await branchScope(tx, actor);
+      const rows = await tx
+        .select({
+          lessonId: lessons.id,
+          lessonDate: lessons.lessonDate,
+          groupId: groups.id,
+          groupName: groups.name,
+          studentId: attendanceRecords.studentId,
+          studentName: users.fullName,
+          status: attendanceRecords.status,
+          note: attendanceRecords.note,
+          markedAt: attendanceRecords.markedAt,
+        })
+        .from(attendanceRecords)
+        .innerJoin(lessons, eq(lessons.id, attendanceRecords.lessonId))
+        .innerJoin(groups, eq(groups.id, lessons.groupId))
+        .innerJoin(users, eq(users.id, attendanceRecords.studentId))
+        .where(and(...this.filters(tx, actor, scope, q), q.status ? eq(attendanceRecords.status, q.status) : undefined))
+        .orderBy(desc(lessons.lessonDate), asc(users.fullName), asc(groups.name))
+        .limit(q.limit)
+        .offset(q.offset);
+      return { items: rows, limit: q.limit, offset: q.offset };
+    });
+  }
+
+  /**
+   * Yig'ma: jami holatlar; guruh ko'rsatilsa o'quvchilar kesimida, aks holda guruhlar kesimida (o'quvchi uchun faqat o'zi).
+   * `rate` = (kelgan + kech qolgan) / (kelgan + kech qolgan + kelmagan) * 100; sababli (EXCUSED) hisobga olinmaydi, maxraj 0 bo'lsa null.
+   */
+  attendanceSummary(actor: AuthUser, q: AttendanceQuery) {
+    return this.db.withContext(this.ctx(actor), async (tx) => {
+      if (!(await this.perms.hasIn(tx, actor, 'attendance.view'))) throw forbidden();
+      const scope = await branchScope(tx, actor);
+      const counts = {
+        present: sql<number>`count(*) filter (where ${attendanceRecords.status} = 'PRESENT')::int`,
+        absent: sql<number>`count(*) filter (where ${attendanceRecords.status} = 'ABSENT')::int`,
+        late: sql<number>`count(*) filter (where ${attendanceRecords.status} = 'LATE')::int`,
+        excused: sql<number>`count(*) filter (where ${attendanceRecords.status} = 'EXCUSED')::int`,
+      };
+      const where = and(...this.filters(tx, actor, scope, q));
+      const shape = <T extends { present: number; absent: number; late: number; excused: number }>(r: T) => ({
+        ...r,
+        total: r.present + r.absent + r.late + r.excused,
+        rate: rate(r.present, r.late, r.absent),
+      });
+      const [totals] = await tx
+        .select(counts)
+        .from(attendanceRecords)
+        .innerJoin(lessons, eq(lessons.id, attendanceRecords.lessonId))
+        .innerJoin(groups, eq(groups.id, lessons.groupId))
+        .where(where);
+      const result: Record<string, unknown> = { totals: shape(totals ?? { present: 0, absent: 0, late: 0, excused: 0 }) };
+      if (q.groupId && actor.role !== 'STUDENT') {
+        const rows = await tx
+          .select({ studentId: attendanceRecords.studentId, fullName: users.fullName, ...counts })
+          .from(attendanceRecords)
+          .innerJoin(lessons, eq(lessons.id, attendanceRecords.lessonId))
+          .innerJoin(groups, eq(groups.id, lessons.groupId))
+          .innerJoin(users, eq(users.id, attendanceRecords.studentId))
+          .where(where)
+          .groupBy(attendanceRecords.studentId, users.fullName)
+          .orderBy(asc(users.fullName));
+        result.byStudent = rows.map(shape);
+      } else {
+        const rows = await tx
+          .select({ groupId: groups.id, groupName: groups.name, ...counts })
+          .from(attendanceRecords)
+          .innerJoin(lessons, eq(lessons.id, attendanceRecords.lessonId))
+          .innerJoin(groups, eq(groups.id, lessons.groupId))
+          .where(where)
+          .groupBy(groups.id, groups.name)
+          .orderBy(asc(groups.name));
+        result.byGroup = rows.map(shape);
+      }
+      return result;
+    });
+  }
+
+  /** Umumiy shartlar: guruh qamrovi, o'quvchi faqat o'zi, guruh/o'quvchi/sana filtrlari. */
+  private filters(tx: Tx, actor: AuthUser, scope: BranchScope, q: AttendanceQuery): (SQL | undefined)[] {
+    return [
+      groupVisibility(tx, actor, scope),
+      actor.role === 'STUDENT' ? eq(attendanceRecords.studentId, actor.id) : q.studentId ? eq(attendanceRecords.studentId, q.studentId) : undefined,
+      q.groupId ? eq(groups.id, q.groupId) : undefined,
+      q.from ? gte(lessons.lessonDate, q.from) : undefined,
+      q.to ? lte(lessons.lessonDate, q.to) : undefined,
+    ];
+  }
+
   // ---------------------------------------------------------------- yordamchilar
+
+  /** Markazning davomat qulfi muddati (kun). */
+  private async lockDays(tx: Tx, centerId: string): Promise<number> {
+    const [c] = await tx.select({ settings: centers.settings }).from(centers).where(eq(centers.id, centerId));
+    const v = (c?.settings as { attendance_lock_days?: unknown } | undefined)?.attendance_lock_days;
+    return typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 365 ? v : DEFAULT_ATTENDANCE_LOCK_DAYS;
+  }
+
+  private isLocked(l: LessonRow, lockDays: number): boolean {
+    return l.lockedAt !== null || daysBetween(l.lessonDate, today()) > lockDays;
+  }
+
+  /** Qulflangan darsni faqat `attendance.edit_past` egasi o'zgartiradi. Qaytaradi: tuzatish qulflangan darsgami (audit amali uchun). */
+  private async assertEditable(tx: Tx, actor: AuthUser, lesson: LessonRow): Promise<boolean> {
+    if (!this.isLocked(lesson, await this.lockDays(tx, actor.centerId!))) return false;
+    if (!(await this.perms.hasIn(tx, actor, 'attendance.edit_past'))) {
+      throw new ForbiddenException({ code: 'LESSON_LOCKED', message: 'Dars qulflangan: tuzatish uchun attendance.edit_past ruxsati kerak' });
+    }
+    return true;
+  }
 
   /** Guruh qamrovda (rahbar hammasi, admin filiali, ustoz o'z guruhi, o'quvchi yozilgan guruhi); aks holda 404. */
   private async visibleGroup(tx: Tx, actor: AuthUser, scope: BranchScope, groupId: string): Promise<GroupRow> {
@@ -248,6 +376,7 @@ export class LessonsService {
   private async present(tx: Tx, actor: AuthUser, rows: LessonRow[], group: GroupRow) {
     if (!rows.length) return [];
     const ids = rows.map((l) => l.id);
+    const lockDays = await this.lockDays(tx, actor.centerId!);
     const teacherIds = [...new Set(rows.map((l) => l.teacherId).filter((x): x is string => !!x))];
     const [teachers, recs] = await Promise.all([
       teacherIds.length ? tx.select({ id: users.id, fullName: users.fullName }).from(users).where(inArray(users.id, teacherIds)) : Promise.resolve([]),
@@ -269,6 +398,7 @@ export class LessonsService {
         topic: l.topic,
         status: l.status,
         lockedAt: l.lockedAt,
+        locked: this.isLocked(l, lockDays),
         createdAt: l.createdAt,
         ...(actor.role === 'STUDENT'
           ? { myStatus: mine[0]?.status ?? null }

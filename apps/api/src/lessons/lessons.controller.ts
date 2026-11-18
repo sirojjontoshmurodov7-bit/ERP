@@ -6,7 +6,7 @@ import type { AuthUser } from '../auth/auth.types.js';
 import { CurrentUser, Roles } from '../auth/decorators.js';
 import { idParamSchema } from '../centers/centers.schemas.js';
 import { ZodPipe } from '../common/zod.pipe.js';
-import { createLessonSchema, listLessonsSchema, markAttendanceSchema, updateLessonSchema } from './lessons.schemas.js';
+import { attendanceQuerySchema, createLessonSchema, listLessonsSchema, markAttendanceSchema, updateLessonSchema } from './lessons.schemas.js';
 import { LessonsService } from './lessons.service.js';
 
 const clientOf = (req: Request): ClientInfo => ({ ip: req.ip, userAgent: req.get('user-agent') });
@@ -63,5 +63,18 @@ export class LessonsController {
     @Req() req: Request,
   ) {
     return this.lessons.markAttendance(actor, lessonId, body, clientOf(req));
+  }
+
+  @Roles('OWNER', 'ADMIN', 'TEACHER', 'STUDENT')
+  @Get('attendance')
+  listAttendance(@CurrentUser() actor: AuthUser, @Query(new ZodPipe(attendanceQuerySchema)) query: z.infer<typeof attendanceQuerySchema>) {
+    return this.lessons.listAttendance(actor, query);
+  }
+
+  /** Yig'ma: guruh berilsa o'quvchilar kesimida, aks holda guruhlar kesimida. */
+  @Roles('OWNER', 'ADMIN', 'TEACHER', 'STUDENT')
+  @Get('attendance/summary')
+  attendanceSummary(@CurrentUser() actor: AuthUser, @Query(new ZodPipe(attendanceQuerySchema)) query: z.infer<typeof attendanceQuerySchema>) {
+    return this.lessons.attendanceSummary(actor, query);
   }
 }

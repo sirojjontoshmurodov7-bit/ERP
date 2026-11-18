@@ -43,3 +43,15 @@ export const markAttendanceSchema = z.object({
     .max(300),
 });
 export type MarkAttendanceInput = z.infer<typeof markAttendanceSchema>;
+
+/** Davomat yozuvlari va yig'ma uchun umumiy filtrlar. */
+export const attendanceQuerySchema = z.object({
+  groupId: z.uuid().optional(),
+  studentId: z.uuid().optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+  status: z.enum(ATTENDANCE_STATUSES).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+export type AttendanceQuery = z.infer<typeof attendanceQuerySchema>;

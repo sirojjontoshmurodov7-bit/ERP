@@ -2,7 +2,7 @@
 import { PERMISSIONS } from '@erp/shared';
 import { type INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
 import { hashPassword } from '../src/auth/password.js';
@@ -107,6 +107,8 @@ describe('Darslar va davomat (PGlite, RLS yoqilgan)', () => {
 
     A = await newCenter('Davomat Markazi A');
     B = await newCenter('Davomat Markazi B');
+    // Bu to'plamdagi testlar eski sanalar bilan ishlaydi: qulf muddati uzaytirilgan (qulf alohida bloklarda sinaladi)
+    await db.execute(sql`update centers set settings = settings || '{"attendance_lock_days": 365}'::jsonb`);
     admin1 = await staff(A, 'ADMIN', 'Admin Bir', [A.main]);
     cashier1 = await staff(A, 'CASHIER', 'Kassir Bir', [A.main]);
     teacher1 = await staff(A, 'TEACHER', 'Ustoz Bir', [A.main]);
