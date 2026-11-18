@@ -8,3 +8,5 @@ coverage/
 graphify-out/cache/
 *.tsbuildinfo
 apps/api/.pg-data/
+.env*.local
+.hallmark/

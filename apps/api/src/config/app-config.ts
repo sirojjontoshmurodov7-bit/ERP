@@ -16,6 +16,11 @@ export interface AppConfig {
   telegramWebhookSecret?: string;
   /** Tashqi cron-trigger (POST /notifications/cron) sirri. */
   cronSecret?: string;
+  /**
+   * Express `trust proxy`: API oldidagi ishonchli proksilar (masalan web BFF) soni yoki ro'yxati. Berilmasa o'chiq
+   * (X-Forwarded-For e'tiborsiz). Faqat API'ga to'g'ridan-to'g'ri tashqaridan kirib bo'lmasa yoqing: aks holda IP soxtalanadi.
+   */
+  trustProxy?: boolean | number | string;
 }
 
 const UNIT_SECONDS = { s: 1, m: 60, h: 3600, d: 86400 } as const;
@@ -40,8 +45,17 @@ const envSchema = z.object({
   TELEGRAM_BOT_USERNAME: optionalEnv(z.string().min(3)),
   TELEGRAM_WEBHOOK_SECRET: optionalEnv(z.string().regex(/^[A-Za-z0-9_-]{16,256}$/)),
   CRON_SECRET: optionalEnv(z.string().min(16)),
+  TRUST_PROXY: optionalEnv(z.string().regex(/^(true|false|d{1,2}|[a-z0-9.:/, ]{1,200})$/i)),
   NODE_ENV: z.string().optional(),
 });
+
+export function parseTrustProxy(v: string | undefined): boolean | number | string | undefined {
+  if (v === undefined) return undefined;
+  if (/^true$/i.test(v)) return true;
+  if (/^false$/i.test(v)) return false;
+  if (/^d+$/.test(v)) return Number(v);
+  return v;
+}
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   const parsed = envSchema.safeParse(env);
@@ -66,6 +80,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     telegramBotUsername: e.TELEGRAM_BOT_USERNAME?.replace(/^@/, ''),
     telegramWebhookSecret: e.TELEGRAM_WEBHOOK_SECRET,
     cronSecret: e.CRON_SECRET,
+    trustProxy: parseTrustProxy(e.TRUST_PROXY),
   };
 }
 

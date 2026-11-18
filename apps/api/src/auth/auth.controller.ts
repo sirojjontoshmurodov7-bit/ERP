@@ -3,6 +3,7 @@ import type { Request } from 'express';
 import { z } from 'zod';
 import { ZodPipe } from '../common/zod.pipe.js';
 import type { AuthUser } from './auth.types.js';
+import { PermissionsService } from './permissions.service.js';
 import { AuthService, type ClientInfo } from './auth.service.js';
 import { AllowMustChangePassword, CurrentUser, Public } from './decorators.js';
 
@@ -20,7 +21,10 @@ const clientOf = (req: Request): ClientInfo => ({ ip: req.ip, userAgent: req.get
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly perms: PermissionsService,
+  ) {}
 
   @Public()
   @HttpCode(200)
@@ -56,8 +60,9 @@ export class AuthController {
 
   @AllowMustChangePassword()
   @Get('me')
-  me(@CurrentUser() user: AuthUser) {
+  async me(@CurrentUser() user: AuthUser) {
     const { sessionId: _sessionId, ...profile } = user;
-    return profile;
+    // UI menyulari uchun samarali ruxsatlar va markaz nomi (ruxsat baribir har so'rovda serverda tekshiriladi)
+    return { ...profile, permissions: await this.perms.effective(user), center: await this.auth.centerSummary(user) };
   }
 }

@@ -22,6 +22,24 @@ export class PermissionsService {
     return this.db.withContext(contextOf(user.centerId, user.role), (tx) => this.hasIn(tx, user, code));
   }
 
+  /** Foydalanuvchining barcha samarali ruxsat kodlari (UI menyulari uchun; tekshiruv baribir har so'rovda serverda). */
+  async effective(user: AuthUser): Promise<string[]> {
+    if (user.role === 'SUPER_ADMIN') return [...PLATFORM_ONLY_PERMISSIONS].sort();
+    if (!user.centerId) return [];
+    const centerId = user.centerId;
+    return this.db.withContext(contextOf(centerId, user.role), async (tx) => {
+      const allowed = new Map<string, boolean>();
+      const template = await tx
+        .select({ code: centerRolePermissions.permissionCode, allowed: centerRolePermissions.allowed })
+        .from(centerRolePermissions)
+        .where(and(eq(centerRolePermissions.centerId, centerId), eq(centerRolePermissions.role, user.role)));
+      for (const t of template) allowed.set(t.code, t.allowed);
+      const overrides = await tx.select({ code: userPermissions.permissionCode, allowed: userPermissions.allowed }).from(userPermissions).where(eq(userPermissions.userId, user.id));
+      for (const o of overrides) allowed.set(o.code, o.allowed);
+      return [...allowed].filter(([code, ok]) => ok && PERMISSION_CODES.has(code) && !PLATFORM_ONLY_PERMISSIONS.has(code)).map(([code]) => code).sort();
+    });
+  }
+
   /** `has` bilan bir xil qoida, lekin chaqiruvchining tranzaksiyasida (servis ichida ruxsat tekshirish uchun). */
   async hasIn(tx: Tx, user: AuthUser, code: string): Promise<boolean> {
     if (!PERMISSION_CODES.has(code)) throw new Error(`Unknown permission code: ${code}`);

@@ -159,6 +159,16 @@ export class AuthService {
     return outcome.pair;
   }
 
+  /** Markaz nomi va holati (UI sarlavhasi uchun); super admin uchun null. */
+  async centerSummary(user: AuthUser): Promise<{ id: string; name: string; status: string; trialEndsAt: Date | null } | null> {
+    if (!user.centerId) return null;
+    const centerId = user.centerId;
+    return this.db.withContext(contextOf(centerId, user.role), async (tx) => {
+      const [c] = await tx.select({ id: centers.id, name: centers.name, status: centers.status, trialEndsAt: centers.trialEndsAt }).from(centers).where(eq(centers.id, centerId));
+      return c ?? null;
+    });
+  }
+
   async logout(user: AuthUser, client: ClientInfo): Promise<void> {
     await this.db.withContext(contextOf(user.centerId, user.role), async (tx) => {
       await tx.update(sessions).set({ revokedAt: new Date() }).where(and(eq(sessions.id, user.sessionId), isNull(sessions.revokedAt)));

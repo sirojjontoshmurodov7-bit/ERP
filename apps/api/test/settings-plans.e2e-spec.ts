@@ -110,6 +110,28 @@ describe('Sozlamalar, tariflar, qulf, filtrlar, login cheklovi (PGlite, RLS yoqi
     await pg?.close();
   });
 
+  describe('/auth/me (UI uchun)', () => {
+    it("samarali ruxsatlar (rol shabloni + foydalanuvchi istisnosi) va markaz; super admin platforma ruxsatlari; sessionId chiqmaydi", async () => {
+      const me = (await A.owner.get('/auth/me').expect(200)).body;
+      expect(me).toMatchObject({ role: 'OWNER', center: { id: A.id, name: 'Sozlama Markazi A', status: 'TRIAL' } });
+      expect(me.permissions).toEqual(expect.arrayContaining(['branch.manage', 'payroll.approve', 'notification.send']));
+      expect(me.permissions).not.toContain('center.create');
+      expect(me).not.toHaveProperty('sessionId');
+      const before = (await admin1.api.get('/auth/me').expect(200)).body.permissions as string[];
+      expect(before).toContain('student.create');
+      expect(before).not.toContain('payment.create'); // ○ yoqilmagan
+      await A.owner.put(`/permissions/users/${admin1.id}`, { permissions: { 'payment.create': true } }).expect(200);
+      const after = (await admin1.api.get('/auth/me').expect(200)).body.permissions as string[];
+      expect(after).toContain('payment.create');
+      expect(after).toContain('student.create'); // ✔ kodlar rol bilan keladi (sozlanmaydi)
+      await A.owner.put(`/permissions/users/${admin1.id}`, { permissions: { 'payment.create': null } }).expect(200);
+      const rootMe = (await root.get('/auth/me').expect(200)).body;
+      expect(rootMe).toMatchObject({ role: 'SUPER_ADMIN', center: null });
+      expect(rootMe.permissions).toEqual(expect.arrayContaining(['center.create', 'plan.manage']));
+      expect(rootMe.permissions).not.toContain('student.view');
+    });
+  });
+
   describe('markaz sozlamalari', () => {
     it("sukut qiymatlar, reja ma'lumoti; rahbar va admin o'qiydi, boshqalar 403, tokensiz 401", async () => {
       const res = await A.owner.get('/center/settings').expect(200);
