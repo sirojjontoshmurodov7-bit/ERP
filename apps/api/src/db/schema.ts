@@ -680,6 +680,98 @@ export const importJobs = pgTable(
   ],
 );
 
+// --- Vazifa va reyting (ERD 2.2). Fayl yuklash yo'q: biriktirmalar havola ro'yxati [{ name, url }] (jsonb). ---
+export const assignments = pgTable(
+  'assignments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    groupId: uuid('group_id').notNull(),
+    teacherId: uuid('teacher_id').notNull(), // yaratgan ustoz
+    title: text('title').notNull(),
+    description: text('description'),
+    attachments: jsonb('attachments').notNull().default(sql`'[]'::jsonb`),
+    dueAt: ts('due_at'),
+    maxScore: integer('max_score').notNull().default(100),
+    archivedAt: ts('archived_at'),
+    createdAt: createdAt(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ name: 'assignments_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    foreignKey({ name: 'assignments_teacher_center_fk', columns: [t.teacherId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    unique('assignments_id_center_uq').on(t.id, t.centerId),
+    index('assignments_group_idx').on(t.groupId),
+    index('assignments_center_idx').on(t.centerId),
+    check('assignments_title_chk', sql`length(btrim(${t.title})) between 1 and 200`),
+    check('assignments_max_score_chk', sql`${t.maxScore} between 1 and 1000`),
+  ],
+);
+
+export const submissions = pgTable(
+  'submissions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    assignmentId: uuid('assignment_id').notNull(),
+    studentId: uuid('student_id').notNull(),
+    text: text('text'),
+    files: jsonb('files').notNull().default(sql`'[]'::jsonb`),
+    submittedAt: ts('submitted_at').notNull().defaultNow(),
+    score: integer('score'),
+    feedback: text('feedback'),
+    gradedBy: uuid('graded_by').references(() => users.id),
+    gradedAt: ts('graded_at'),
+  },
+  (t) => [
+    foreignKey({ name: 'submissions_assignment_center_fk', columns: [t.assignmentId, t.centerId], foreignColumns: [assignments.id, assignments.centerId] }),
+    foreignKey({ name: 'submissions_student_center_fk', columns: [t.studentId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    unique('submissions_id_center_uq').on(t.id, t.centerId),
+    uniqueIndex('submissions_assignment_student_uq').on(t.assignmentId, t.studentId), // bitta o'quvchi bitta vazifaga bitta topshiriq
+    index('submissions_student_idx').on(t.studentId),
+    index('submissions_center_idx').on(t.centerId),
+    check('submissions_score_chk', sql`${t.score} is null or ${t.score} >= 0`),
+    check('submissions_graded_chk', sql`(${t.score} is null) = (${t.gradedAt} is null)`),
+  ],
+);
+
+// Reyting voqealari: append-only (tuzatish teskari/delta yozuv bilan). Davomat balli saqlanmaydi, so'rovda attendance_records'dan hisoblanadi.
+export const ratingPoints = pgTable(
+  'rating_points',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    branchId: uuid('branch_id').notNull(), // guruh filiali (voqea paytida)
+    groupId: uuid('group_id').notNull(),
+    studentId: uuid('student_id').notNull(),
+    source: text('source').notNull(), // HOMEWORK | MANUAL
+    sourceId: uuid('source_id'), // HOMEWORK: submission id
+    points: integer('points').notNull(),
+    reason: text('reason'), // MANUAL uchun majburiy
+    createdBy: uuid('created_by').references(() => users.id),
+    at: ts('at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ name: 'rating_points_branch_center_fk', columns: [t.branchId, t.centerId], foreignColumns: [branches.id, branches.centerId] }),
+    foreignKey({ name: 'rating_points_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    foreignKey({ name: 'rating_points_student_center_fk', columns: [t.studentId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    index('rating_points_student_idx').on(t.studentId),
+    index('rating_points_group_at_idx').on(t.groupId, t.at),
+    index('rating_points_center_at_idx').on(t.centerId, t.at),
+    index('rating_points_source_idx').on(t.sourceId),
+    check('rating_points_source_chk', sql`${t.source} in ('HOMEWORK','MANUAL')`),
+    check('rating_points_points_chk', sql`${t.points} <> 0 and abs(${t.points}) <= 1000`),
+    check('rating_points_manual_chk', sql`${t.source} <> 'MANUAL' or (${t.reason} is not null and length(btrim(${t.reason})) > 0)`),
+    check('rating_points_homework_chk', sql`${t.source} <> 'HOMEWORK' or ${t.sourceId} is not null`),
+  ],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

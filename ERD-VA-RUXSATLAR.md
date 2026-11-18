@@ -269,9 +269,10 @@ erDiagram
         uuid teacher_id FK
         string title
         string description
-        jsonb attachments
+        jsonb attachments "[{name, url}] havolalar (fayl yuklash yo'q)"
         timestamptz due_at
-        int max_score
+        int max_score "1-1000, sukut 100"
+        timestamptz archived_at
     }
     submissions {
         uuid id PK
@@ -291,9 +292,11 @@ erDiagram
         uuid branch_id FK
         uuid group_id FK
         uuid student_id FK
-        string source "HOMEWORK|ATTENDANCE|MANUAL"
-        uuid source_id
-        int points
+        string source "HOMEWORK|MANUAL (davomat balli saqlanmaydi)"
+        uuid source_id "HOMEWORK: submission id"
+        int points "HOMEWORK: baho farqi; MANUAL: +/-"
+        string reason "MANUAL uchun majburiy"
+        uuid created_by FK
         timestamptz at
     }
 ```
@@ -392,6 +395,9 @@ erDiagram
 - **Moliyaviy hisobot (implementatsiya, 17-qadam):** kassa asosida, faqat o'qiydi (SQL agregatsiya), `finance.report`. Tushum = to'lov sanasi (Asia/Tashkent) bo'yicha sof to'lovlar: qaytarish yozuvi o'z kunida manfiy. Xarajat = `ACTIVE` xarajatlar `spent_on` bo'yicha. Maosh to'lovlari (sof) faqat rahbar va filial filtrisiz ko'rinadi (filialga bog'lanmagan). Sof natija = tushum − xarajat − maosh to'lovi. Guruhlar bo'yicha tushum — oy ichida hisoblarga taqsimlangan sof summa; `unallocated` = tushum − guruh tushumlari (avans o'zgarishi), faqat butun markaz uchun. Qamrov: rahbar hammasi, kassir ✔/admin ○ faqat o'z filiallari (qamrovdan tashqari `branchId` bo'sh natija beradi).
 - **Umumiy hisobotlar (implementatsiya, 18-qadam):** `report.overview` va `report.branch_compare` faqat rahbarda (–: boshqa rolga berib bo'lmaydi), faqat o'qiydi (SQL agregatsiya). Atributsiya: o'quvchi, guruh, yozilish, davomat va qarz — guruh filialiga; tushum — to'lov qabul qilingan filialga; xarajat — o'z filialiga; o'quvchi soni `user_branches` bo'yicha (ikki filialli o'quvchi ikkala filialda, markaz jamisida bir marta). Qarz = muddati o'tgan (`bugun > due_date + grace_days`) hisoblar qoldig'i. Davomat: (kelgan + kech qolgan) / (kelgan + kech qolgan + kelmagan), sababli hisobga olinmaydi.
 - **Import (implementatsiya, 19-qadam):** `import_jobs` append-only (faqat SELECT/INSERT). Hozir faqat `STUDENTS` (jadvalda `GROUPS`, `PAYMENTS` turlari rezerv). Fayl saqlanmaydi (`file_url` o'rniga `file_name`); hisobotda qiymat yo'q. `import.run`: rahbar ✔, admin ○ o'z filialida. Sukut: bitta xato bo'lsa hech narsa yaratilmaydi (`REJECTED`); `skipInvalid` bilan to'g'ri qatorlar yaratiladi. Vaqtinchalik parollar faqat javobda (`no-store`), auditga tushmaydi.
+- **Vazifa va reyting (implementatsiya, 20-qadam):** vazifani faqat ustoz o'z amaldagi guruhida yaratadi, tahrirlaydi, arxivlaydi va baholaydi (`homework.create|grade`; rahbar/admin faqat ko'radi). O'quvchi faqat faol yozilishda topshiradi (muzlatilgan 409), baholangunga qadar qayta topshirishi mumkin; muddatdan keyingi topshiriq `late` belgilanadi, rad etilmaydi. Baholangan topshiriq o'zgarmaydi; vazifaning maksimal balli baholar bo'lgach o'zgarmaydi. O'quvchi faqat o'z topshirig'ini ko'radi.
+- **Reyting balli:** vazifa bahosi 10 ballik shkalada (`round(10 * baho / maksimal)`), qayta baholashda `rating_points` ga faqat farq yoziladi; qo'lda ball `rating.adjust` (rahbar, ustoz o'z guruhida; sabab majburiy, +/- 1000 gacha); **davomat balli saqlanmaydi** (ERD'dagi `ATTENDANCE` manbasi o'rniga): so'rovda `attendance_records` dan hisoblanadi: kelgan 2, kech qolgan 1, kelmagan va sababli 0 (davomat tuzatilsa reyting o'zi to'g'rilanadi). `rating_points` append-only.
+- **Reyting kesimlari:** guruh, filial (voqea guruh filialiga; ikki filialli o'quvchi har filialda alohida), markaz; davr oy (sukut joriy oy) yoki umumiy. Faqat faol o'quvchilar, teng ball bir xil o'rin. Ko'rish: rahbar hammasi; admin faqat o'z filiallari (markaz kesimi yo'q); ustoz faqat o'z guruhi; o'quvchi o'z guruhi, o'z filiali va markaz (to'liq ism, filiallar va o'z o'rni `my`), ERD 6.5.
 - **Chek raqami:** markaz bo'yicha `max + 1` (markaz kaliti bo'yicha advisory lock ichida), `(center_id, receipt_no)` unikal. Qaytarish yozuvi ham o'z raqamini oladi. Usullar hozircha `CASH|CARD|TRANSFER`; `CLICK|PAYME` (`external_txn_id`) provayder qo'shilganda ochiladi.
 
 ### 2.4. Maosh, bildirishnoma, import

@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795040208.7636247,
-    "seen": 1795040224.5058484,
-    "ast_hash": "d3afe69d4af15b318fb7a9f600581695",
+    "mtime": 1795040879.3015761,
+    "seen": 1795040891.4555266,
+    "ast_hash": "d0a736393605dcd91eda9c7a25923d7d",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,9 +48,9 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795033770.739862,
-    "seen": 1795040224.485374,
-    "ast_hash": "5c09693dcc33aa7264f41f2c1eaff85a",
+    "mtime": 1795040562.3009608,
+    "seen": 1795040891.42837,
+    "ast_hash": "c5af6975eb4b8acdfe392e9222024132",
     "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
@@ -276,9 +276,9 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795033507.4677846,
-    "seen": 1795040224.493419,
-    "ast_hash": "203d7b36413bfc22bb93508d77014fb4",
+    "mtime": 1795040439.152392,
+    "seen": 1795040891.439028,
+    "ast_hash": "a5a53a87ab0e65ee7b13861a1c086ec3",
     "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
@@ -306,9 +306,9 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795033788.9516742,
-    "seen": 1795040224.5031605,
-    "ast_hash": "05924ef1a45fa94e2faa754c062fe4d2",
+    "mtime": 1795040612.3791103,
+    "seen": 1795040891.451944,
+    "ast_hash": "fd298a458ba1fa592c2b947efe40983c",
     "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795040208.7636247,
-    "seen": 1795040224.5058503,
-    "ast_hash": "0151e6db9e7c235b6048d8e8c8de4c22",
+    "mtime": 1795040879.303576,
+    "seen": 1795040891.4555295,
+    "ast_hash": "e2747865f1453dff4ece0c1ba68789e1",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -1011,6 +1011,48 @@
     "mtime": 1795036877.6152725,
     "seen": 1795040224.5022857,
     "ast_hash": "6b2820b48be6557f4ed0f4bb8eea328c",
+    "semantic_hash": ""
+  },
+  "apps/api/src/academic/academic.controller.ts": {
+    "mtime": 1795040571.0331323,
+    "seen": 1795040891.4279764,
+    "ast_hash": "c4ba1df3cfb9959ca3e50a0dbdbab3f5",
+    "semantic_hash": ""
+  },
+  "apps/api/src/academic/academic.module.ts": {
+    "mtime": 1795040562.1342072,
+    "seen": 1795040891.4279802,
+    "ast_hash": "bc29165c59f0fae3f37bfbd85c0b7283",
+    "semantic_hash": ""
+  },
+  "apps/api/src/academic/academic.schemas.ts": {
+    "mtime": 1795040477.8822873,
+    "seen": 1795040891.427987,
+    "ast_hash": "b7e2561fb378fed1c89ddb1118eee81a",
+    "semantic_hash": ""
+  },
+  "apps/api/src/academic/assignments.service.ts": {
+    "mtime": 1795040514.205678,
+    "seen": 1795040891.4279888,
+    "ast_hash": "a87da5c3ca4592c3c925b52747250a0a",
+    "semantic_hash": ""
+  },
+  "apps/api/src/academic/homework-points.spec.ts": {
+    "mtime": 1795040742.194359,
+    "seen": 1795040891.4279904,
+    "ast_hash": "a48725f8483b5431b032a98a6c986a56",
+    "semantic_hash": ""
+  },
+  "apps/api/src/academic/ratings.service.ts": {
+    "mtime": 1795040562.0385225,
+    "seen": 1795040891.4279926,
+    "ast_hash": "c7453c7af97c2d91a4d6e09c96b067a6",
+    "semantic_hash": ""
+  },
+  "apps/api/test/academic.e2e-spec.ts": {
+    "mtime": 1795040879.2995741,
+    "seen": 1795040891.4486144,
+    "ast_hash": "2991c3ecc1d084a4f1db63c3eec5ae98",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

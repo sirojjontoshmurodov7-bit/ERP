@@ -37,6 +37,9 @@ const TENANT_TABLES = [
   'payroll_payouts',
   'expenses',
   'import_jobs',
+  'assignments',
+  'submissions',
+  'rating_points',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -52,6 +55,7 @@ interface Fixture {
   payment: string;
   payrollRule: string;
   payrollPeriod: string;
+  assignment: string;
   lesson: string;
   branch1: string;
   branch2: string;
@@ -148,6 +152,13 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into expenses (center_id, branch_id, category, amount, spent_on) values (${f.center}, ${f.branch1}, 'Ijara', 1000, '2026-02-02')`;
       case 'import_jobs':
         return sql`insert into import_jobs (center_id, type, file_name, status, total_rows, report) values (${f.center}, 'STUDENTS', 'a.xlsx', 'DONE', 3, '{}'::jsonb)`;
+      case 'assignments':
+        return sql`insert into assignments (center_id, group_id, teacher_id, title) values (${f.center}, ${f.group}, ${f.admin}, ${'vazifa-' + n})`;
+      case 'submissions':
+        return sql`with a as (insert into assignments (center_id, group_id, teacher_id, title) values (${f.center}, ${f.group}, ${f.admin}, ${'sub-' + n}) returning id)
+                   insert into submissions (center_id, assignment_id, student_id, text) select ${f.center}::uuid, id, ${f.admin}::uuid, 'javob' from a`;
+      case 'rating_points':
+        return sql`insert into rating_points (center_id, branch_id, group_id, student_id, source, points, reason) values (${f.center}, ${f.branch1}, ${f.group}, ${f.admin}, 'MANUAL', 5, 'sinov')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -199,6 +210,9 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.payrollPayouts).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 300, method: 'CASH' });
     await db.insert(s.expenses).values({ centerId: c!.id, branchId: b1!.id, category: 'Ijara', amount: 2000, spentOn: '2026-01-05' });
     await db.insert(s.importJobs).values({ centerId: c!.id, type: 'STUDENTS', fileName: 'seed.xlsx', status: 'DONE', totalRows: 2, createdRows: 2, report: { errors: [] } });
+    const [asg] = await db.insert(s.assignments).values({ centerId: c!.id, groupId: group!.id, teacherId: admin!.id, title: 'Seed vazifa' }).returning();
+    await db.insert(s.submissions).values({ centerId: c!.id, assignmentId: asg!.id, studentId: admin!.id, text: 'seed' });
+    await db.insert(s.ratingPoints).values({ centerId: c!.id, branchId: b1!.id, groupId: group!.id, studentId: admin!.id, source: 'MANUAL', points: 3, reason: 'seed' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -206,7 +220,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
     await db.insert(s.auditLogs).values({ centerId: c!.id, actorId: owner!.id, action: 'seed', entity: 'user' });
-    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, charge: charge!.id, payment: payment!.id, payrollRule: prule!.id, payrollPeriod: pperiod!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
+    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, charge: charge!.id, payment: payment!.id, payrollRule: prule!.id, payrollPeriod: pperiod!.id, assignment: asg!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
   }
 
   beforeAll(async () => {
@@ -450,6 +464,44 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, sql`delete from payment_allocations where payment_id = ${A.payment}`))).toMatch(/permission denied/);
       expect(await failure(q(ctxA, sql`update payments set status = 'REVERSED' where id = ${A.payment}`))).toBeNull();
       expect(await failure(q(ctxA, sql`update payments set status = 'CONFIRMED' where id = ${A.payment}`))).toMatch(/append-only/);
+    });
+
+    it("vazifa va reyting: kross-markaz havola, bazaviy qoidalar, append-only", async () => {
+      // boshqa markaz guruhi/ustozi/vazifasi/o'quvchisi
+      expect(await failure(q(ctxA, sql`insert into assignments (center_id, group_id, teacher_id, title) values (${A.center}, ${B.group}, ${A.admin}, 'x')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into assignments (center_id, group_id, teacher_id, title) values (${A.center}, ${A.group}, ${B.admin}, 'x')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into submissions (center_id, assignment_id, student_id) values (${A.center}, ${B.assignment}, ${A.admin})`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into submissions (center_id, assignment_id, student_id) values (${A.center}, ${A.assignment}, ${B.admin})`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into rating_points (center_id, branch_id, group_id, student_id, source, points, reason) values (${A.center}, ${B.branch1}, ${A.group}, ${A.admin}, 'MANUAL', 1, 'x')`))).toMatch(/foreign key/);
+      expect(await failure(q(ctxA, sql`insert into rating_points (center_id, branch_id, group_id, student_id, source, points, reason) values (${A.center}, ${A.branch1}, ${B.group}, ${A.admin}, 'MANUAL', 1, 'x')`))).toMatch(/foreign key/);
+      // vazifa qoidalari
+      const asg = (cols: string, vals: unknown[]) => sql`insert into assignments (center_id, group_id, teacher_id, ${sql.raw(cols)}) values (${A.center}, ${A.group}, ${A.admin}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      expect(await failure(q(ctxA, asg('title', ['   '])))).toMatch(/assignments_title_chk/);
+      expect(await failure(q(ctxA, asg('title', ['x'.repeat(201)])))).toMatch(/assignments_title_chk/);
+      expect(await failure(q(ctxA, asg('title, max_score', ['x', 0])))).toMatch(/assignments_max_score_chk/);
+      expect(await failure(q(ctxA, asg('title, max_score', ['x', 1001])))).toMatch(/assignments_max_score_chk/);
+      // topshiriq: bitta o'quvchi bitta vazifaga bitta, baho va vaqt birga
+      const sub = (cols: string, vals: unknown[]) => sql`insert into submissions (center_id, assignment_id, student_id, ${sql.raw(cols)}) values (${A.center}, ${A.assignment}, ${A.admin}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      expect(await failure(q(ctxA, sub('text', ['takror'])))).toMatch(/submissions_assignment_student_uq|duplicate/);
+      expect(await failure(q(ctxA, sub('score', [5])))).toMatch(/submissions_graded_chk|submissions_assignment_student_uq|duplicate/);
+      const [fresh] = await q<{ id: string }>(ctxA, sql`insert into assignments (center_id, group_id, teacher_id, title) values (${A.center}, ${A.group}, ${A.admin}, 'yangi') returning id`);
+      const ins = (cols: string, vals: unknown[]) => sql`insert into submissions (center_id, assignment_id, student_id, ${sql.raw(cols)}) values (${A.center}, ${fresh!.id}, ${A.owner}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      expect(await failure(q(ctxA, ins('score', [5])))).toMatch(/submissions_graded_chk/); // baho bor, vaqt yo'q
+      expect(await failure(q(ctxA, ins('score, graded_at', [-1, new Date().toISOString()])))).toMatch(/submissions_score_chk/);
+      expect(await failure(q(ctxA, ins('score, graded_at', [5, new Date().toISOString()])))).toBeNull();
+      expect(await failure(q(ctxA, sql`delete from assignments where id = ${fresh!.id}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from submissions where assignment_id = ${fresh!.id}`))).toMatch(/permission denied/);
+      // reyting voqealari
+      const rp = (cols: string, vals: unknown[]) => sql`insert into rating_points (center_id, branch_id, group_id, student_id, ${sql.raw(cols)}) values (${A.center}, ${A.branch1}, ${A.group}, ${A.admin}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)})`;
+      expect(await failure(q(ctxA, rp('source, points, reason', ['WEIRD', 1, 'x'])))).toMatch(/rating_points_source_chk/);
+      expect(await failure(q(ctxA, rp('source, points, reason', ['MANUAL', 0, 'x'])))).toMatch(/rating_points_points_chk/);
+      expect(await failure(q(ctxA, rp('source, points, reason', ['MANUAL', 1001, 'x'])))).toMatch(/rating_points_points_chk/);
+      expect(await failure(q(ctxA, rp('source, points', ['MANUAL', 1])))).toMatch(/rating_points_manual_chk/); // sabab yo'q
+      expect(await failure(q(ctxA, rp('source, points, reason', ['MANUAL', 1, '  '])))).toMatch(/rating_points_manual_chk/);
+      expect(await failure(q(ctxA, rp('source, points', ['HOMEWORK', 2])))).toMatch(/rating_points_homework_chk/); // source_id yo'q
+      expect(await failure(q(ctxA, rp('source, points, reason', ['MANUAL', -7, 'jarima'])))).toBeNull();
+      expect(await failure(q(ctxA, sql`update rating_points set points = 100 where center_id = ${A.center}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from rating_points where center_id = ${A.center}`))).toMatch(/permission denied/);
     });
 
     it("import_jobs: bazaviy qoidalar va append-only (faqat INSERT)", async () => {
