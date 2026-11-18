@@ -24,10 +24,10 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 17. Xarajat va moliyaviy hisobotlar | tayyor | `apps/api/src/finance/`, `drizzle/0012`, `test/finance.e2e-spec.ts` |
 | 18. Umumiy hisobotlar (`/reports/overview`, `/reports/branches`) | tayyor | `apps/api/src/reports/`, `test/reports.e2e-spec.ts` |
 | 19. Excel/CSV import (o'quvchilar) (`/imports`) | tayyor | `apps/api/src/imports/`, `common/spreadsheet.ts`, `drizzle/0013`, `test/imports.e2e-spec.ts` |
-| 20. Vazifa va reyting (`/assignments`, `/ratings`) | tayyor (commitsiz) | `apps/api/src/academic/`, `drizzle/0014`, `test/academic.e2e-spec.ts` |
+| 20. Vazifa va reyting (`/assignments`, `/ratings`) | tayyor | `apps/api/src/academic/`, `drizzle/0014`, `test/academic.e2e-spec.ts` |
 | **21. Telegram bot va bildirishnomalar** | **keyingi** | hali yozilmagan (`notification_log`, `telegram.settings`, `notification.send`) |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`. 20-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`. Ish daraxti toza; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -203,7 +203,7 @@ Qoidalar manbasi: ERD 2.4 ("Import (implementatsiya, 19-qadam)").
 - **Ochiq:** `GROUPS` va `PAYMENTS` importi (turlar jadvalda rezerv); eski .xls; ko'p varaq; maxsus login ustuni; import natijasini (loginlar/parollar) Excel/PDF qilib chiqarish; 300 dan ko'p qator (fon jarayoni bilan).
 - Test: `test/imports.e2e-spec.ts` (13 ta) + `src/common/spreadsheet.spec.ts` (9) + `src/imports/student-import.spec.ts` (7) + izolyatsiya testida `import_jobs`. Umumiy 450 e2e + 61 unit.
 
-### 20-qadam: vazifa va reyting (tayyor, commitsiz)
+### 20-qadam: vazifa va reyting (tayyor)
 Qoidalar manbasi: ERD 2.2 va 3.3 ("Vazifa va reyting (implementatsiya, 20-qadam)").
 - **Migratsiya `0014`:** `assignments` (`group_id`, `teacher_id`, `title` 1-200, `description`, `attachments` jsonb [{name, url}], `due_at`, `max_score` 1-1000, `archived_at`), `submissions` (bitta o'quvchi bitta vazifaga bitta: unikal indeks; `score` va `graded_at` birga), `rating_points` (bigserial, `branch_id`, `group_id`, `student_id`, `source` HOMEWORK|MANUAL, `source_id`, `points` != 0, |points| <= 1000, `reason`). RLS, kompozit FK, `TENANT_TABLES` da. `rating_points`: faqat SELECT/INSERT (append-only); vazifa va topshiriq: DELETE huquqi yo'q (vazifa arxivlanadi).
 - **Vazifa** (`academic/assignments.service.ts`): `POST /groups/:groupId/assignments`, `GET /assignments` (`groupId`, `status` open|overdue, `includeArchived` (xodim), sahifalash), `GET /assignments/:id`, `PATCH /assignments/:id`, `POST /assignments/:id/archive`, `POST /assignments/:id/submission` (o'quvchi: `{text?, files?}`), `POST /assignments/:id/submissions/:studentId/grade` (`{score, feedback?}`). Biriktirma faqat http(s) havola (<= 10), fayl yuklash yo'q. Yaratish/tahrirlash/arxivlash/baholash faqat ustoz o'z amaldagi guruhida (rahbar va admin faqat ko'radi; o'z guruhi bo'lmasa 404). Xatolar: 409 `SCORE_EXCEEDS_MAX`, `HAS_GRADES`, `ALREADY_GRADED`, `ENROLLMENT_NOT_ACTIVE`, `ASSIGNMENT_ARCHIVED`, `ALREADY_ARCHIVED`; 404 `SUBMISSION_NOT_FOUND`. Ko'rish: xodimga hamma topshiriqlar va sanoq (`students/submitted/graded`), o'quvchiga faqat o'zining topshirig'i (`mySubmission` / `submission`).
@@ -211,6 +211,15 @@ Qoidalar manbasi: ERD 2.2 va 3.3 ("Vazifa va reyting (implementatsiya, 20-qadam)
 - **Audit:** `assignment.create|edit|archive`, `homework.grade`, `rating.adjust`.
 - **Ochiq:** fayl yuklash (hozir faqat havola; `assets`/blob saqlash keyin); vazifa eslatmalari (Telegram bot bosqichida); muddatdan keyin topshirishni taqiqlash sozlamasi; markaz sozlamasi "boshqa filial ismlarini yashirish"; reytingga mukofot/yutuqlar (badge); davomat ballini markaz sozlamasidan o'zgartirish; katta markazda reyting agregatsiyasi uchun indeks/kesh.
 - Test: `test/academic.e2e-spec.ts` (16 ta: vazifa yaratish/ko'rish qamrovi, topshirish, baholash va ball farqi, qo'lda ball, davomat balli, guruh/filial/markaz reytingi, teng o'rinlar, davr, ruxsat, o'quvchi voqealari, arxiv) + `src/academic/homework-points.spec.ts` (1) + izolyatsiya testida 3 jadval va bazaviy qoidalar. Umumiy 482 e2e + 62 unit.
+
+## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
+Backend asosiy funksiyalar (1-20) tayyor. Qolgani, tavsiya etilgan tartibda:
+1. **21-qadam: Telegram bot va bildirishnomalar** (`notification_log`, `telegram.settings`, `notification.send`; `users.telegram_chat_id` ustuni bor): grammY yoki Telegraf; o'quvchini/ota-onani bog'lash (bir martalik kod), qarz eslatmasi, dars va vazifa eslatmalari, maosh xabari. Cron yo'q: bepul hostingda fon jarayoni kafolatsiz, shuning uchun yuborish "so'rov bilan" yoki tashqi cron-trigger bilan.
+2. **Kichik backend bo'shliqlari** (hammasi migratsiyasiz yoki kichik): markaz sozlamalari endpointi (`centers.settings`: `attendance_lock_days`, `join_proration`, `grace_days`, til; hozir faqat bazada), tariflar (`plans`) yaratish va markazga biriktirish (super admin, SaaS minimum), davomatni qo'lda qulflash/ochish, rahbar uchun guruh/o'quvchi ro'yxatidagi qo'shimcha filtrlar, login cheklovini umumiy xotiraga (baza) ko'chirish (ko'p nusxa).
+3. **Haqiqiy Postgres'da sinash:** hozir hamma test PGlite'da; `db:migrate`, `db:seed`, `db:create-super-admin` va `erp_app` roli haqiqiy bazada hali sinalmagan (Docker uchun WSL kerak yoki Neon bepul bazasi). Deploydan oldin majburiy.
+4. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
+5. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
+Kod konvensiyalari yangi chat uchun: migratsiya = drizzle-kit (jadvallar) + qo'lda SQL (RLS, trigger, huquq); har yangi tenant jadvali `TENANT_TABLES` ga va izolyatsiya testiga qo'shiladi; pul yozuvi append-only; yangi ruxsat kodi `packages/shared` da; har qadam oxirida testlar, lint, build, PROGRESS.md + ERD, `graphify update .`.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).
