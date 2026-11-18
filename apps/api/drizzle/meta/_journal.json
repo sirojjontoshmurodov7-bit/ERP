@@ -57,6 +57,13 @@
       "when": 1795025935933,
       "tag": "0007_enrollments",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1795026537100,
+      "tag": "0008_lessons_attendance",
+      "breakpoints": true
     }
   ]
 }

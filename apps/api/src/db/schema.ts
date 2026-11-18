@@ -343,6 +343,58 @@ export const enrollmentDiscounts = pgTable(
   ],
 );
 
+// --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
+export const lessons = pgTable(
+  'lessons',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    groupId: uuid('group_id').notNull(),
+    lessonDate: date('lesson_date', { mode: 'string' }).notNull(),
+    teacherId: uuid('teacher_id'), // darsni o'tgan ustoz (NULL = belgilanmagan)
+    topic: text('topic'),
+    status: text('status').notNull().default('HELD'), // HELD | CANCELLED
+    lockedAt: ts('locked_at'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ name: 'lessons_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    foreignKey({ name: 'lessons_teacher_center_fk', columns: [t.teacherId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    unique('lessons_id_center_uq').on(t.id, t.centerId),
+    uniqueIndex('lessons_group_date_uq').on(t.groupId, t.lessonDate), // bir guruhda bir sanada bitta dars
+    index('lessons_center_idx').on(t.centerId),
+    index('lessons_teacher_idx').on(t.teacherId),
+    check('lessons_status_chk', sql`${t.status} in ('HELD','CANCELLED')`),
+  ],
+);
+
+export const attendanceRecords = pgTable(
+  'attendance_records',
+  {
+    lessonId: uuid('lesson_id').notNull(),
+    studentId: uuid('student_id').notNull(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    status: text('status').notNull(), // PRESENT | ABSENT | LATE | EXCUSED
+    note: text('note'),
+    markedBy: uuid('marked_by').references(() => users.id),
+    markedAt: ts('marked_at').notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.lessonId, t.studentId] }),
+    foreignKey({ name: 'attendance_lesson_center_fk', columns: [t.lessonId, t.centerId], foreignColumns: [lessons.id, lessons.centerId] }),
+    foreignKey({ name: 'attendance_student_center_fk', columns: [t.studentId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    index('attendance_student_idx').on(t.studentId),
+    index('attendance_center_idx').on(t.centerId),
+    check('attendance_status_chk', sql`${t.status} in ('PRESENT','ABSENT','LATE','EXCUSED')`),
+  ],
+);
+
 export const permissions = pgTable('permissions', {
   code: text('code').primaryKey(),
   module: text('module').notNull(),

@@ -24,6 +24,8 @@ const TENANT_TABLES = [
   'group_teachers',
   'enrollments',
   'enrollment_discounts',
+  'lessons',
+  'attendance_records',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -35,6 +37,7 @@ interface Fixture {
   course: string;
   group: string;
   enrollment: string;
+  lesson: string;
   branch1: string;
   branch2: string;
 }
@@ -103,6 +106,10 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into enrollments (group_id, student_id, center_id) values (${f.group}, ${f.owner}, ${f.center})`;
       case 'enrollment_discounts':
         return sql`insert into enrollment_discounts (enrollment_id, center_id, type) values (${f.enrollment}, ${f.center}, 'FREE')`;
+      case 'lessons':
+        return sql`insert into lessons (center_id, group_id, lesson_date) values (${f.center}, ${f.group}, '2026-02-02')`;
+      case 'attendance_records':
+        return sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${f.lesson}, ${f.owner}, ${f.center}, 'PRESENT')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -138,6 +145,8 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.groupTeachers).values({ groupId: group!.id, teacherId: admin!.id, centerId: c!.id, kind: 'MAIN' });
     const [enrollment] = await db.insert(s.enrollments).values({ groupId: group!.id, studentId: admin!.id, centerId: c!.id }).returning();
     await db.insert(s.enrollmentDiscounts).values({ enrollmentId: enrollment!.id, centerId: c!.id, type: 'PERCENT', value: 10 });
+    const [lesson] = await db.insert(s.lessons).values({ centerId: c!.id, groupId: group!.id, lessonDate: '2026-01-01', teacherId: admin!.id }).returning();
+    await db.insert(s.attendanceRecords).values({ lessonId: lesson!.id, studentId: admin!.id, centerId: c!.id, status: 'ABSENT' });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -145,7 +154,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
     await db.insert(s.auditLogs).values({ centerId: c!.id, actorId: owner!.id, action: 'seed', entity: 'user' });
-    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, branch1: b1!.id, branch2: b2!.id };
+    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, lesson: lesson!.id, branch1: b1!.id, branch2: b2!.id };
   }
 
   beforeAll(async () => {
@@ -337,6 +346,28 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, disc('AMOUNT', 'null')))).toMatch(/enrollment_discounts_value_chk/);
       expect(await failure(q(ctxA, disc('FREE', '5')))).toMatch(/enrollment_discounts_value_chk/);
       expect(await failure(q(ctxA, disc('AMOUNT', '50000')))).toBeNull();
+    });
+
+    it("lessons va attendance_records: boshqa markaz guruhi, ustozi, darsi va o'quvchisiga bog'lab bo'lmaydi", async () => {
+      const l1 = await failure(q(ctxA, sql`insert into lessons (center_id, group_id, lesson_date) values (${A.center}, ${B.group}, '2026-03-03')`));
+      expect(l1).toMatch(/foreign key/);
+      const l2 = await failure(q(ctxA, sql`insert into lessons (center_id, group_id, lesson_date, teacher_id) values (${A.center}, ${A.group}, '2026-03-03', ${B.admin})`));
+      expect(l2).toMatch(/foreign key/);
+      const a1 = await failure(q(ctxA, sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${B.lesson}, ${A.admin}, ${A.center}, 'PRESENT')`));
+      expect(a1).toMatch(/foreign key/);
+      const a2 = await failure(q(ctxA, sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${A.lesson}, ${B.admin}, ${A.center}, 'PRESENT')`));
+      expect(a2).toMatch(/foreign key/);
+    });
+
+    it("dars va davomat qoidalari bazada: guruhda sana noyob, holatlar cheklangan, yozuv takrorlanmaydi", async () => {
+      const dup = await failure(q(ctxA, sql`insert into lessons (center_id, group_id, lesson_date) values (${A.center}, ${A.group}, '2026-01-01')`));
+      expect(dup).toMatch(/lessons_group_date_uq|duplicate/);
+      const st = await failure(q(ctxA, sql`insert into lessons (center_id, group_id, lesson_date, status) values (${A.center}, ${A.group}, '2026-04-04', 'DONE')`));
+      expect(st).toMatch(/lessons_status_chk/);
+      const bad = await failure(q(ctxA, sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${A.lesson}, ${A.owner}, ${A.center}, 'SLEEPING')`));
+      expect(bad).toMatch(/attendance_status_chk/);
+      const twice = await failure(q(ctxA, sql`insert into attendance_records (lesson_id, student_id, center_id, status) values (${A.lesson}, ${A.admin}, ${A.center}, 'PRESENT')`));
+      expect(twice).toMatch(/duplicate|attendance_records_pkey/);
     });
 
     it("superuser ulanishi bilan ham kross-markaz bog'lash rad etiladi (baza darajasida)", async () => {

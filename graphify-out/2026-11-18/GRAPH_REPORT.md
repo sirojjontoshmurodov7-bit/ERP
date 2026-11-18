@@ -1,17 +1,17 @@
 # Graph Report - ERP  (2026-11-18)
 
 ## Corpus Check
-- 104 files · ~41,531 words
+- 111 files · ~47,957 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 10 file(s) not represented in the graph (top: (none) 5, .css 2, .example 1)
 
 ## Summary
-- 1170 nodes · 3140 edges · 51 communities (45 shown, 6 thin omitted)
-- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 219 edges (avg confidence: 0.83)
+- 1262 nodes · 3503 edges · 68 communities (52 shown, 16 thin omitted)
+- Extraction: 93% EXTRACTED · 7% INFERRED · 0% AMBIGUOUS · INFERRED: 235 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b332edae`
+- Built from commit: `af89a715`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -30,28 +30,28 @@
 - scripts
 - db
 - scripts
-- .list
+- audit.controller.ts
 - devDependencies
 - dependencies
 - Arxitektura qarorlari (kodda tasdiqlangan)
-- courses.service.ts
-- .changePassword
-- centers.e2e-spec.ts
+- CurrentUser
+- app.controller.ts
+- db.service.ts
 - users.service.ts
 - shared/package.json
-- groups.service.ts
+- schema.ts
 - centers.service.ts
 - compilerOptions
 - api/package.json
-- JwtAuthGuard
+- decorators.ts
 - DbService
 - @nestjs/common
-- CurrentUser
-- students.controller.ts
+- groups.service.ts
+- students.schemas.ts
 - Buyruqlar ro'yxati
 - RequirePermission
 - main.ts
-- guards.ts
+- auth.service.ts
 - permissions-admin.controller.ts
 - .oxlintrc.json
 - Qabul qilingan qarorlar va ochiq savollar (6-bo'lim)
@@ -60,25 +60,35 @@
 - nest-cli.json
 - REJA.md
 - allowBuilds
-- auth.controller.ts
+- permission-matrix.e2e-spec.ts
 - vitest
 - enrollments
-- users.service.ts
+- students.service.ts
 - @nestjs/mau@^0.2.6
-- @nestjs/schematics@^12.0.0
-- tsx@^4.23.15
+- .resetPassword
+- UsersService
+- students.e2e-spec.ts
+- index.ts
+- enrollments.e2e-spec.ts
+- app-config.ts
+- users.schemas.ts
+- BranchesController
+- groups.e2e-spec.ts
+- drizzle-kit
+- UserPasswordController
+- vite@^8.0.0
 
 ## God Nodes (most connected - your core abstractions)
-1. `AuthUser` - 127 edges
-2. `ERD-VA-RUXSATLAR.md (ERD va ruxsatlar)` - 59 edges
-3. `CurrentUser` - 55 edges
-4. `ClientInfo` - 47 edges
-5. `@nestjs/common` - 46 edges
-6. `Tx` - 36 edges
-7. `writeAudit()` - 33 edges
-8. `RequirePermission()` - 33 edges
-9. `CLAUDE.md (loyiha ko'rsatmalari)` - 32 edges
-10. `DbService` - 29 edges
+1. `AuthUser` - 152 edges
+2. `CurrentUser` - 63 edges
+3. `ERD-VA-RUXSATLAR.md (ERD va ruxsatlar)` - 59 edges
+4. `ClientInfo` - 56 edges
+5. `@nestjs/common` - 50 edges
+6. `Tx` - 47 edges
+7. `writeAudit()` - 35 edges
+8. `branchScope()` - 33 edges
+9. `RequirePermission()` - 33 edges
+10. `drizzle-orm` - 32 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Frontend: Next.js (React)` --references--> `typescript`  [EXTRACTED]
@@ -100,19 +110,19 @@
 - **Ruxsat tekshirish qatlami** — erd_va_ruxsatlar_perm_code_guard, erd_va_ruxsatlar_scope, erd_va_ruxsatlar_effective_perm, erd_va_ruxsatlar_guard_order, progress_d_guard_order, progress_d_effective_perm [INFERRED 0.85]
 - **RLS tenant izolyatsiya mexanizmi** — erd_va_ruxsatlar_rls_impl, erd_va_ruxsatlar_secdef_funcs, erd_va_ruxsatlar_composite_fk, erd_va_ruxsatlar_isolation_test, progress_d_rls [INFERRED 0.85]
 
-## Communities (51 total, 6 thin omitted)
+## Communities (68 total, 16 thin omitted)
 
 ### Community 0 - "auth.service.ts"
-Cohesion: 0.11
-Nodes (10): accountInactive(), AuthService, centerBlocked(), invalidCredentials(), invalidRefresh(), LoginResult, SessionRow, TokenPair (+2 more)
+Cohesion: 0.08
+Nodes (11): AuthController, clientOf(), accountInactive(), AuthService, centerBlocked(), invalidCredentials(), invalidRefresh(), AllowMustChangePassword() (+3 more)
 
 ### Community 1 - "groups.controller.ts"
-Cohesion: 0.15
+Cohesion: 0.18
 Nodes (19): Roles(), id(), id(), blockCenterSchema, createCenterSchema, idParamSchema, listCentersSchema, phone (+11 more)
 
 ### Community 2 - "PermissionsAdminService"
-Cohesion: 0.08
-Nodes (17): clientOf(), PermissionsAdminController, assertConfigurable(), PermissionsAdminService, DEFAULT_CENTER_SETTINGS, DEFAULT_TRIAL_DAYS, defaultRolePermissionRows(), ROLE_PERMISSION_MATRIX (+9 more)
+Cohesion: 0.15
+Nodes (5): clientOf(), PermissionsAdminController, assertConfigurable(), PermissionsAdminService, TenantRole
 
 ### Community 3 - "web/package.json"
 Cohesion: 0.06
@@ -158,45 +168,45 @@ Nodes (17): environment, healthcheck, image, ports, restart, volumes, POSTGRES_D
 Cohesion: 0.12
 Nodes (16): engines, node, name, packageManager, private, scripts, build, db:create-super-admin (+8 more)
 
+### Community 14 - "audit.controller.ts"
+Cohesion: 0.29
+Nodes (3): AuditController, listAuditSchema, AuditModule
+
 ### Community 15 - "devDependencies"
-Cohesion: 0.10
-Nodes (19): devDependencies, drizzle-kit@^0.31.11, @electric-sql/pglite@^0.5.16, @nestjs/cli@^12.0.0, @nestjs/testing@^12.0.1, oxlint@^1.58.0, oxlint-tsgolint@^7.0.2001, prettier@^3.4.2 (+11 more)
+Cohesion: 0.11
+Nodes (19): devDependencies, @electric-sql/pglite@^0.5.16, @nestjs/testing@^12.0.1, oxlint@^1.58.0, oxlint-tsgolint@^7.0.2001, source-map-support@^0.5.21, supertest@^7.0.0, tsx@^4.23.15 (+11 more)
 
 ### Community 16 - "dependencies"
-Cohesion: 0.14
-Nodes (14): dependencies, drizzle-orm@^0.45.4, @erp/shared@workspace:*, @nestjs/common@^12.0.1, @nestjs/platform-express@^12.0.1, @node-rs/argon2@^2.2.2, reflect-metadata@^0.2.2, rxjs@^7.8.1 (+6 more)
+Cohesion: 0.12
+Nodes (17): dependencies, drizzle-orm@^0.45.4, @erp/shared@workspace:*, @nestjs/common@^12.0.1, @nestjs/core@^12.0.1, @nestjs/jwt@^12.0.5, @nestjs/platform-express@^12.0.1, @node-rs/argon2@^2.2.2 (+9 more)
 
 ### Community 17 - "Arxitektura qarorlari (kodda tasdiqlangan)"
 Cohesion: 0.09
 Nodes (37): To'lov, maosh to'lovi, audit append-only, ORM: Drizzle, Skelet 1: Monorepo, Docker Compose, .env.example (tayyor), Skelet 2: Migratsiyalar 10 jadval (tayyor), Skelet 3: Auth login, JWT+refresh, guard (tayyor), Skelet 4: RLS va tenant izolyatsiya testi (tayyor), Skelet 7: Audit jurnali va ruxsat matritsasi testi (kutmoqda), Skelet maqsadi: super admin markaz ochadi, rahbar kiradi, filial va xodim yaratadi (+29 more)
 
-### Community 18 - "courses.service.ts"
-Cohesion: 0.11
-Nodes (16): pgErrorInfo(), uniqueViolation(), clientOf(), CoursesController, CreateCourseInput, createCourseSchema, listCoursesSchema, price (+8 more)
+### Community 18 - "CurrentUser"
+Cohesion: 0.07
+Nodes (15): CurrentUser, clientOf(), CoursesController, CreateCourseInput, createCourseSchema, listCoursesSchema, price, UpdateCourseInput (+7 more)
 
-### Community 19 - ".changePassword"
-Cohesion: 0.15
-Nodes (6): AppController, AppService, AuthController, clientOf(), AllowMustChangePassword(), Public()
-
-### Community 20 - "centers.e2e-spec.ts"
-Cohesion: 0.05
-Nodes (61): postgres@^4.1.1, AppModule, hashPassword(), PARAMS, verifyAgainstDummy(), verifyPassword(), APP_CONFIG, AppConfig (+53 more)
+### Community 20 - "db.service.ts"
+Cohesion: 0.13
+Nodes (14): AppConfig, DbModule, contextOf(), DB, Db, DB_OPTIONS, DbOptions, NO_CONTEXT (+6 more)
 
 ### Community 21 - "users.service.ts"
-Cohesion: 0.07
-Nodes (29): writeAudit(), ClientInfo, AuthUser, generateTempPassword(), audited(), BranchesService, nameTaken(), view() (+21 more)
+Cohesion: 0.09
+Nodes (30): writeAudit(), ClientInfo, AuthUser, CreateBranchInput, phone, UpdateBranchInput, audited(), BranchesService (+22 more)
 
 ### Community 22 - "shared/package.json"
 Cohesion: 0.18
 Nodes (11): devDependencies, typescript@^5.9.3, typescript, main, name, private, scripts, build (+3 more)
 
-### Community 23 - "groups.service.ts"
-Cohesion: 0.16
-Nodes (18): AuditEntry, notFound(), branchFilter(), auditLogs, branches, centers, courses, createdAt() (+10 more)
+### Community 23 - "schema.ts"
+Cohesion: 0.10
+Nodes (22): AuditEntry, CourseRow, notFound(), client, db, login, client, auditLogs (+14 more)
 
 ### Community 24 - "centers.service.ts"
-Cohesion: 0.16
-Nodes (10): CreateCenterInput, ListCentersQuery, UpdateCenterInput, CreatedCenter, notFound(), SUPER, CYRILLIC, slugify() (+2 more)
+Cohesion: 0.14
+Nodes (16): generateTempPassword(), CreateCenterInput, ListCentersQuery, UpdateCenterInput, CreatedCenter, notFound(), SUPER, CYRILLIC (+8 more)
 
 ### Community 25 - "compilerOptions"
 Cohesion: 0.18
@@ -204,39 +214,35 @@ Nodes (10): compilerOptions, declaration, esModuleInterop, module, outDir, rootD
 
 ### Community 26 - "api/package.json"
 Cohesion: 0.12
-Nodes (15): author, description, @types/express@^5.0.0, @types/supertest@^7.0.0, vite@^8.0.0, @vitest/coverage-v8@^4.1.2, license, name (+7 more)
+Nodes (15): author, description, @nestjs/cli@^12.0.0, @nestjs/schematics@^12.0.0, prettier@^3.4.2, @types/supertest@^7.0.0, license, name (+7 more)
 
-### Community 27 - "JwtAuthGuard"
-Cohesion: 0.20
-Nodes (4): JwtAuthGuard, PermissionsGuard, RolesGuard, unauthorized()
+### Community 27 - "decorators.ts"
+Cohesion: 0.16
+Nodes (10): AuthedRequest, ALLOW_MUST_CHANGE, IS_PUBLIC, PERMISSIONS_KEY, ROLES_KEY, JwtAuthGuard, PermissionsGuard, RolesGuard (+2 more)
 
 ### Community 29 - "@nestjs/common"
-Cohesion: 0.12
-Nodes (12): @nestjs/jwt@^12.0.5, AuditModule, AuthModule, BranchesModule, CentersModule, CoursesModule, GroupsModule, PermissionsAdminModule (+4 more)
+Cohesion: 0.13
+Nodes (10): AuthModule, BranchesModule, CentersModule, CoursesModule, EnrollmentsModule, GroupsModule, PermissionsAdminModule, StudentsModule (+2 more)
 
-### Community 30 - "CurrentUser"
-Cohesion: 0.07
-Nodes (23): CurrentUser, clientOf(), GroupsController, AssignTeacherInput, assignTeacherSchema, BILLING_KEYS, billingMode, CreateGroupInput (+15 more)
+### Community 30 - "groups.service.ts"
+Cohesion: 0.06
+Nodes (47): branchFilter(), BranchScope, currentTeacher, studentGroupIds(), teacherGroupIds(), pgErrorInfo(), enrollments, groupSchedules (+39 more)
 
-### Community 31 - "students.controller.ts"
-Cohesion: 0.16
-Nodes (12): studentProfiles, birthDate, CreateStudentInput, createStudentSchema, ListStudentsQuery, login, phone, UpdateStudentInput (+4 more)
+### Community 31 - "students.schemas.ts"
+Cohesion: 0.10
+Nodes (11): clientOf(), StudentsController, birthDate, CreateStudentInput, createStudentSchema, ListStudentsQuery, listStudentsSchema, login (+3 more)
 
 ### Community 32 - "Buyruqlar ro'yxati"
 Cohesion: 0.13
 Nodes (17): Kod grafi graphify-out, pnpm build, pnpm --filter @erp/api db:generate (drizzle-kit), pnpm db:migrate | db:seed | db:create-super-admin, pnpm --filter @erp/api test:e2e (PGlite, ~20 s, 98 test), graphify update ., pnpm --filter @erp/api lint (oxlint), pnpm --filter @erp/api test (unit) (+9 more)
 
 ### Community 33 - "RequirePermission"
-Cohesion: 0.06
-Nodes (14): RequirePermission(), BranchesController, clientOf(), CreateBranchInput, createBranchSchema, listBranchesSchema, phone, UpdateBranchInput (+6 more)
+Cohesion: 0.07
+Nodes (9): RequirePermission(), clientOf(), createBranchSchema, updateBranchSchema, CentersController, clientOf(), ProbeController, ProbeController (+1 more)
 
-### Community 34 - "main.ts"
-Cohesion: 0.29
-Nodes (3): @nestjs/core@^12.0.1, envFile, @nestjs/core
-
-### Community 35 - "guards.ts"
-Cohesion: 0.18
-Nodes (16): listAuditSchema, AccessClaims, AuthedRequest, UserRow, ALLOW_MUST_CHANGE, IS_PUBLIC, PERMISSIONS_KEY, ROLES_KEY (+8 more)
+### Community 35 - "auth.service.ts"
+Cohesion: 0.24
+Nodes (10): changePasswordSchema, loginSchema, refreshSchema, LoginResult, AccessClaims, SessionRow, TokenPair, UserRow (+2 more)
 
 ### Community 36 - "permissions-admin.controller.ts"
 Cohesion: 0.53
@@ -270,37 +276,69 @@ Nodes (33): Qarzdor: today > due_date + grace_days va charge to'lanmagan, grace_
 Cohesion: 0.40
 Nodes (4): allowBuilds, sharp, unrs-resolver, packages
 
-### Community 44 - "auth.controller.ts"
-Cohesion: 0.50
-Nodes (3): changePasswordSchema, loginSchema, refreshSchema
+### Community 44 - "permission-matrix.e2e-spec.ts"
+Cohesion: 0.13
+Nodes (14): AppModule, config, createTestDb(), activate(), AllPermissionsProbe, config, newCenter(), activate() (+6 more)
 
 ### Community 46 - "enrollments"
 Cohesion: 0.15
 Nodes (17): Ikki to'lov rejimi GROUP_CYCLE / STUDENT_CYCLE, Qarz saqlanmaydi, charges dan hisoblanadi, Qaror: avans va ko'p oylik to'lov mumkin, To'lov eng eski ochiq charge ga taqsimlanadi, ortiqcha = avans, charges, Ikki to'lov sikli taqqoslash jadvali, Chegirma charge yaratilganda qotiriladi, enrollment_discounts (+9 more)
 
-### Community 47 - "users.service.ts"
-Cohesion: 0.14
-Nodes (17): generateLogin(), isLoginConflict(), MAX_LOGIN_TRIES, teacherProfiles, branchIds, CreateStaffInput, ListStaffQuery, login (+9 more)
+### Community 47 - "students.service.ts"
+Cohesion: 0.15
+Nodes (19): inScope(), generateLogin(), isLoginConflict(), MAX_LOGIN_TRIES, branches, centers, sessions, studentProfiles (+11 more)
+
+### Community 49 - ".resetPassword"
+Cohesion: 0.19
+Nodes (3): clientOf(), createStaffSchema, updateStaffSchema
+
+### Community 50 - "UsersService"
+Cohesion: 0.24
+Nodes (6): ListStaffQuery, UpdateStaffInput, editCode(), manageableRoles(), userNotFound(), UsersService
+
+### Community 51 - "students.e2e-spec.ts"
+Cohesion: 0.23
+Nodes (10): hashPassword(), PARAMS, verifyAgainstDummy(), verifyPassword(), activate(), Center, config, newCenter() (+2 more)
+
+### Community 52 - "index.ts"
+Cohesion: 0.21
+Nodes (8): PAYMENT_MODES, PaymentMode, ROLES, PERMISSION_CODES, PERMISSION_MODULES, PermissionDef, PermissionModule, PLATFORM_ONLY_PERMISSIONS
+
+### Community 53 - "enrollments.e2e-spec.ts"
+Cohesion: 0.33
+Nodes (9): activate(), Api, Center, config, makeApi(), mkStudent(), newCenter(), staff() (+1 more)
+
+### Community 54 - "app-config.ts"
+Cohesion: 0.25
+Nodes (6): APP_CONFIG, ConfigModule, envSchema, loadConfig(), parseDuration(), UNIT_SECONDS
+
+### Community 55 - "users.schemas.ts"
+Cohesion: 0.22
+Nodes (6): branchIds, listStaffSchema, login, phone, STAFF_ROLES, StaffRole
+
+### Community 57 - "groups.e2e-spec.ts"
+Cohesion: 0.39
+Nodes (7): activate(), Api, Center, config, makeApi(), newCenter(), staff()
 
 ## Knowledge Gaps
 - **34 isolated node(s):** `./tsconfig.json`, `Ruxsat kodi: NestJS guard/decorator`, `Xato javoblari { code, message }`, `pnpm build`, `pnpm --filter @erp/api db:generate (drizzle-kit)` (+29 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 307 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 329 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `typescript` connect `CLAUDE.md (loyiha ko'rsatmalari)` to `api/package.json`?**
-  _High betweenness centrality (0.239) - this node is a cross-community bridge._
+- **Why does `CLAUDE.md (loyiha ko'rsatmalari)` connect `CLAUDE.md (loyiha ko'rsatmalari)` to `Buyruqlar ro'yxati`, `ERD-VA-RUXSATLAR.md (ERD va ruxsatlar)`, `Skelet 6: Rahbar filial va xodim yaratish, ruxsat sozlash (keyingi)`, `Ruxsatlar matritsasi (3-bo'lim)`, `REJA.md`, `enrollments`, `Arxitektura qarorlari (kodda tasdiqlangan)`?**
+  _High betweenness centrality (0.259) - this node is a cross-community bridge._
 - **What connects `./tsconfig.json`, `Ruxsat kodi: NestJS guard/decorator`, `Xato javoblari { code, message }` to the rest of the system?**
   _34 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `auth.service.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.10795454545454546 - nodes in this community are weakly interconnected._
-- **Why does `CLAUDE.md (loyiha ko'rsatmalari)` connect `CLAUDE.md (loyiha ko'rsatmalari)` to `Buyruqlar ro'yxati`, `ERD-VA-RUXSATLAR.md (ERD va ruxsatlar)`, `Skelet 6: Rahbar filial va xodim yaratish, ruxsat sozlash (keyingi)`, `Ruxsatlar matritsasi (3-bo'lim)`, `REJA.md`, `enrollments`, `Arxitektura qarorlari (kodda tasdiqlangan)`?**
-  _High betweenness centrality (0.237) - this node is a cross-community bridge._
-- **Should `groups.controller.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.14772727272727273 - nodes in this community are weakly interconnected._
-- **Why does `AuthUser` connect `users.service.ts` to `auth.service.ts`, `groups.controller.ts`, `RequirePermission`, `guards.ts`, `permissions-admin.controller.ts`, `PermissionsAdminService`, `auth.controller.ts`, `.list`, `users.service.ts`, `courses.service.ts`, `.changePassword`, `groups.service.ts`, `centers.service.ts`, `CurrentUser`, `students.controller.ts`?**
-  _High betweenness centrality (0.138) - this node is a cross-community bridge._
-- **Should `PermissionsAdminService` be split into smaller, more focused modules?**
-  _Cohesion score 0.08205128205128205 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08416389811738649 - nodes in this community are weakly interconnected._
+- **Why does `typescript` connect `CLAUDE.md (loyiha ko'rsatmalari)` to `api/package.json`?**
+  _High betweenness centrality (0.252) - this node is a cross-community bridge._
+- **Should `web/package.json` be split into smaller, more focused modules?**
+  _Cohesion score 0.05758582502768549 - nodes in this community are weakly interconnected._
+- **Why does `@nestjs/common` connect `@nestjs/common` to `groups.controller.ts`, `audit.controller.ts`, `dependencies`, `app.controller.ts`, `db.service.ts`, `users.service.ts`, `schema.ts`, `centers.service.ts`, `api/package.json`, `decorators.ts`, `groups.service.ts`, `auth.service.ts`, `permissions-admin.controller.ts`, `permission-matrix.e2e-spec.ts`, `students.service.ts`, `students.e2e-spec.ts`, `index.ts`, `enrollments.e2e-spec.ts`, `app-config.ts`, `groups.e2e-spec.ts`?**
+  _High betweenness centrality (0.161) - this node is a cross-community bridge._
+- **Should `CLAUDE.md (loyiha ko'rsatmalari)` be split into smaller, more focused modules?**
+  _Cohesion score 0.09788359788359788 - nodes in this community are weakly interconnected._

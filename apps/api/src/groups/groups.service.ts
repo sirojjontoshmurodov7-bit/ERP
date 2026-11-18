@@ -4,8 +4,8 @@ import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { PermissionsService } from '../auth/permissions.service.js';
-import { type BranchScope, branchFilter, branchScope, inScope } from '../common/branch-scope.js';
-import { currentTeacher, studentGroupIds, teacherGroupIds } from '../common/group-access.js';
+import { type BranchScope, branchScope, inScope } from '../common/branch-scope.js';
+import { currentTeacher, groupVisibility } from '../common/group-access.js';
 import { pgErrorInfo } from '../common/pg-errors.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
 import { branches, centers, courses, enrollments, groupSchedules, groups, groupTeachers, userBranches, users } from '../db/schema.js';
@@ -94,7 +94,7 @@ export class GroupsService {
       if (q.branchId && actor.role !== 'TEACHER' && actor.role !== 'STUDENT' && !inScope(scope, q.branchId)) return empty;
 
       const conds: (SQL | undefined)[] = [
-        this.visibility(tx, actor, scope),
+        groupVisibility(tx, actor, scope),
         q.includeArchived ? undefined : isNull(groups.archivedAt),
         q.branchId ? eq(groups.branchId, q.branchId) : undefined,
         q.courseId ? eq(groups.courseId, q.courseId) : undefined,
@@ -298,13 +298,6 @@ export class GroupsService {
     return startDate ? Math.min(Number(startDate.slice(8, 10)), 28) : 1;
   }
 
-  /** Ustoz va o'quvchi guruhlarni faqat o'z biriktirilishi/yozilishi bo'yicha ko'radi; xodimlar filial qamrovi bo'yicha. */
-  private visibility(tx: Tx, actor: AuthUser, scope: BranchScope): SQL | undefined {
-    if (actor.role === 'TEACHER') return inArray(groups.id, teacherGroupIds(tx, actor.id));
-    if (actor.role === 'STUDENT') return inArray(groups.id, studentGroupIds(tx, actor.id));
-    return branchFilter(groups.branchId, scope);
-  }
-
   private async assertBranch(tx: Tx, scope: BranchScope, branchId: string) {
     const [b] = await tx.select({ id: branches.id }).from(branches).where(and(eq(branches.id, branchId), isNull(branches.archivedAt)));
     if (!b) throw new NotFoundException({ code: 'BRANCH_NOT_FOUND', message: 'Filial topilmadi' });
@@ -325,7 +318,7 @@ export class GroupsService {
       .where(
         and(
           eq(groups.id, id),
-          this.visibility(tx, actor, scope),
+          groupVisibility(tx, actor, scope),
         ),
       );
     if (!g) throw groupNotFound();

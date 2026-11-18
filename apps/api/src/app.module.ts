@@ -7,6 +7,7 @@ import { BranchesModule } from './branches/branches.module.js';
 import { CentersModule } from './centers/centers.module.js';
 import { ConfigModule } from './config/app-config.js';
 import { DbModule } from './db/db.module.js';
+import { LessonsModule } from './lessons/lessons.module.js';
 import { PermissionsAdminModule } from './permissions-admin/permissions-admin.module.js';
 import { StudentsModule } from './students/students.module.js';
 import { CoursesModule } from './courses/courses.module.js';
@@ -15,7 +16,7 @@ import { GroupsModule } from './groups/groups.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
-  imports: [ConfigModule, DbModule, AuthModule, AuditModule, CentersModule, BranchesModule, UsersModule, StudentsModule, CoursesModule, GroupsModule, EnrollmentsModule, PermissionsAdminModule],
+  imports: [ConfigModule, DbModule, AuthModule, AuditModule, CentersModule, BranchesModule, UsersModule, StudentsModule, CoursesModule, GroupsModule, EnrollmentsModule, LessonsModule, PermissionsAdminModule],
   controllers: [AppController],
   providers: [AppService],
 })
