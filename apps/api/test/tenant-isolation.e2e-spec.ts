@@ -36,6 +36,7 @@ const TENANT_TABLES = [
   'payroll_adjustments',
   'payroll_payouts',
   'expenses',
+  'import_jobs',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -145,6 +146,8 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into payroll_payouts (center_id, period_id, employee_id, amount, method) values (${f.center}, ${f.payrollPeriod}, ${f.admin}, 100, 'CASH')`;
       case 'expenses':
         return sql`insert into expenses (center_id, branch_id, category, amount, spent_on) values (${f.center}, ${f.branch1}, 'Ijara', 1000, '2026-02-02')`;
+      case 'import_jobs':
+        return sql`insert into import_jobs (center_id, type, file_name, status, total_rows, report) values (${f.center}, 'STUDENTS', 'a.xlsx', 'DONE', 3, '{}'::jsonb)`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -195,6 +198,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
     await db.insert(s.payrollAdjustments).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 500, reason: 'seed' });
     await db.insert(s.payrollPayouts).values({ centerId: c!.id, periodId: pperiod!.id, employeeId: admin!.id, amount: 300, method: 'CASH' });
     await db.insert(s.expenses).values({ centerId: c!.id, branchId: b1!.id, category: 'Ijara', amount: 2000, spentOn: '2026-01-05' });
+    await db.insert(s.importJobs).values({ centerId: c!.id, type: 'STUDENTS', fileName: 'seed.xlsx', status: 'DONE', totalRows: 2, createdRows: 2, report: { errors: [] } });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -446,6 +450,18 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, sql`delete from payment_allocations where payment_id = ${A.payment}`))).toMatch(/permission denied/);
       expect(await failure(q(ctxA, sql`update payments set status = 'REVERSED' where id = ${A.payment}`))).toBeNull();
       expect(await failure(q(ctxA, sql`update payments set status = 'CONFIRMED' where id = ${A.payment}`))).toMatch(/append-only/);
+    });
+
+    it("import_jobs: bazaviy qoidalar va append-only (faqat INSERT)", async () => {
+      const job = (cols: string, vals: unknown[]) => sql`insert into import_jobs (center_id, ${sql.raw(cols)}, report) values (${A.center}, ${sql.join(vals.map((v) => sql`${v}`), sql`, `)}, '{}'::jsonb)`;
+      expect(await failure(q(ctxA, job('type, file_name, status, total_rows', ['WEIRD', 'a.xlsx', 'DONE', 1])))).toMatch(/import_jobs_type_chk/);
+      expect(await failure(q(ctxA, job('type, file_name, status, total_rows', ['STUDENTS', 'a.xlsx', 'WEIRD', 1])))).toMatch(/import_jobs_status_chk/);
+      expect(await failure(q(ctxA, job('type, file_name, status, total_rows', ['STUDENTS', 'a.xlsx', 'DONE', -1])))).toMatch(/import_jobs_counts_chk/);
+      expect(await failure(q(ctxA, job('type, file_name, status, total_rows, created_rows', ['STUDENTS', 'a.xlsx', 'DONE', 1, 2])))).toMatch(/import_jobs_counts_chk/); // yaratilgani jamidan ko'p
+      expect(await failure(q(ctxA, job('type, file_name, status, total_rows, created_rows', ['STUDENTS', 'a.xlsx', 'REJECTED', 3, 1])))).toMatch(/import_jobs_rejected_chk/);
+      expect(await failure(q(ctxA, job('type, file_name, status, total_rows, created_rows', ['STUDENTS', 'a.xlsx', 'DONE', 3, 3])))).toBeNull();
+      expect(await failure(q(ctxA, sql`update import_jobs set status = 'REJECTED' where center_id = ${A.center}`))).toMatch(/permission denied/);
+      expect(await failure(q(ctxA, sql`delete from import_jobs where center_id = ${A.center}`))).toMatch(/permission denied/);
     });
 
     it("expenses: kross-markaz filial, bazaviy qoidalar va append-only", async () => {

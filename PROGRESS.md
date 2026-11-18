@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar) tayyor; keyingi: Excel import). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import) tayyor; keyingi: reyting va vazifalar). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -22,10 +22,11 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 15. Chegirmalar va qarzdorlar (`/enrollments/:id/discounts`, `/debtors`) | tayyor | `apps/api/src/billing/{discounts,debtors}.*`, `test/discounts-debtors.e2e-spec.ts` |
 | 16. Maosh (`payroll_*`) | tayyor | `apps/api/src/payroll/`, `drizzle/0011`, `test/payroll.e2e-spec.ts` |
 | 17. Xarajat va moliyaviy hisobotlar | tayyor | `apps/api/src/finance/`, `drizzle/0012`, `test/finance.e2e-spec.ts` |
-| 18. Umumiy hisobotlar (`/reports/overview`, `/reports/branches`) | tayyor (commitsiz) | `apps/api/src/reports/`, `test/reports.e2e-spec.ts` |
-| **19. Excel import** | **keyingi** | hali yozilmagan (`import_jobs`, `import.run`) |
+| 18. Umumiy hisobotlar (`/reports/overview`, `/reports/branches`) | tayyor | `apps/api/src/reports/`, `test/reports.e2e-spec.ts` |
+| 19. Excel/CSV import (o'quvchilar) (`/imports`) | tayyor (commitsiz) | `apps/api/src/imports/`, `common/spreadsheet.ts`, `drizzle/0013`, `test/imports.e2e-spec.ts` |
+| **20. Vazifa va reyting** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`. 18-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`. 19-qadam hali commitlanmagan (ish daraxtida); commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -38,7 +39,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~70 s, 431 test; unit 45 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~85 s, 450 test; unit 61 ta
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -182,7 +183,7 @@ Qoidalar manbasi: ERD 2.3 ("Xarajat" va "Moliyaviy hisobot (implementatsiya, 17-
 - **Ochiq:** kassa smenasi va kun yopish (naqd topshirish) yo'q; maosh to'lovi filialga bog'lanmagan (filial kesimida ko'rinmaydi); xarajat kategoriyalari erkin matn (markaz ro'yxati keyin); Excel/PDF eksport yo'q.
 - Test: `test/finance.e2e-spec.ts` (12 ta: tekshiruvlar, ruxsat, hisobot summalari qo'lda hisoblangan qiymatlar bilan, filial qamrovi, sana oralig'i, kassa kitobi, ro'yxat, bekor qilish, kategoriyalar) + izolyatsiya testida `expenses` va bazaviy qoidalar/append-only. Umumiy 421 e2e + 43 unit.
 
-### 18-qadam: umumiy hisobotlar (tayyor, commitsiz)
+### 18-qadam: umumiy hisobotlar (tayyor)
 Migratsiya yo'q (faqat o'qish). Qoidalar: ERD 2.4 ("Umumiy hisobotlar (implementatsiya, 18-qadam)").
 - **`GET /reports/overview`** (`report.overview`, faqat rahbar; `from`, `to`: Asia/Tashkent, sukut shu oyning boshidan bugungacha, <= 366 kun): `students {active, archived, new}`, `staff {admins, cashiers, teachers}`, `groups {active, planned, finished}` (arxivlanmagan), `enrollments {active, frozen, joined, left}` (`joined/left` oraliqda, qolgani joriy holat), `attendance {lessons, present, absent, late, excused, total, rate}`, `finance {income, expenses, payouts, net}` (kassa asosida, 17-qadam qoidalari), `debt {amount, debtors, overdueCharges}` (muddati o'tgan, joriy holat).
 - **`GET /reports/branches`** (`report.branch_compare`, faqat rahbar; `from`, `to`, `sort` = name|income|net|students|groups|debt|attendance, name o'sish, qolganlari kamayish): har filial uchun `students`, `groups`, `enrollments {active, joined, left}`, `attendance`, `income`, `expenses`, `net`, `debt`, `debtors`; `totals` (o'quvchi markazda bir marta sanaladi). Ko'rsatkichsiz arxivlangan filial chiqmaydi, faol bo'sh filial chiqadi.
@@ -190,6 +191,16 @@ Migratsiya yo'q (faqat o'qish). Qoidalar: ERD 2.4 ("Umumiy hisobotlar (implement
 - **Ruxsat:** faqat OWNER (`@Roles('OWNER')` + servisda kod tekshiruvi); `report.*` kodlari – (sozlanmaydi), admin/kassir/ustoz/o'quvchi 403. Har so'rovdan oldin `generate` (qarz yangi bo'ladi).
 - **Ochiq:** o'quvchi/davomat/qarz kesimida kunlik trend (grafik uchun); reyting (`rating.view`) hisobotlari reyting bosqichida; Excel/PDF eksport; katta markazda agregatsiya indekslari/keshi.
 - Test: `test/reports.e2e-spec.ts` (10 ta: qo'lda hisoblangan qiymatlar, ikki filialli o'quvchi, arxivlangan o'quvchi/yozilish, muzlatilgan, qarz va qaytarish, oraliq, saralash, ruxsat) + `src/reports/reports.spec.ts` (2 unit). Umumiy 431 e2e + 45 unit.
+
+### 19-qadam: Excel/CSV import (tayyor, commitsiz)
+Qoidalar manbasi: ERD 2.4 ("Import (implementatsiya, 19-qadam)").
+- **Migratsiya `0013`:** `import_jobs` (`type`, `file_name`, `status` DONE|REJECTED, `total_rows`, `created_rows`, `error_rows`, `skip_invalid`, `report` jsonb, `created_by`). RLS, `TENANT_TABLES` da; faqat SELECT/INSERT; CHECK: son qoidalari, REJECTED => yaratilgan 0.
+- **Fayl o'qish** `common/spreadsheet.ts`: tashqi kutubxonasiz (ta'minot zanjiri xavfi va byudjet), `.xlsx` (ZIP + OOXML, birinchi varaq, sharedStrings/inlineStr, sana uslubi, ilmiy ko'rinishdagi raqam) va `.csv` (`,` `;` tab, BOM, qo'shtirnoq). Chegaralar: fayl 5 MB, ochilganda 20/40 MB (ZIP-bomba, `maxOutputLength`), 500 ichki fayl, 20 000 qator, parolli va ZIP64 rad etiladi. Test yozuvchisi: `test/helpers/xlsx-writer.ts`.
+- **O'quvchi importi** (`imports/student-import.ts` sof, `imports.service.ts`): sarlavha uz/ru/en sinonimlari (Ism, Telefon, Tug'ilgan sana, Ota-ona ismi/telefoni, Izoh, Filial, Guruh, Qo'shilgan sana); sana `KK.OO.YYYY`/`YYYY-OO-KK`/Excel sanasi; telefon qoidasi qo'lda kiritish bilan bir xil. Filial: ustun yoki `branchId` yoki yagona filial. `Guruh` berilsa shu filialdagi (arxivsiz, tugamagan) guruhga yoziladi, birinchi hisob yaratiladi. Takror telefon (bazada yoki faylda; faqat raqamlar bo'yicha) xato. Loginlar `markaz.ism[N]` avtomatik (maxsus login yo'q). Hammasi bitta tranzaksiyada; tarif chegarasi oldindan (403 `PLAN_STUDENT_LIMIT`, hech narsa yaratilmaydi). Bir importda <= 300 qator (har qatorga argon2 xesh).
+- **Endpointlar:** `POST /imports` (multipart: `file`, `type`=STUDENTS, `branchId?`, `dryRun?`, `skipInvalid?`; javob `no-store`: `job`, `errors` (<= 200, `row/field/code/message` qiymatsiz), `created` (`row, studentId, login, temporaryPassword, ...`)), `GET /imports` va `GET /imports/:id` (rahbar hammasini, admin faqat o'zinikini), `GET /imports/template` (CSV shablon). Fayl xatolari 400: `FILE_REQUIRED`, `IMPORT_UNSUPPORTED_FILE|CORRUPT_FILE|EMPTY_FILE|MISSING_COLUMN|EMPTY|TOO_MANY_ROWS|TYPE_NOT_SUPPORTED`, `BRANCH_REQUIRED`; 413 katta fayl.
+- **Ruxsat:** `import.run` (rahbar ✔, admin ○ faqat o'z filiallari); kassir, ustoz, o'quvchi 403. Audit: `import.students` (soni), har o'quvchi uchun `student.create` (`source: import`) va `enrollment.create`; parol va fayl qiymatlari auditda va tarixda yo'q.
+- **Ochiq:** `GROUPS` va `PAYMENTS` importi (turlar jadvalda rezerv); eski .xls; ko'p varaq; maxsus login ustuni; import natijasini (loginlar/parollar) Excel/PDF qilib chiqarish; 300 dan ko'p qator (fon jarayoni bilan).
+- Test: `test/imports.e2e-spec.ts` (13 ta) + `src/common/spreadsheet.spec.ts` (9) + `src/imports/student-import.spec.ts` (7) + izolyatsiya testida `import_jobs`. Umumiy 450 e2e + 61 unit.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).

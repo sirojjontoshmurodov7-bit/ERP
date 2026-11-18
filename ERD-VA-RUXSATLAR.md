@@ -391,6 +391,7 @@ erDiagram
 - **Xarajat (implementatsiya, 17-qadam):** `expenses` append-only: summa, kategoriya, sana o'zgarmaydi; xato `ACTIVE -> VOIDED` (sabab, kim, qachon) bilan tuzatiladi (trigger), DELETE huquqi yo'q. `spent_on` — biznes sanasi (ERD'dagi `at` o'rniga: hisobotlar kun bo'yicha, kelajak sanasi rad etiladi). Kategoriya erkin matn (1-60 belgi), registrsiz guruhlanadi. Yozish `expense.manage` (rahbar, kassir ○ o'z filialida), ko'rish `expense.manage` yoki `finance.report`.
 - **Moliyaviy hisobot (implementatsiya, 17-qadam):** kassa asosida, faqat o'qiydi (SQL agregatsiya), `finance.report`. Tushum = to'lov sanasi (Asia/Tashkent) bo'yicha sof to'lovlar: qaytarish yozuvi o'z kunida manfiy. Xarajat = `ACTIVE` xarajatlar `spent_on` bo'yicha. Maosh to'lovlari (sof) faqat rahbar va filial filtrisiz ko'rinadi (filialga bog'lanmagan). Sof natija = tushum − xarajat − maosh to'lovi. Guruhlar bo'yicha tushum — oy ichida hisoblarga taqsimlangan sof summa; `unallocated` = tushum − guruh tushumlari (avans o'zgarishi), faqat butun markaz uchun. Qamrov: rahbar hammasi, kassir ✔/admin ○ faqat o'z filiallari (qamrovdan tashqari `branchId` bo'sh natija beradi).
 - **Umumiy hisobotlar (implementatsiya, 18-qadam):** `report.overview` va `report.branch_compare` faqat rahbarda (–: boshqa rolga berib bo'lmaydi), faqat o'qiydi (SQL agregatsiya). Atributsiya: o'quvchi, guruh, yozilish, davomat va qarz — guruh filialiga; tushum — to'lov qabul qilingan filialga; xarajat — o'z filialiga; o'quvchi soni `user_branches` bo'yicha (ikki filialli o'quvchi ikkala filialda, markaz jamisida bir marta). Qarz = muddati o'tgan (`bugun > due_date + grace_days`) hisoblar qoldig'i. Davomat: (kelgan + kech qolgan) / (kelgan + kech qolgan + kelmagan), sababli hisobga olinmaydi.
+- **Import (implementatsiya, 19-qadam):** `import_jobs` append-only (faqat SELECT/INSERT). Hozir faqat `STUDENTS` (jadvalda `GROUPS`, `PAYMENTS` turlari rezerv). Fayl saqlanmaydi (`file_url` o'rniga `file_name`); hisobotda qiymat yo'q. `import.run`: rahbar ✔, admin ○ o'z filialida. Sukut: bitta xato bo'lsa hech narsa yaratilmaydi (`REJECTED`); `skipInvalid` bilan to'g'ri qatorlar yaratiladi. Vaqtinchalik parollar faqat javobda (`no-store`), auditga tushmaydi.
 - **Chek raqami:** markaz bo'yicha `max + 1` (markaz kaliti bo'yicha advisory lock ichida), `(center_id, receipt_no)` unikal. Qaytarish yozuvi ham o'z raqamini oladi. Usullar hozircha `CASH|CARD|TRANSFER`; `CLICK|PAYME` (`external_txn_id`) provayder qo'shilganda ochiladi.
 
 ### 2.4. Maosh, bildirishnoma, import
@@ -475,10 +476,15 @@ erDiagram
         uuid id PK
         uuid center_id FK
         string type "STUDENTS|GROUPS|PAYMENTS"
-        string file_url
-        string status
-        jsonb report
+        string file_name "fayl o'zi saqlanmaydi (shaxsiy ma'lumot)"
+        string status "DONE|REJECTED"
+        int total_rows
+        int created_rows
+        int error_rows
+        bool skip_invalid
+        jsonb report "xatolar: qator, maydon, kod (qiymatlarsiz)"
         uuid created_by FK
+        timestamptz created_at
     }
 ```
 

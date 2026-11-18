@@ -652,6 +652,34 @@ export const expenses = pgTable(
   ],
 );
 
+// --- Import (ERD 2.4): fayl o'zi saqlanmaydi (shaxsiy ma'lumot), faqat natija hisoboti (qator raqami, maydon, xato kodi; qiymatlarsiz). Append-only. ---
+export const importJobs = pgTable(
+  'import_jobs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    type: text('type').notNull(), // STUDENTS | GROUPS | PAYMENTS (hozir faqat STUDENTS)
+    fileName: text('file_name').notNull(),
+    status: text('status').notNull(), // DONE | REJECTED
+    totalRows: integer('total_rows').notNull(),
+    createdRows: integer('created_rows').notNull().default(0),
+    errorRows: integer('error_rows').notNull().default(0),
+    skipInvalid: boolean('skip_invalid').notNull().default(false),
+    report: jsonb('report').notNull(), // { errors: [{ row, field, code, message }], truncated }
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('import_jobs_center_created_idx').on(t.centerId, t.createdAt),
+    check('import_jobs_type_chk', sql`${t.type} in ('STUDENTS','GROUPS','PAYMENTS')`),
+    check('import_jobs_status_chk', sql`${t.status} in ('DONE','REJECTED')`),
+    check('import_jobs_counts_chk', sql`${t.totalRows} >= 0 and ${t.createdRows} >= 0 and ${t.errorRows} >= 0 and ${t.createdRows} <= ${t.totalRows}`),
+    check('import_jobs_rejected_chk', sql`${t.status} <> 'REJECTED' or ${t.createdRows} = 0`),
+  ],
+);
+
 // --- Davomat (ERD 2.2): dars va davomat yozuvi. Qator o'chirilmaydi; tuzatishlar audit jurnalida. ---
 export const lessons = pgTable(
   'lessons',

@@ -6,9 +6,9 @@
     "semantic_hash": "2ab544bcdae2df9c8df41d465a515066"
   },
   "ERD-VA-RUXSATLAR.md": {
-    "mtime": 1795033023.4564137,
-    "seen": 1795033030.2187355,
-    "ast_hash": "2cd46a2960e33ccd630ad6e9cc9f03c1",
+    "mtime": 1795040208.7636247,
+    "seen": 1795040224.5058484,
+    "ast_hash": "d3afe69d4af15b318fb7a9f600581695",
     "semantic_hash": ""
   },
   "REJA.md": {
@@ -48,9 +48,9 @@
     "semantic_hash": "c235eaa02914b239404d51b601adbd9e"
   },
   "apps/api/src/app.module.ts": {
-    "mtime": 1795032830.4070375,
-    "seen": 1795033030.1967835,
-    "ast_hash": "bd76b710d58b60b80342adc399eceb8c",
+    "mtime": 1795033770.739862,
+    "seen": 1795040224.485374,
+    "ast_hash": "5c09693dcc33aa7264f41f2c1eaff85a",
     "semantic_hash": ""
   },
   "apps/api/src/app.service.ts": {
@@ -276,9 +276,9 @@
     "semantic_hash": "d4903841cf44a0593c7193759e6b5600"
   },
   "apps/api/src/db/schema.ts": {
-    "mtime": 1795032295.1575625,
-    "seen": 1795032668.7235243,
-    "ast_hash": "5e072e85ecc84d4a8c55aef88b78eab0",
+    "mtime": 1795033507.4677846,
+    "seen": 1795040224.493419,
+    "ast_hash": "203d7b36413bfc22bb93508d77014fb4",
     "semantic_hash": ""
   },
   "apps/api/src/db/seed.ts": {
@@ -306,9 +306,9 @@
     "semantic_hash": "64dca3f713626a4b78ce63ccd4f8315b"
   },
   "apps/api/test/tenant-isolation.e2e-spec.ts": {
-    "mtime": 1795032390.9054973,
-    "seen": 1795032668.7345402,
-    "ast_hash": "404134f31b33b522152469c01ab4a7d2",
+    "mtime": 1795033788.9516742,
+    "seen": 1795040224.5031605,
+    "ast_hash": "05924ef1a45fa94e2faa754c062fe4d2",
     "semantic_hash": ""
   },
   "apps/api/src/auth/temp-password.ts": {
@@ -408,9 +408,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795033023.4592865,
-    "seen": 1795033030.2187376,
-    "ast_hash": "f41681cfd2acf9b62330b21bbe46fd80",
+    "mtime": 1795040208.7636247,
+    "seen": 1795040224.5058503,
+    "ast_hash": "0151e6db9e7c235b6048d8e8c8de4c22",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -951,6 +951,66 @@
     "mtime": 1795032902.1534135,
     "seen": 1795033030.2156935,
     "ast_hash": "c5738cecb261a836a04f6602947d867f",
+    "semantic_hash": ""
+  },
+  "apps/api/src/common/spreadsheet.spec.ts": {
+    "mtime": 1795033623.6022613,
+    "seen": 1795040224.4918883,
+    "ast_hash": "516b913d7511df3604b22a23f2bf9547",
+    "semantic_hash": ""
+  },
+  "apps/api/src/common/spreadsheet.ts": {
+    "mtime": 1795033582.0445511,
+    "seen": 1795040224.4918907,
+    "ast_hash": "4f30f6601e1a328eefdd1d7776948856",
+    "semantic_hash": ""
+  },
+  "apps/api/src/imports/imports.controller.ts": {
+    "mtime": 1795033770.3580225,
+    "seen": 1795040224.496305,
+    "ast_hash": "d14e89d7c4ddcc12f159e364485fe8e7",
+    "semantic_hash": ""
+  },
+  "apps/api/src/imports/imports.module.ts": {
+    "mtime": 1795033770.4460883,
+    "seen": 1795040224.4963074,
+    "ast_hash": "2349bbd59411d008e3ac8f5db5e48f43",
+    "semantic_hash": ""
+  },
+  "apps/api/src/imports/imports.schemas.ts": {
+    "mtime": 1795033727.3701582,
+    "seen": 1795040224.49631,
+    "ast_hash": "084c62d3e05eb6e73fec9354797cf8c8",
+    "semantic_hash": ""
+  },
+  "apps/api/src/imports/imports.service.ts": {
+    "mtime": 1795040172.0341153,
+    "seen": 1795040224.496312,
+    "ast_hash": "1841076615e0ed2f365b82dce824fbff",
+    "semantic_hash": ""
+  },
+  "apps/api/src/imports/student-import.spec.ts": {
+    "mtime": 1795033673.454841,
+    "seen": 1795040224.4963136,
+    "ast_hash": "1d79f61d62a5d07ad3ed741a9ddeaecf",
+    "semantic_hash": ""
+  },
+  "apps/api/src/imports/student-import.ts": {
+    "mtime": 1795033673.3458245,
+    "seen": 1795040224.4963155,
+    "ast_hash": "1d4f0e13aaf739262b5c41794a22a162",
+    "semantic_hash": ""
+  },
+  "apps/api/test/helpers/xlsx-writer.ts": {
+    "mtime": 1795033582.188238,
+    "seen": 1795040224.5022838,
+    "ast_hash": "b1c5cc7662fcf297663b1abfbe146049",
+    "semantic_hash": ""
+  },
+  "apps/api/test/imports.e2e-spec.ts": {
+    "mtime": 1795036877.6152725,
+    "seen": 1795040224.5022857,
+    "ast_hash": "6b2820b48be6557f4ed0f4bb8eea328c",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {
