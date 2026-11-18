@@ -269,7 +269,8 @@ describe('Kurslar va guruhlar (PGlite, RLS yoqilgan)', () => {
       }
       expect((await ids(teacher1.api)).sort()).toEqual([g1.id]);
       expect((await ids(teacher2.api)).sort()).toEqual([g2.id]);
-      await student.get('/groups').expect(403); // o'quvchi guruhi yozilish modulidan keyin
+      expect((await student.get('/groups').expect(200)).body.items).toEqual([]); // yozilmagan o'quvchi guruh ko'rmaydi (yozilganlari enrollments testida)
+      await student.get(`/groups/${g1.id}`).expect(404);
     });
 
     it("filtrlar: filial, kurs, holat, ustoz, nom bo'yicha qidiruv, arxiv; qamrovdan tashqari filial filtri bo'sh", async () => {

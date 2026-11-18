@@ -277,6 +277,72 @@ export const groupTeachers = pgTable(
   ],
 );
 
+// --- Yozilish (ERD 2.2). Qator hech qachon o'chirilmaydi: chiqish/ko'chirish `LEFT` bilan yopiladi (tarix saqlanadi). ---
+export const enrollments = pgTable(
+  'enrollments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    groupId: uuid('group_id').notNull(),
+    studentId: uuid('student_id').notNull(),
+    joinedAt: date('joined_at', { mode: 'string' }).notNull().default(sql`current_date`),
+    leftAt: date('left_at', { mode: 'string' }),
+    status: text('status').notNull().default('ACTIVE'), // ACTIVE | FROZEN | LEFT
+    billingAnchor: date('billing_anchor', { mode: 'string' }), // faqat STUDENT_CYCLE: davr boshi kuni
+    priceOverride: bigint('price_override', { mode: 'number' }),
+    leftReason: text('left_reason'),
+    createdBy: uuid('created_by').references(() => users.id),
+    createdAt: createdAt(),
+    updatedAt: ts('updated_at').notNull().defaultNow(),
+  },
+  (t) => [
+    foreignKey({ name: 'enrollments_group_center_fk', columns: [t.groupId, t.centerId], foreignColumns: [groups.id, groups.centerId] }),
+    foreignKey({ name: 'enrollments_student_center_fk', columns: [t.studentId, t.centerId], foreignColumns: [users.id, users.centerId] }),
+    unique('enrollments_id_center_uq').on(t.id, t.centerId),
+    // Bitta o'quvchi bitta guruhda bir vaqtda faqat bitta tugallanmagan yozilishga ega
+    uniqueIndex('enrollments_open_uq').on(t.groupId, t.studentId).where(sql`${t.status} <> 'LEFT'`),
+    index('enrollments_student_idx').on(t.studentId),
+    index('enrollments_group_idx').on(t.groupId),
+    index('enrollments_center_idx').on(t.centerId),
+    check('enrollments_status_chk', sql`${t.status} in ('ACTIVE','FROZEN','LEFT')`),
+    check('enrollments_left_chk', sql`(${t.status} = 'LEFT') = (${t.leftAt} is not null)`),
+    check('enrollments_dates_chk', sql`${t.leftAt} is null or ${t.leftAt} >= ${t.joinedAt}`),
+    check('enrollments_price_chk', sql`${t.priceOverride} is null or ${t.priceOverride} >= 0`),
+  ],
+);
+
+// Jadval tayyor; chegirma berish (`discount.grant`) moliya bosqichida qo'shiladi.
+export const enrollmentDiscounts = pgTable(
+  'enrollment_discounts',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    centerId: uuid('center_id')
+      .notNull()
+      .references(() => centers.id),
+    enrollmentId: uuid('enrollment_id').notNull(),
+    type: text('type').notNull(), // PERCENT | AMOUNT | FREE
+    value: bigint('value', { mode: 'number' }),
+    reason: text('reason'),
+    fromDate: date('from_date', { mode: 'string' }),
+    toDate: date('to_date', { mode: 'string' }),
+    grantedBy: uuid('granted_by').references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    foreignKey({ name: 'enrollment_discounts_enrollment_center_fk', columns: [t.enrollmentId, t.centerId], foreignColumns: [enrollments.id, enrollments.centerId] }),
+    index('enrollment_discounts_enrollment_idx').on(t.enrollmentId),
+    index('enrollment_discounts_center_idx').on(t.centerId),
+    check('enrollment_discounts_type_chk', sql`${t.type} in ('PERCENT','AMOUNT','FREE')`),
+    check(
+      'enrollment_discounts_value_chk',
+      sql`(${t.type} = 'FREE' and ${t.value} is null) or (${t.type} = 'PERCENT' and ${t.value} is not null and ${t.value} between 1 and 100) or (${t.type} = 'AMOUNT' and ${t.value} is not null and ${t.value} > 0)`,
+    ),
+    check('enrollment_discounts_dates_chk', sql`${t.toDate} is null or ${t.fromDate} is null or ${t.toDate} >= ${t.fromDate}`),
+  ],
+);
+
 export const permissions = pgTable('permissions', {
   code: text('code').primaryKey(),
   module: text('module').notNull(),

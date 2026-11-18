@@ -207,7 +207,8 @@ describe("O'quvchilar (PGlite, RLS yoqilgan)", () => {
       await A.owner.get(`/students/${admin1.id}`).expect(404);
       await A.owner.get(`/students/${NOPE}`).expect(404);
       await A.owner.get('/students/not-a-uuid').expect(400);
-      await teacher1.api.get('/students').expect(403); // ustoz: yozilish moduli kelguncha yo'q
+      expect((await teacher1.api.get('/students').expect(200)).body.items).toEqual([]); // ustoz guruhsiz o'quvchini ko'rmaydi (yozilishlar enrollments testida)
+      await teacher1.api.get(`/students/${s1}`).expect(404);
     });
 
     it("boshqa markaz ro'yxatda ko'rinmaydi", async () => {

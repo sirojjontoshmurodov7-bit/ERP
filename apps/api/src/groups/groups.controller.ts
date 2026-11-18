@@ -19,7 +19,7 @@ import { GroupsService } from './groups.service.js';
 const clientOf = (req: Request): ClientInfo => ({ ip: req.ip, userAgent: req.get('user-agent') });
 const id = () => new ZodPipe(idParamSchema);
 
-/** Aniq ruxsat (`group.create|edit|billing_settings|view`) va qamrov servisda tekshiriladi. O'quvchi (o'z guruhi) yozilish modulidan keyin. */
+/** Aniq ruxsat (`group.create|edit|billing_settings|view`) va qamrov servisda tekshiriladi. O'quvchi faqat o'z guruhlarini ko'radi (list/get). */
 @Controller('groups')
 @Roles('OWNER', 'ADMIN', 'CASHIER', 'TEACHER')
 export class GroupsController {
@@ -30,11 +30,13 @@ export class GroupsController {
     return this.groups.create(actor, body, clientOf(req));
   }
 
+  @Roles('OWNER', 'ADMIN', 'CASHIER', 'TEACHER', 'STUDENT')
   @Get()
   list(@CurrentUser() actor: AuthUser, @Query(new ZodPipe(listGroupsSchema)) query: z.infer<typeof listGroupsSchema>) {
     return this.groups.list(actor, query);
   }
 
+  @Roles('OWNER', 'ADMIN', 'CASHIER', 'TEACHER', 'STUDENT')
   @Get(':id')
   get(@CurrentUser() actor: AuthUser, @Param('id', id()) groupId: string) {
     return this.groups.get(actor, groupId);

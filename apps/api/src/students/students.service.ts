@@ -1,5 +1,5 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, count, eq, ilike, inArray, isNull, or, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
@@ -7,9 +7,10 @@ import { hashPassword } from '../auth/password.js';
 import { PermissionsService } from '../auth/permissions.service.js';
 import { generateTempPassword } from '../auth/temp-password.js';
 import { type BranchScope, branchScope, inScope } from '../common/branch-scope.js';
+import { teacherStudentIds } from '../common/group-access.js';
 import { generateLogin, isLoginConflict, MAX_LOGIN_TRIES } from '../common/login.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
-import { branches, centers, plans, sessions, studentProfiles, userBranches, users } from '../db/schema.js';
+import { branches, centers, enrollments, plans, sessions, studentProfiles, userBranches, users } from '../db/schema.js';
 import type { CreateStudentInput, ListStudentsQuery, UpdateStudentInput } from './students.schemas.js';
 
 const forbidden = (message = "Bu amal uchun ruxsat yo'q") => new ForbiddenException({ code: 'FORBIDDEN', message });
@@ -93,7 +94,7 @@ export class StudentsService {
       if (!(await this.perms.hasIn(tx, actor, 'student.view'))) throw forbidden();
       const scope = await branchScope(tx, actor);
       const empty = { items: [], limit: query.limit, offset: query.offset };
-      if (query.branchId && !inScope(scope, query.branchId)) return empty;
+      if (query.branchId && actor.role !== 'TEACHER' && !inScope(scope, query.branchId)) return empty;
 
       const conds: (SQL | undefined)[] = [eq(users.role, 'STUDENT')];
       if (query.status) conds.push(eq(users.status, query.status));
@@ -101,7 +102,11 @@ export class StudentsService {
         const like = `%${escapeLike(query.q)}%`;
         conds.push(or(ilike(users.fullName, like), ilike(users.login, like), ilike(users.phone, like)));
       }
-      if (query.branchId) {
+      if (actor.role === 'TEACHER') {
+        // Ustoz faqat o'z guruhlaridagi (tugallanmagan yozilishli) o'quvchilarni ko'radi
+        conds.push(inArray(users.id, teacherStudentIds(tx, actor.id)));
+        if (query.branchId) conds.push(inArray(users.id, tx.select({ id: userBranches.userId }).from(userBranches).where(eq(userBranches.branchId, query.branchId))));
+      } else if (query.branchId) {
         conds.push(inArray(users.id, tx.select({ id: userBranches.userId }).from(userBranches).where(eq(userBranches.branchId, query.branchId))));
       } else if (!scope.all) {
         if (!scope.branchIds.length) return empty;
@@ -123,7 +128,8 @@ export class StudentsService {
     return this.db.withContext(this.ctx(actor), async (tx) => {
       if (!(await this.perms.hasIn(tx, actor, 'student.view'))) throw forbidden();
       const scope = await branchScope(tx, actor);
-      const user = actor.role === 'STUDENT' ? await this.loadSelf(tx, actor, id) : await this.loadTarget(tx, scope, id);
+      const user =
+        actor.role === 'STUDENT' ? await this.loadSelf(tx, actor, id) : actor.role === 'TEACHER' ? await this.loadForTeacher(tx, actor, id) : await this.loadTarget(tx, scope, id);
       const [item] = await this.present(tx, [user], scope);
       return item!;
     });
@@ -179,6 +185,12 @@ export class StudentsService {
       const now = new Date();
       await tx.update(users).set({ status: 'ARCHIVED', updatedAt: now }).where(eq(users.id, id));
       await tx.update(sessions).set({ revokedAt: now }).where(and(eq(sessions.userId, id), isNull(sessions.revokedAt)));
+      // Arxivlangan o'quvchining tugallanmagan yozilishlari yopiladi (tarix saqlanadi; qarz ma'lumoti hisob-kitobda qoladi)
+      const closed = await tx
+        .update(enrollments)
+        .set({ status: 'LEFT', leftAt: sql`greatest(${enrollments.joinedAt}, current_date)`, leftReason: 'STUDENT_ARCHIVED', updatedAt: now })
+        .where(and(eq(enrollments.studentId, id), sql`${enrollments.status} <> 'LEFT'`))
+        .returning({ id: enrollments.id });
       await writeAudit(tx, {
         centerId: actor.centerId,
         actorId: actor.id,
@@ -186,7 +198,7 @@ export class StudentsService {
         entity: 'student',
         entityId: id,
         before: { status: target.status },
-        after: { status: 'ARCHIVED' },
+        after: { status: 'ARCHIVED', closedEnrollments: closed.length },
         ip: client.ip,
       });
       const [fresh] = await tx.select().from(users).where(eq(users.id, id));
@@ -244,6 +256,16 @@ export class StudentsService {
       const links = await tx.select({ branchId: userBranches.branchId }).from(userBranches).where(eq(userBranches.userId, id));
       if (!links.some((l) => inScope(scope, l.branchId))) throw notFound();
     }
+    return user;
+  }
+
+  /** Ustoz: o'quvchi uning amaldagi guruhida tugallanmagan yozilishga ega bo'lsa; aks holda 404. */
+  private async loadForTeacher(tx: Tx, actor: AuthUser, id: string): Promise<UserRow> {
+    const [user] = await tx
+      .select()
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.role, 'STUDENT'), inArray(users.id, teacherStudentIds(tx, actor.id))));
+    if (!user) throw notFound();
     return user;
   }
 

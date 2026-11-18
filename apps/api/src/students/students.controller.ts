@@ -12,7 +12,7 @@ import { StudentsService } from './students.service.js';
 const clientOf = (req: Request): ClientInfo => ({ ip: req.ip, userAgent: req.get('user-agent') });
 const id = () => new ZodPipe(idParamSchema);
 
-/** O'quvchilar. Aniq ruxsat (`student.*`) va filial qamrovi servisda tekshiriladi. Ustoz (o'z guruhi) yozilish modulidan keyin qo'shiladi. */
+/** O'quvchilar. Aniq ruxsat (`student.*`) va filial qamrovi servisda tekshiriladi. Ustoz faqat o'z guruhlaridagi o'quvchilarni ko'radi (list/get). */
 @Controller('students')
 @Roles('OWNER', 'ADMIN', 'CASHIER')
 export class StudentsController {
@@ -29,12 +29,13 @@ export class StudentsController {
     return this.students.create(actor, body, clientOf(req));
   }
 
+  @Roles('OWNER', 'ADMIN', 'CASHIER', 'TEACHER')
   @Get()
   list(@CurrentUser() actor: AuthUser, @Query(new ZodPipe(listStudentsSchema)) query: z.infer<typeof listStudentsSchema>) {
     return this.students.list(actor, query);
   }
 
-  @Roles('OWNER', 'ADMIN', 'CASHIER', 'STUDENT')
+  @Roles('OWNER', 'ADMIN', 'CASHIER', 'TEACHER', 'STUDENT')
   @Get(':id')
   get(@CurrentUser() actor: AuthUser, @Param('id', id()) studentId: string) {
     return this.students.get(actor, studentId);

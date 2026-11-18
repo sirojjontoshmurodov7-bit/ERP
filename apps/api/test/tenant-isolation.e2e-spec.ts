@@ -22,6 +22,8 @@ const TENANT_TABLES = [
   'groups',
   'group_schedules',
   'group_teachers',
+  'enrollments',
+  'enrollment_discounts',
   'audit_logs',
 ] as const;
 type TenantTable = (typeof TENANT_TABLES)[number];
@@ -32,6 +34,7 @@ interface Fixture {
   owner: string;
   course: string;
   group: string;
+  enrollment: string;
   branch1: string;
   branch2: string;
 }
@@ -96,6 +99,10 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
         return sql`insert into group_schedules (group_id, center_id, weekday, start_time, end_time) values (${f.group}, ${f.center}, 2, '10:00', '11:00')`;
       case 'group_teachers':
         return sql`insert into group_teachers (group_id, teacher_id, center_id, kind) values (${f.group}, ${f.owner}, ${f.center}, 'ASSISTANT')`;
+      case 'enrollments':
+        return sql`insert into enrollments (group_id, student_id, center_id) values (${f.group}, ${f.owner}, ${f.center})`;
+      case 'enrollment_discounts':
+        return sql`insert into enrollment_discounts (enrollment_id, center_id, type) values (${f.enrollment}, ${f.center}, 'FREE')`;
       case 'audit_logs':
         return sql`insert into audit_logs (center_id, action, entity) values (${f.center}, 'test.insert', 'x')`;
     }
@@ -129,6 +136,8 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       .returning();
     await db.insert(s.groupSchedules).values({ groupId: group!.id, centerId: c!.id, weekday: 1, startTime: '09:00', endTime: '10:30' });
     await db.insert(s.groupTeachers).values({ groupId: group!.id, teacherId: admin!.id, centerId: c!.id, kind: 'MAIN' });
+    const [enrollment] = await db.insert(s.enrollments).values({ groupId: group!.id, studentId: admin!.id, centerId: c!.id }).returning();
+    await db.insert(s.enrollmentDiscounts).values({ enrollmentId: enrollment!.id, centerId: c!.id, type: 'PERCENT', value: 10 });
     await db.insert(s.sessions).values({
       userId: owner!.id,
       centerId: c!.id,
@@ -136,7 +145,7 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expiresAt: new Date(Date.now() + 3600_000),
     });
     await db.insert(s.auditLogs).values({ centerId: c!.id, actorId: owner!.id, action: 'seed', entity: 'user' });
-    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, branch1: b1!.id, branch2: b2!.id };
+    return { center: c!.id, admin: admin!.id, owner: owner!.id, course: course!.id, group: group!.id, enrollment: enrollment!.id, branch1: b1!.id, branch2: b2!.id };
   }
 
   beforeAll(async () => {
@@ -303,6 +312,31 @@ describe('Tenant izolyatsiyasi (RLS + kompozit FK + triggerlar)', () => {
       expect(await failure(q(ctxA, bad('GROUP_CYCLE', 'null')))).toMatch(/groups_billing_day_chk/);
       expect(await failure(q(ctxA, bad('STUDENT_CYCLE', '5')))).toMatch(/groups_billing_day_chk/);
       expect(await failure(q(ctxA, bad('STUDENT_CYCLE', 'null')))).toBeNull();
+    });
+
+    it("enrollments: boshqa markaz guruhi/o'quvchisiga yozib bo'lmaydi; chegirma boshqa markaz yozilishiga bog'lanmaydi", async () => {
+      const g = await failure(q(ctxA, sql`insert into enrollments (group_id, student_id, center_id) values (${B.group}, ${A.admin}, ${A.center})`));
+      expect(g).toMatch(/foreign key/);
+      const st = await failure(q(ctxA, sql`insert into enrollments (group_id, student_id, center_id) values (${A.group}, ${B.admin}, ${A.center})`));
+      expect(st).toMatch(/foreign key/);
+      const d = await failure(q(ctxA, sql`insert into enrollment_discounts (enrollment_id, center_id, type) values (${B.enrollment}, ${A.center}, 'FREE')`));
+      expect(d).toMatch(/foreign key/);
+    });
+
+    it("yozilish qoidalari bazada: ochiq yozilish takrorlanmaydi, LEFT va sana mosligi, chegirma qiymati", async () => {
+      const dup = await failure(q(ctxA, sql`insert into enrollments (group_id, student_id, center_id) values (${A.group}, ${A.admin}, ${A.center})`));
+      expect(dup).toMatch(/enrollments_open_uq|duplicate/);
+      const left = await failure(q(ctxA, sql`insert into enrollments (group_id, student_id, center_id, status) values (${A.group}, ${A.owner}, ${A.center}, 'LEFT')`));
+      expect(left).toMatch(/enrollments_left_chk/);
+      const ok = await failure(q(ctxA, sql`insert into enrollments (group_id, student_id, center_id, status, joined_at, left_at) values (${A.group}, ${A.admin}, ${A.center}, 'LEFT', '2026-01-01', '2026-02-01')`));
+      expect(ok).toBeNull(); // tugallangan eski yozilish bilan yangisi yonma-yon yashaydi
+      const early = await failure(q(ctxA, sql`insert into enrollments (group_id, student_id, center_id, status, joined_at, left_at) values (${A.group}, ${A.owner}, ${A.center}, 'LEFT', '2026-03-01', '2026-02-01')`));
+      expect(early).toMatch(/enrollments_dates_chk/);
+      const disc = (type: string, value: string) => sql`insert into enrollment_discounts (enrollment_id, center_id, type, value) values (${A.enrollment}, ${A.center}, ${type}, ${value === 'null' ? null : Number(value)})`;
+      expect(await failure(q(ctxA, disc('PERCENT', '101')))).toMatch(/enrollment_discounts_value_chk/);
+      expect(await failure(q(ctxA, disc('AMOUNT', 'null')))).toMatch(/enrollment_discounts_value_chk/);
+      expect(await failure(q(ctxA, disc('FREE', '5')))).toMatch(/enrollment_discounts_value_chk/);
+      expect(await failure(q(ctxA, disc('AMOUNT', '50000')))).toBeNull();
     });
 
     it("superuser ulanishi bilan ham kross-markaz bog'lash rad etiladi (baza darajasida)", async () => {

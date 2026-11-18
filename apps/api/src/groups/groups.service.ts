@@ -1,13 +1,14 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { and, asc, eq, gte, ilike, inArray, isNull, or, sql, type SQL } from 'drizzle-orm';
+import { and, asc, count, eq, ilike, inArray, isNull, sql, type SQL } from 'drizzle-orm';
 import { writeAudit } from '../audit/audit.js';
 import type { ClientInfo } from '../auth/auth.service.js';
 import type { AuthUser } from '../auth/auth.types.js';
 import { PermissionsService } from '../auth/permissions.service.js';
 import { type BranchScope, branchFilter, branchScope, inScope } from '../common/branch-scope.js';
+import { currentTeacher, studentGroupIds, teacherGroupIds } from '../common/group-access.js';
 import { pgErrorInfo } from '../common/pg-errors.js';
 import { contextOf, DbService, type Tx } from '../db/db.service.js';
-import { branches, centers, courses, groupSchedules, groups, groupTeachers, userBranches, users } from '../db/schema.js';
+import { branches, centers, courses, enrollments, groupSchedules, groups, groupTeachers, userBranches, users } from '../db/schema.js';
 import {
   type AssignTeacherInput,
   BILLING_KEYS,
@@ -25,9 +26,6 @@ const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 const today = () => new Date().toISOString().slice(0, 10);
 
 type GroupRow = typeof groups.$inferSelect;
-/** Ustoz biriktirilishi amalda: tugash sanasi yo'q yoki bugundan oldin emas. */
-const currentTeacher = or(isNull(groupTeachers.toDate), gte(groupTeachers.toDate, sql`current_date`));
-
 @Injectable()
 export class GroupsService {
   constructor(
@@ -93,10 +91,10 @@ export class GroupsService {
       if (!(await this.perms.hasIn(tx, actor, 'group.view'))) throw forbidden();
       const scope = await branchScope(tx, actor);
       const empty = { items: [], limit: q.limit, offset: q.offset };
-      if (q.branchId && actor.role !== 'TEACHER' && !inScope(scope, q.branchId)) return empty;
+      if (q.branchId && actor.role !== 'TEACHER' && actor.role !== 'STUDENT' && !inScope(scope, q.branchId)) return empty;
 
       const conds: (SQL | undefined)[] = [
-        actor.role === 'TEACHER' ? inArray(groups.id, this.teacherGroupIds(tx, actor.id)) : branchFilter(groups.branchId, scope),
+        this.visibility(tx, actor, scope),
         q.includeArchived ? undefined : isNull(groups.archivedAt),
         q.branchId ? eq(groups.branchId, q.branchId) : undefined,
         q.courseId ? eq(groups.courseId, q.courseId) : undefined,
@@ -162,12 +160,14 @@ export class GroupsService {
     );
   }
 
-  /** Arxivlash yumshoq o'chirish. Faol yozilishlari bo'lgan guruhni arxivlash cheklovi yozilish moduli bilan qo'shiladi. */
+  /** Arxivlash yumshoq o'chirish. Tugallanmagan yozilishi bo'lgan guruh arxivlanmaydi. */
   archive(actor: AuthUser, id: string, client: ClientInfo) {
     return this.db.withContext(this.ctx(actor), async (tx) => {
       if (!(await this.perms.hasIn(tx, actor, 'group.edit'))) throw forbidden();
       const before = await this.load(tx, actor, await branchScope(tx, actor), id);
       if (before.archivedAt) throw conflict('ALREADY_ARCHIVED', 'Guruh allaqachon arxivlangan');
+      const [{ open } = { open: 0 }] = await tx.select({ open: count() }).from(enrollments).where(and(eq(enrollments.groupId, id), sql`${enrollments.status} <> 'LEFT'`));
+      if (Number(open) > 0) throw conflict('GROUP_HAS_STUDENTS', `Guruhda ${open} ta faol o'quvchi bor: avval ularni chiqaring yoki ko'chiring`);
       const [after] = await tx.update(groups).set({ archivedAt: new Date(), updatedAt: new Date() }).where(eq(groups.id, id)).returning();
       await this.audit(tx, actor, client, 'group.archive', id, this.auditView(before), this.auditView(after!));
       return (await this.present(tx, actor, [after!]))[0]!;
@@ -298,8 +298,11 @@ export class GroupsService {
     return startDate ? Math.min(Number(startDate.slice(8, 10)), 28) : 1;
   }
 
-  private teacherGroupIds(tx: Tx, teacherId: string) {
-    return tx.select({ id: groupTeachers.groupId }).from(groupTeachers).where(and(eq(groupTeachers.teacherId, teacherId), currentTeacher));
+  /** Ustoz va o'quvchi guruhlarni faqat o'z biriktirilishi/yozilishi bo'yicha ko'radi; xodimlar filial qamrovi bo'yicha. */
+  private visibility(tx: Tx, actor: AuthUser, scope: BranchScope): SQL | undefined {
+    if (actor.role === 'TEACHER') return inArray(groups.id, teacherGroupIds(tx, actor.id));
+    if (actor.role === 'STUDENT') return inArray(groups.id, studentGroupIds(tx, actor.id));
+    return branchFilter(groups.branchId, scope);
   }
 
   private async assertBranch(tx: Tx, scope: BranchScope, branchId: string) {
@@ -322,7 +325,7 @@ export class GroupsService {
       .where(
         and(
           eq(groups.id, id),
-          actor.role === 'TEACHER' ? inArray(groups.id, this.teacherGroupIds(tx, actor.id)) : branchFilter(groups.branchId, scope),
+          this.visibility(tx, actor, scope),
         ),
       );
     if (!g) throw groupNotFound();
@@ -339,7 +342,7 @@ export class GroupsService {
   private async present(tx: Tx, actor: AuthUser, rows: GroupRow[]) {
     if (!rows.length) return [];
     const ids = rows.map((g) => g.id);
-    const [courseRows, branchRows, scheduleRows, teacherRows] = await Promise.all([
+    const [courseRows, branchRows, scheduleRows, teacherRows, countRows] = await Promise.all([
       tx.select({ id: courses.id, name: courses.name }).from(courses).where(inArray(courses.id, [...new Set(rows.map((g) => g.courseId))])),
       tx.select({ id: branches.id, name: branches.name }).from(branches).where(inArray(branches.id, [...new Set(rows.map((g) => g.branchId))])),
       tx.select().from(groupSchedules).where(inArray(groupSchedules.groupId, ids)).orderBy(asc(groupSchedules.weekday), asc(groupSchedules.startTime)),
@@ -349,6 +352,11 @@ export class GroupsService {
         .innerJoin(users, eq(users.id, groupTeachers.teacherId))
         .where(and(inArray(groupTeachers.groupId, ids), currentTeacher))
         .orderBy(asc(groupTeachers.kind), asc(users.fullName)),
+      tx
+        .select({ groupId: enrollments.groupId, n: count() })
+        .from(enrollments)
+        .where(and(inArray(enrollments.groupId, ids), sql`${enrollments.status} <> 'LEFT'`))
+        .groupBy(enrollments.groupId),
     ]);
     const hideBilling = actor.role === 'TEACHER';
     return rows.map((g) => ({
@@ -364,6 +372,7 @@ export class GroupsService {
       status: g.status,
       archivedAt: g.archivedAt,
       createdAt: g.createdAt,
+      ...(actor.role === 'STUDENT' ? {} : { studentCount: Number(countRows.find((c) => c.groupId === g.id)?.n ?? 0) }),
       schedule: scheduleRows
         .filter((s) => s.groupId === g.id)
         .map((s) => ({ id: s.id, weekday: s.weekday, startTime: s.startTime.slice(0, 5), endTime: s.endTime.slice(0, 5), room: s.room })),

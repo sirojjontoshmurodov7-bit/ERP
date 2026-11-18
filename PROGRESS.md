@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar) tayyor; keyingi 10: yozilish). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish) tayyor; keyingi: davomat). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -14,9 +14,10 @@ Oxirgi yangilanish: 2026-11-18 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 7. Audit jurnali va ruxsat matritsasi avtomatik testi | tayyor | `apps/api/src/audit/`, `test/permission-matrix.e2e-spec.ts` |
 | 8. O'quvchilar (`student_profiles`, `/students`) | tayyor | `apps/api/src/students/`, `drizzle/0005`, `test/students.e2e-spec.ts` |
 | 9. Kurslar va guruhlar | tayyor | `apps/api/src/{courses,groups}/`, `drizzle/0006`, `test/groups.e2e-spec.ts` |
-| **10. Yozilish (`enrollments`)** | **keyingi** | hali yozilmagan |
+| 10. Yozilish (`enrollments`) | tayyor | `apps/api/src/enrollments/`, `common/group-access.ts`, `drizzle/0007`, `test/enrollments.e2e-spec.ts` |
+| **11. Davomat (`lessons`, `attendance_records`)** | **keyingi** | hali yozilmagan |
 
-Commitlar: skelet 1-7 `6e73b51`, 8-qadam `b332eda`. 9-qadam o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8-qadam `b332eda`, 9-qadam `af89a71`. 10-qadam o'zgarishlari **commit qilinmagan**; commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -29,7 +30,7 @@ Commitlar: skelet 1-7 `6e73b51`, 8-qadam `b332eda`. 9-qadam o'zgarishlari **comm
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~30 s, 208 test
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~35 s, 241 test
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -91,6 +92,20 @@ Reja (tasdiqlangan): 8 o'quvchilar, 9 kurs va guruhlar (`courses`, `groups`, `gr
 - **Ochiq:** guruhni arxivlashda faol yozilishlar tekshiruvi (10-qadamda); guruh narxi/rejimi o'zgarganda mavjud `charges` ga ta'siri (to'lov bosqichida hal qilinadi); ustoz jadvali to'qnashuvi tekshirilmaydi.
 - Audit: `course.create|edit|archive|unarchive`, `group.create|edit|archive|unarchive|schedule_update|teacher_assign|teacher_end`.
 - Test: `test/groups.e2e-spec.ts` (22 ta) + izolyatsiya testida 4 yangi jadval va kross-markaz/qoida testlari; umumiy 208 e2e + 14 unit.
+
+### 10-qadam: yozilish (tayyor)
+- Migratsiya `0007`: `enrollments`, `enrollment_discounts` (RLS, kompozit FK `(group_id|student_id|enrollment_id, center_id)`, `TENANT_TABLES` da). Bazada qoidalar: bitta o'quvchi bitta guruhda bir vaqtda faqat bitta tugallanmagan (ACTIVE/FROZEN) yozilishga ega (qisman UNIQUE), `status='LEFT'` <=> `left_at` bor, `left_at >= joined_at`, narx >= 0; chegirmada `PERCENT` 1-100, `AMOUNT` > 0, `FREE` qiymatsiz. DELETE huquqi yo'q: chiqish/ko'chirish `LEFT` bilan yopiladi, tarix saqlanadi. `enrollment_discounts` faqat jadval: chegirma berish (`discount.grant`) moliya bosqichida.
+- `/enrollments`: `POST` (`{groupId, studentId, joinedAt?, priceOverride?}`), `GET` (`groupId`, `studentId`, `branchId`, `status`, `limit`, `offset`), `GET :id`, `POST :id/freeze|unfreeze`, `POST :id/leave` (`{reason?, leftAt?}`), `POST :id/transfer` (`{toGroupId, reason?, transferDate?, priceOverride?}`: eski `LEFT` + `left_reason='TRANSFER[: sabab]'`, yangi guruhda yangi ACTIVE qator; bitta tranzaksiya, xatoda hech narsa o'zgarmaydi; eski individual narx ko'chmaydi).
+- Ruxsat: o'zgartirish `enrollment.manage` (OWNER, ADMIN f), `priceOverride` uchun qo'shimcha `group.billing_settings`. Admin ham guruh, ham o'quvchi o'z filial qamrovida bo'lishi shart (tashqarisi 404). Ko'rish `group.view`: rahbar hammasi, admin/kassir guruh filiali bo'yicha, **ustoz o'z amaldagi guruhlari** (individual narxsiz), **o'quvchi faqat o'zinikini**.
+- `billing_anchor`: guruh `STUDENT_CYCLE` bo'lsa yozilish (yoki ko'chirish) sanasi, aks holda NULL. Muzlatilgan yozilish ham "ochiq" (qayta yozib bo'lmaydi, guruhni arxivlashga to'sqinlik qiladi).
+- Boshqa filial guruhiga yozilsa/ko'chirilsa o'quvchiga o'sha filial `user_branches` ga avtomatik qo'shiladi.
+- **Boshqa modullarga ta'siri:** `/students` ni ustoz endi ko'radi (faqat o'z guruhlaridagi tugallanmagan yozilishli o'quvchilar, `student.view` scope `o`); `/groups` list/get ni o'quvchi ko'radi (faqat yozilgan guruhlari, narxi bilan, `studentCount`siz; `group.view` scope `o`); `GroupsService` guruh arxivlashda `GROUP_HAS_STUDENTS` tekshiradi va `studentCount` beradi; o'quvchi arxivlanganda tugallanmagan yozilishlari `LEFT` (`STUDENT_ARCHIVED`), qaytarilganda tiklanmaydi. Umumiy qamrov yordamchilari: `common/group-access.ts` (`teacherGroupIds`, `studentGroupIds`, `teacherStudentIds`).
+- **Ochiq:** muzlatish davri sanalari saqlanmaydi (faqat holat va audit): to'lov bosqichida kerak bo'lsa `frozen_from/to` qo'shiladi (avval ERD yangilanadi); guruh `FINISHED` bo'lganda yozilishlarni avtomatik yopish yo'q; `/courses` o'quvchiga yopiq.
+- Audit: `enrollment.create|freeze|unfreeze|leave|transfer`, `student.archive` (`closedEnrollments`).
+- Test: `test/enrollments.e2e-spec.ts` (21 ta) + izolyatsiya testida 2 jadval va bazaviy qoidalar; umumiy 241 e2e + 14 unit.
+
+## Keyingi bosqich: davomat (CLAUDE.md "Keyingi bosqichlar": davomat, so'ng to'lov va qarzdorlik, maosh, hisobotlar, Excel import, vazifa/reyting, Telegram bot)
+`lessons`, `attendance_records` (ERD 2.2), dars qulflanishi (`lessons.locked_at`), `attendance.mark|view|edit_past`. Boshlashdan oldin qisqa reja ko'rsatib tasdiqlat.
 
 ## Ochiq savollar
 - Markaz reytingida boshqa filial o'quvchilarining to'liq ismi ko'rinsinmi (sukut: ha).

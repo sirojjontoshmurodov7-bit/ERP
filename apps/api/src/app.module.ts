@@ -10,11 +10,12 @@ import { DbModule } from './db/db.module.js';
 import { PermissionsAdminModule } from './permissions-admin/permissions-admin.module.js';
 import { StudentsModule } from './students/students.module.js';
 import { CoursesModule } from './courses/courses.module.js';
+import { EnrollmentsModule } from './enrollments/enrollments.module.js';
 import { GroupsModule } from './groups/groups.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
-  imports: [ConfigModule, DbModule, AuthModule, AuditModule, CentersModule, BranchesModule, UsersModule, StudentsModule, CoursesModule, GroupsModule, PermissionsAdminModule],
+  imports: [ConfigModule, DbModule, AuthModule, AuditModule, CentersModule, BranchesModule, UsersModule, StudentsModule, CoursesModule, GroupsModule, EnrollmentsModule, PermissionsAdminModule],
   controllers: [AppController],
   providers: [AppService],
 })
