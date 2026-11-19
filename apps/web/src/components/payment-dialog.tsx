@@ -47,7 +47,10 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
   const branches = useBranches(open);
   const balance = useApi<{ debt: number; advance: number }>(open && picked ? `/students/${picked.id}/balance` : null);
 
-  const studentBranches = (branches.data?.items ?? []).filter((b) => picked?.branchIds.includes(b.id));
+  // ro'yxatlardan kelganda (qarzdorlar) filiallar noma'lum bo'lishi mumkin: o'quvchi kartasidan olamiz
+  const detail = useApi<{ branchIds: string[] }>(open && picked && !picked.branchIds.length ? `/students/${picked.id}` : null);
+  const pickedBranchIds = picked?.branchIds.length ? picked.branchIds : (detail.data?.branchIds ?? []);
+  const studentBranches = (branches.data?.items ?? []).filter((b) => pickedBranchIds.includes(b.id));
   // bitta filial bo'lsa avtomatik; tanlangan filial o'quvchiga tegishli bo'lmasa (o'quvchi almashgan) bekor
   const branchId = studentBranches.length === 1 ? studentBranches[0]!.id : studentBranches.some((b) => b.id === branchChoice) ? branchChoice : '';
 
@@ -104,7 +107,7 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
               <>
                 Qarz: <span className="fig debt">{money(balance.data.debt)}</span> so&apos;m{' '}
                 <button type="button" className="link-btn" onClick={() => setAmount(balance.data!.debt)}>
-                  To&apos;liq summani qo&apos;yish
+                  To&apos;liq summa
                 </button>
               </>
             ) : (

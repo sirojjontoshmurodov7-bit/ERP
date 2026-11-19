@@ -3,12 +3,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Button, TextInput } from '@/components/ui';
 import { ApiError, auth, errorText } from '@/lib/api';
-
-/** Faqat o'z ilovamizdagi nisbiy yo'lga qaytaramiz (ochiq redirect yo'q). */
-function safeNext(v: string | null): string {
-  if (!v || !v.startsWith('/') || v.startsWith('//') || v.startsWith('/\\') || v.startsWith('/api')) return '/';
-  return v;
-}
+import { safeNext } from '@/lib/safe-next';
 
 export function LoginForm() {
   const router = useRouter();

@@ -103,5 +103,5 @@ export async function refreshPair(refreshToken: string, headers: Record<string, 
   return p;
 }
 
-/** API xatosi bo'lmasa ham tarmoq uzilsa — bir xil shakldagi javob. */
+/** Tarmoq uzilsa ham API xatosi bilan bir xil shakldagi javob. */
 export const unavailable = () => Response.json({ code: 'API_UNAVAILABLE', message: "Server bilan aloqa yo'q. Birozdan keyin qayta urinib ko'ring" }, { status: 503 });

@@ -62,17 +62,17 @@ function OwnerView() {
   const debtors = useApi<{ items: DebtorRow[]; total: number; totalDebt: number }>('/debtors', { limit: 6 });
   return (
     <>
-      <DataView state={ov} skeleton={<div className="stats"><Stat label="Yuklanmoqda" value="—" /></div>}>
+      <DataView state={ov} skeleton={<div className="stats"><Stat label="Yuklanmoqda" value="yo'q" /></div>}>
         {(o) => (
           <section className="stack-sm" aria-labelledby="month-h">
-            <h2 id="month-h">Shu oy: {date(o.from)} – {date(o.to)}</h2>
+            <h2 id="month-h">Shu oy: {date(o.from)} dan {date(o.to)} gacha</h2>
             <div className="stats">
               <Stat label="Faol o'quvchilar" value={money(o.students.active)} note={`${o.students.new} ta yangi`} />
               <Stat label="Faol guruhlar" value={money(o.groups.active)} note={o.groups.planned ? `${o.groups.planned} ta rejada` : undefined} />
               <Stat label="Tushum" value={money(o.finance.income)} note="so'm" />
               <Stat label="Xarajat va maosh" value={money(o.finance.expenses + o.finance.payouts)} note="so'm" />
               <Stat label="Qarz" value={money(o.debt.amount)} note={`${o.debt.debtors} ta qarzdor`} tone={o.debt.amount > 0 ? 'debt' : undefined} />
-              <Stat label="Davomat" value={o.attendance.rate === null ? '—' : `${o.attendance.rate}%`} note={`${o.attendance.lessons} ta dars`} />
+              <Stat label="Davomat" value={o.attendance.rate === null ? "yo'q" : `${o.attendance.rate}%`} note={`${o.attendance.lessons} ta dars`} />
             </div>
           </section>
         )}
@@ -146,7 +146,7 @@ function DebtorsPanel({ state }: { state: ReturnType<typeof useApi<{ items: Debt
                         {r.phone ? <div className="cell-sub fig">{r.phone}</div> : null}
                       </td>
                       <td className="muted">{r.groups.map((g) => g.groupName).join(', ')}</td>
-                      <td className="num">{r.daysOverdue !== undefined ? `${r.daysOverdue} kun` : '—'}</td>
+                      <td className="num">{r.daysOverdue !== undefined ? `${r.daysOverdue} kun` : "yo'q"}</td>
                       <td className="num debt">{r.debt !== undefined ? money(r.debt) : 'bor'}</td>
                     </tr>
                   ))}
@@ -194,7 +194,7 @@ function TeacherView() {
                   {today.map(({ g, s }) => (
                     <li key={g.id + s.startTime} className="row" data-between>
                       <span>
-                        <span className="fig">{s.startTime}–{s.endTime}</span>{' '}
+                        <span className="fig">{s.startTime}-{s.endTime}</span>{' '}
                         <Link className="cell-main" href={`/groups/${g.id}`}>
                           {g.name}
                         </Link>
@@ -257,7 +257,7 @@ function StudentView() {
   return (
     <>
       <div className="stats">
-        <DataView state={bal} skeleton={<Stat label="Balans" value="—" />}>
+        <DataView state={bal} skeleton={<Stat label="Balans" value="yo'q" />}>
           {(b) =>
             b.debt > 0 ? (
               <Stat label="Qarz" value={money(b.debt)} note={`so'm, eng eski muddat ${date(b.openCharges[0]?.dueDate)}`} tone="debt" />
@@ -266,8 +266,8 @@ function StudentView() {
             )
           }
         </DataView>
-        <DataView state={att} skeleton={<Stat label="Davomat" value="—" />}>
-          {(a) => <Stat label="Davomat" value={a.totals.rate === null ? '—' : `${a.totals.rate}%`} note={`${a.totals.absent} ta qoldirilgan dars`} />}
+        <DataView state={att} skeleton={<Stat label="Davomat" value="yo'q" />}>
+          {(a) => <Stat label="Davomat" value={a.totals.rate === null ? "yo'q" : `${a.totals.rate}%`} note={`${a.totals.absent} ta qoldirilgan dars`} />}
         </DataView>
       </div>
       <div className="grid-2">

@@ -4,6 +4,7 @@ import { Skeleton } from '@/components/ui';
 import { StudentCard } from './student-card';
 
 export const metadata: Metadata = { title: "O'quvchi" };
+export const instant = false; // sessiyaga bog'liq mijoz sahifasi
 
 export default function Page() {
   return (

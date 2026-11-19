@@ -11,6 +11,7 @@ import { date, dateTime, money, monthLabel, todayLocal } from '@/lib/format';
 import { clean, useSubmit } from '@/lib/forms';
 import { useGroupsLite, useUrlState } from '@/lib/hooks';
 import { useSession } from '@/lib/session';
+import { ATT_LABEL } from '@/lib/labels';
 import { useApi } from '@/lib/use-api';
 import { ENROLL_STATUS, type Enrollment, type Student } from '../types';
 
@@ -46,12 +47,6 @@ const CHARGE_STATUS: Record<Charge['status'], { label: string; kind: 'ok' | 'war
   PARTIAL: { label: 'Qisman', kind: 'warn' },
   PAID: { label: "To'langan", kind: 'ok' },
   CANCELLED: { label: 'Bekor qilingan', kind: 'mute' },
-};
-export const ATT_LABEL: Record<AttRow['status'], { label: string; kind: 'ok' | 'warn' | 'bad' | 'mute' }> = {
-  PRESENT: { label: 'Keldi', kind: 'ok' },
-  LATE: { label: 'Kechikdi', kind: 'warn' },
-  ABSENT: { label: 'Kelmadi', kind: 'bad' },
-  EXCUSED: { label: 'Sababli', kind: 'mute' },
 };
 
 export function StudentCard() {
@@ -237,7 +232,7 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
                     <td>
                       <Tag kind={ENROLL_STATUS[e.status].kind}>{ENROLL_STATUS[e.status].label}</Tag>
                     </td>
-                    <td className="num">{e.priceOverride !== null ? money(e.priceOverride) : '—'}</td>
+                    <td className="num">{e.priceOverride !== null ? money(e.priceOverride) : "yo'q"}</td>
                     {can('enrollment.manage') ? (
                       <td className="actions-cell">
                         {e.status !== 'LEFT' ? (
@@ -420,7 +415,7 @@ function DiscountInner({ value, onClose, onDone }: ValueDialog & { value: Enroll
                     <td className="fig">{x.type === 'PERCENT' ? `${x.value}%` : x.type === 'AMOUNT' ? `${money(x.value)} so'm` : 'Bepul'}</td>
                     <td>{x.reason}</td>
                     <td className="fig">
-                      {x.fromDate ? date(x.fromDate) : 'boshidan'} – {x.toDate ? date(x.toDate) : 'muddatsiz'}
+                      {x.fromDate ? `${date(x.fromDate)} dan` : 'boshidan'} {x.toDate ? `${date(x.toDate)} gacha` : 'muddatsiz'}
                     </td>
                     <td className="actions-cell">
                       {x.active ? (
@@ -486,13 +481,13 @@ function ChargesTab({ studentId }: { studentId: string }) {
                   <td>
                     {monthLabel(c.periodStart.slice(0, 7))}
                     <div className="cell-sub fig">
-                      {date(c.periodStart)} – {date(c.periodEnd)}
+                      {date(c.periodStart)} dan {date(c.periodEnd)} gacha
                     </div>
                   </td>
                   <td>{c.groupName}</td>
                   <td className="fig">{date(c.dueDate)}</td>
                   <td className="num">{money(c.baseAmount)}</td>
-                  <td className="num">{c.discountAmount ? money(c.discountAmount) : '—'}</td>
+                  <td className="num">{c.discountAmount ? money(c.discountAmount) : "yo'q"}</td>
                   <td className="num">{money(c.amount)}</td>
                   <td>{c.status === 'PAID' ? <span className="stamp">To&apos;langan</span> : <Tag kind={CHARGE_STATUS[c.status].kind}>{CHARGE_STATUS[c.status].label}</Tag>}</td>
                 </tr>
@@ -583,15 +578,15 @@ function InfoTab({ s }: { s: Student }) {
     <div className="panel panel-body">
       <dl className="kv">
         <dt>Telefon</dt>
-        <dd className="fig">{s.phone ?? '—'}</dd>
+        <dd className="fig">{s.phone ?? "yo'q"}</dd>
         <dt>Tug&apos;ilgan sana</dt>
         <dd className="fig">{date(s.birthDate)}</dd>
         <dt>Ota-ona</dt>
-        <dd>{s.parentName ?? '—'}</dd>
+        <dd>{s.parentName ?? "yo'q"}</dd>
         <dt>Ota-ona telefoni</dt>
-        <dd className="fig">{s.parentPhone ?? '—'}</dd>
+        <dd className="fig">{s.parentPhone ?? "yo'q"}</dd>
         <dt>Izoh</dt>
-        <dd>{s.note ?? '—'}</dd>
+        <dd>{s.note ?? "yo'q"}</dd>
         <dt>Ro&apos;yxatga olingan</dt>
         <dd className="fig">{dateTime(s.createdAt)}</dd>
         <dt>Oxirgi kirish</dt>

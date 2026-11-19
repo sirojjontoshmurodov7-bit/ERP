@@ -46,7 +46,7 @@ export interface Branch {
 export interface Course {
   id: string;
   name: string;
-  defaultPrice: number;
+  defaultPrice: number | null;
   archivedAt: string | null;
 }
 export interface GroupLite {

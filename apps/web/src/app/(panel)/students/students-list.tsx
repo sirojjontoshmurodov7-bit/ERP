@@ -123,12 +123,12 @@ export function StudentsList() {
                         </Link>
                         <div className="cell-sub fig">{s.login}</div>
                       </td>
-                      <td className="fig">{s.phone ?? <span className="muted">—</span>}</td>
+                      <td className="fig">{s.phone ?? <span className="muted">{"yo'q"}</span>}</td>
                       <td>
-                        {s.parentName ?? <span className="muted">—</span>}
+                        {s.parentName ?? <span className="muted">{"yo'q"}</span>}
                         {s.parentPhone ? <div className="cell-sub fig">{s.parentPhone}</div> : null}
                       </td>
-                      {!is('TEACHER') ? <td className="muted">{s.branchIds.map((b) => branchName.get(b) ?? '').filter(Boolean).join(', ') || '—'}</td> : null}
+                      {!is('TEACHER') ? <td className="muted">{s.branchIds.map((b) => branchName.get(b) ?? '').filter(Boolean).join(', ') || "yo'q"}</td> : null}
                       <td className="fig muted">{tsDate(s.createdAt)}</td>
                       <td>{s.status === 'ACTIVE' ? (s.mustChangePassword ? <Tag kind="mute">Kirmagan</Tag> : <Tag kind="ok">Faol</Tag>) : <Tag kind="mute">Arxivda</Tag>}</td>
                     </tr>

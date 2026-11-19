@@ -211,7 +211,7 @@ export function Pager({ offset, limit, count, total, onChange }: { offset: numbe
   return (
     <div className="table-foot">
       <span className="fig">
-        {from}–{to}
+        {from}-{to}
         {total !== undefined ? ` / ${total}` : ''}
       </span>
       <div className="pager">
