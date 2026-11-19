@@ -31,7 +31,7 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 24. Web panel (BFF, dizayn tizimi, barcha rollar va bo'limlar) | tayyor | `apps/web/src/{app,components,lib}`, `apps/web/test/bff.test.ts` |
 | 25. Docker, CI, deploy qo'llanmasi | tayyor | `apps/{api,web}/Dockerfile`, `docker-compose.prod.yml`, `docker/`, `.github/workflows/ci.yml`, `DEPLOY.md` |
 
-Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`. Commitni foydalanuvchi so'raganda qil.
+Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`, 23 `c9c97d8`, 24 `b55e8ff` + `918e77c`, 25 `27d613d`; GitHub: origin main. Commitni foydalanuvchi so'raganda qil.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
