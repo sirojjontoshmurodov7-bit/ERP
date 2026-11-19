@@ -266,6 +266,7 @@ Qoidalar manbasi: ERD 2.4 ("Sozlamalar, tariflar, qulf, login cheklovi (implemen
 
 ## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
 Backend (1-23), web panel (24) va deploy tayyorgarligi (25) tayyor. Qolgani, tavsiya etilgan tartibda:
+0. **Keyingi chat (foydalanuvchi tanlovi): dizayn va landing page.** Panel dizaynini sayqallash (Hallmark, Coral mavzusi, `apps/web/src/app/globals.css` + `src/styles/tokens.css`) va mahsulot uchun ochiq landing sahifa (`/` tashqarisida, masalan `(site)` route group yoki alohida domen; hozir `/` panel bosh sahifasi va `proxy.ts` sessiyasizlarni `/login` ga yo'naltiradi). Landing uchun Hallmark to'liq oqimi: material (skrinshotlar, raqamlar, narx) foydalanuvchidan so'raladi; o'ylab topilgan raqam/sharh yo'q.
 1. **Haqiqiy Telegram bot va Neon bilan sinash** (token va akkaunt kerak; lokal haqiqiy Postgres 23-qadamda sinalgan).
 2. **Birinchi haqiqiy deploy:** server yoki Neon + hosting tanlash, `DEPLOY.md` bo'yicha ko'tarish, CI'ning Docker job'i yashil bo'lishini kuzatish, zaxira nusxa cron'i, monitoring/xatolar hisoboti (masalan Uptime Kuma, Sentry).
 3. **Sifat:** xavfsizlik tekshiruvi (OWASP, CSP), Playwright e2e (asosiy oqimlar), yuk sinovi (hisobotlar agregatsiyasi, `/debtors`), rus tili tarjimasi.
