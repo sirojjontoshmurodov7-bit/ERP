@@ -61,10 +61,10 @@ describe('refreshPair', () => {
 describe('safeNext (login dan keyingi yo\'naltirish)', () => {
   it("faqat o'z ilovamizdagi nisbiy yo'l", () => {
     expect(safeNext('/students?tab=1')).toBe('/students?tab=1');
-    expect(safeNext(null)).toBe('/');
-    expect(safeNext('https://evil.test')).toBe('/');
-    expect(safeNext('//evil.test')).toBe('/');
-    expect(safeNext('/\\evil.test')).toBe('/');
-    expect(safeNext('/api/auth/logout')).toBe('/');
+    expect(safeNext(null)).toBe('/dashboard');
+    expect(safeNext('https://evil.test')).toBe('/dashboard');
+    expect(safeNext('//evil.test')).toBe('/dashboard');
+    expect(safeNext('/\\evil.test')).toBe('/dashboard');
+    expect(safeNext('/api/auth/logout')).toBe('/dashboard');
   });
 });

@@ -10,7 +10,7 @@ import { Icon } from './icons';
 import { Button, ErrorState, ToastProvider } from './ui';
 
 function isActive(pathname: string, href: string) {
-  return href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function Shell({ children }: { children: ReactNode }) {

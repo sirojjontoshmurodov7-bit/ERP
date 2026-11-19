@@ -30,8 +30,15 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 23. Haqiqiy Postgres'da sinash (embedded PG 17, smoke, e2e ikki rejimda) | tayyor | `apps/api/scripts/{pg-local.ts,smoke.mjs}`, `test/helpers/test-db.ts` |
 | 24. Web panel (BFF, dizayn tizimi, barcha rollar va bo'limlar) | tayyor | `apps/web/src/{app,components,lib}`, `apps/web/test/bff.test.ts` |
 | 25. Docker, CI, deploy qo'llanmasi | tayyor | `apps/{api,web}/Dockerfile`, `docker-compose.prod.yml`, `docker/`, `.github/workflows/ci.yml`, `DEPLOY.md` |
+| 26. Landing sahifa va Teal (#006666) qayta dizayn | tayyor, commitsiz | `apps/web/src/app/{page.tsx,landing.css,login/page.tsx,globals.css}`, `src/styles/tokens.css` |
 
 Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`, 23 `c9c97d8`, 24 `b55e8ff` + `918e77c`, 25 `27d613d`; GitHub: origin main. Commitni foydalanuvchi so'raganda qil.
+
+### 26-qadam: landing va qayta dizayn (tayyor, commitsiz)
+- **Marshrut:** `/` endi hamma uchun ochiq landing (`app/page.tsx`, `landing.css`); panel bosh sahifasi `/dashboard` ga ko'chdi (`(panel)/dashboard/`), `nav.ts`, `shell.tsx`, `safe-next.ts` (`/` va noto'g'ri yo'l `/dashboard` ga), parol almashtirishdan keyingi yo'naltirish yangilandi. `proxy.ts`: `/` va `/login` ochiq; boshqa yo'llar sessiyasiz `/login?next=...`. Landing "Kirish" tugmasi sessiya cookie'si bo'lsa "Panelga o'tish" bo'ladi (server komponent, `cookies()`, Suspense ichida). **Register yo'q** (foydalanuvchi qarori: markazni super admin ochadi).
+- **Dizayn:** Hallmark redesign (full), Coral o'rniga **Teal**: asos `#006666` (`--color-brand`), qolgan ranglar shu hue (195) bo'yicha oklch, bitta iliq amber signal (`--color-signal`, to'langan muhr `--color-paid`). Panel: to'q teal yon panel, tekis sirtlar (`--edge-stock` endi nozik ramka), yangi login (teal tomon + forma). Shrift o'zgarmadi (Onest + Geist Mono).
+- **Landing material:** faqat tizimning haqiqiy imkoniyatlari (o'ylab topilgan raqam/sharh/logo yo'q). Hero'dagi rasm `public/images/screens/dashboard.png`: demo markaz (namuna) rahbarining haqiqiy panel skrinshoti (CDP bilan olingan; demo ismlar o'ylab topilgan). Brend nomi vaqtincha "O'quv markazi"; narx, kontakt, haqiqiy skrinshot foydalanuvchidan kelganda almashtiriladi.
+- Tekshiruv: `sloplint` 0 FAIL, `pnpm --filter @erp/web typecheck|lint|test|build` toza, brauzerda landing/login 1280 va 375px.
 
 ## Muhit holati (muhim)
 - **Docker ishlamaydi:** Docker Desktop o'rnatilgan, lekin kompyuterda **WSL yo'q**, dvigatel ko'tarilmaydi. Tuzatish: administrator PowerShell'da `wsl --install`, qayta yoqish.
@@ -266,7 +273,7 @@ Qoidalar manbasi: ERD 2.4 ("Sozlamalar, tariflar, qulf, login cheklovi (implemen
 
 ## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
 Backend (1-23), web panel (24) va deploy tayyorgarligi (25) tayyor. Qolgani, tavsiya etilgan tartibda:
-0. **Keyingi chat (foydalanuvchi tanlovi): dizayn va landing page.** Panel dizaynini sayqallash (Hallmark, Coral mavzusi, `apps/web/src/app/globals.css` + `src/styles/tokens.css`) va mahsulot uchun ochiq landing sahifa (`/` tashqarisida, masalan `(site)` route group yoki alohida domen; hozir `/` panel bosh sahifasi va `proxy.ts` sessiyasizlarni `/login` ga yo'naltiradi). Landing uchun Hallmark to'liq oqimi: material (skrinshotlar, raqamlar, narx) foydalanuvchidan so'raladi; o'ylab topilgan raqam/sharh yo'q.
+0. **(26-qadamda bajarildi, qoldig'i: haqiqiy brend nomi, kontakt, narx, ko'proq skrinshot.)** Dizayn va landing page. Panel dizaynini sayqallash (Hallmark, Coral mavzusi, `apps/web/src/app/globals.css` + `src/styles/tokens.css`) va mahsulot uchun ochiq landing sahifa (`/` tashqarisida, masalan `(site)` route group yoki alohida domen; hozir `/` panel bosh sahifasi va `proxy.ts` sessiyasizlarni `/login` ga yo'naltiradi). Landing uchun Hallmark to'liq oqimi: material (skrinshotlar, raqamlar, narx) foydalanuvchidan so'raladi; o'ylab topilgan raqam/sharh yo'q.
 1. **Haqiqiy Telegram bot va Neon bilan sinash** (token va akkaunt kerak; lokal haqiqiy Postgres 23-qadamda sinalgan).
 2. **Birinchi haqiqiy deploy:** server yoki Neon + hosting tanlash, `DEPLOY.md` bo'yicha ko'tarish, CI'ning Docker job'i yashil bo'lishini kuzatish, zaxira nusxa cron'i, monitoring/xatolar hisoboti (masalan Uptime Kuma, Sentry).
 3. **Sifat:** xavfsizlik tekshiruvi (OWASP, CSP), Playwright e2e (asosiy oqimlar), yuk sinovi (hisobotlar agregatsiyasi, `/debtors`), rus tili tarjimasi.

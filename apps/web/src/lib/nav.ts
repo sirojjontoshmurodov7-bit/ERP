@@ -17,7 +17,7 @@ const staff = (s: Session) => s.is('OWNER', 'ADMIN', 'CASHIER', 'TEACHER');
 
 export const NAV: NavGroup[] = [
   {
-    items: [{ href: '/', label: 'Bosh sahifa', icon: 'home', show: () => true }],
+    items: [{ href: '/dashboard', label: 'Bosh sahifa', icon: 'home', show: () => true }],
   },
   {
     title: "O'quv jarayoni",

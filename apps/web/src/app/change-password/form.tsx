@@ -31,7 +31,7 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
         setNext('');
         setRepeat('');
         onDone();
-      } else router.replace('/');
+      } else router.replace('/dashboard');
     } catch (err) {
       if (err instanceof ApiError && err.code === 'INVALID_CREDENTIALS') setErrors({ current: "Joriy parol noto'g'ri" });
       else if (err instanceof ApiError && err.status === 401) router.replace('/login');

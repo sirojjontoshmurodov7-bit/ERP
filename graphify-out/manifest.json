@@ -374,32 +374,32 @@
   "apps/api/drizzle/0000_init_core.sql": {
     "mtime": 1795012429.367787,
     "seen": 1795063491.1880033,
-    "ast_hash": "b408c110253bea456eb22e187ff52900",
-    "semantic_hash": "b408c110253bea456eb22e187ff52900"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0001_rls_and_grants.sql": {
     "mtime": 1795022501.5504894,
     "seen": 1795063491.1880074,
-    "ast_hash": "a224880b5191316a73078f1dccf56f72",
-    "semantic_hash": "a224880b5191316a73078f1dccf56f72"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0002_tenant_composite_fks.sql": {
     "mtime": 1795022501.6371846,
     "seen": 1795063491.1880121,
-    "ast_hash": "b829637fd763451e4e32ef2f9c34f39a",
-    "semantic_hash": "b829637fd763451e4e32ef2f9c34f39a"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0003_centers_platform_guard.sql": {
     "mtime": 1795022501.7036736,
     "seen": 1795063491.1880162,
-    "ast_hash": "f7ebad49d4b4e856a100faa3399637af",
-    "semantic_hash": "f7ebad49d4b4e856a100faa3399637af"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795063305.8881056,
-    "seen": 1795063491.1896384,
-    "ast_hash": "516314a495845caef90df8470156da6f",
-    "semantic_hash": "516314a495845caef90df8470156da6f"
+    "mtime": 1795064671.8830357,
+    "seen": 1795064696.0770886,
+    "ast_hash": "a5eb867a6ae9a69f6077f83f638930d8",
+    "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
     "mtime": 1795024528.266486,
@@ -722,38 +722,38 @@
   "apps/api/drizzle/0004_teacher_profiles.sql": {
     "mtime": 1795024460.687514,
     "seen": 1795063491.188021,
-    "ast_hash": "af3f4b7210d0affe75dd2f129a998134",
-    "semantic_hash": "af3f4b7210d0affe75dd2f129a998134"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0005_student_profiles.sql": {
     "mtime": 1795025146.8642087,
     "seen": 1795063491.1880252,
-    "ast_hash": "60d31f100bf126823fcf3418f1bb4cb7",
-    "semantic_hash": "60d31f100bf126823fcf3418f1bb4cb7"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0006_courses_groups.sql": {
     "mtime": 1795025534.7797973,
     "seen": 1795063491.1880312,
-    "ast_hash": "cd22617daba4f9635b2680a20ea7c998",
-    "semantic_hash": "cd22617daba4f9635b2680a20ea7c998"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0007_enrollments.sql": {
     "mtime": 1795025936.3640983,
     "seen": 1795063491.1880367,
-    "ast_hash": "c1869d69f3629a8049638bf273f93abd",
-    "semantic_hash": "c1869d69f3629a8049638bf273f93abd"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0008_lessons_attendance.sql": {
     "mtime": 1795026537.488099,
     "seen": 1795063491.188041,
-    "ast_hash": "48de7d6a1263fc60919d9afcf6c76a62",
-    "semantic_hash": "48de7d6a1263fc60919d9afcf6c76a62"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0009_charges.sql": {
     "mtime": 1795027926.9486096,
     "seen": 1795063491.1880443,
-    "ast_hash": "dca8af42214625c0a122f2e11cc044c4",
-    "semantic_hash": "dca8af42214625c0a122f2e11cc044c4"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/src/billing/allocator.ts": {
     "mtime": 1795029638.9783044,
@@ -1046,32 +1046,32 @@
   "apps/api/drizzle/0010_payments.sql": {
     "mtime": 1795029593.1451416,
     "seen": 1795063491.1880476,
-    "ast_hash": "a6ce90bf787876d52da0afa455d93eee",
-    "semantic_hash": "a6ce90bf787876d52da0afa455d93eee"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0011_payroll.sql": {
     "mtime": 1795031447.2633553,
     "seen": 1795063491.1880522,
-    "ast_hash": "bb32a8da9672ba54c2e4a9a76bc82414",
-    "semantic_hash": "bb32a8da9672ba54c2e4a9a76bc82414"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0012_expenses.sql": {
     "mtime": 1795032296.7562337,
     "seen": 1795063491.1880558,
-    "ast_hash": "5ee57b9c5285ebfba2c86abf82cd27ae",
-    "semantic_hash": "5ee57b9c5285ebfba2c86abf82cd27ae"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0013_import_jobs.sql": {
     "mtime": 1795033509.0343044,
     "seen": 1795063491.1880589,
-    "ast_hash": "3604253601508a990b32622c36078b45",
-    "semantic_hash": "3604253601508a990b32622c36078b45"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0014_homework_rating.sql": {
     "mtime": 1795040441.2829077,
     "seen": 1795063491.188062,
-    "ast_hash": "1a298e5f1665402dae9b9268df8bbe6b",
-    "semantic_hash": "1a298e5f1665402dae9b9268df8bbe6b"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/src/notifications/dispatch.service.ts": {
     "mtime": 1795041953.2658086,
@@ -1319,12 +1319,6 @@
     "ast_hash": "fae7c6bbcc27f52d02f0087e034446af",
     "semantic_hash": "fae7c6bbcc27f52d02f0087e034446af"
   },
-  "apps/web/src/app/(panel)/dashboard.tsx": {
-    "mtime": 1795061324.8730783,
-    "seen": 1795063491.1893137,
-    "ast_hash": "10f5c9a7fd2b02968e2d4323197f5ab8",
-    "semantic_hash": "10f5c9a7fd2b02968e2d4323197f5ab8"
-  },
   "apps/web/src/app/(panel)/debtors/debtors-page.tsx": {
     "mtime": 1795046402.9048944,
     "seen": 1795063491.189316,
@@ -1408,12 +1402,6 @@
     "seen": 1795063491.1893718,
     "ast_hash": "8c5ae081bb320fe0340fef4465b2ebd0",
     "semantic_hash": "8c5ae081bb320fe0340fef4465b2ebd0"
-  },
-  "apps/web/src/app/(panel)/page.tsx": {
-    "mtime": 1795061140.3474638,
-    "seen": 1795063491.1893744,
-    "ast_hash": "ccb39e94f6ca1dafd3b130cd0f95458a",
-    "semantic_hash": "ccb39e94f6ca1dafd3b130cd0f95458a"
   },
   "apps/web/src/app/(panel)/payments/[id]/page.tsx": {
     "mtime": 1795061141.1223927,
@@ -1572,10 +1560,10 @@
     "semantic_hash": "a534f7d1b0b441135744da9bc151753b"
   },
   "apps/web/src/app/change-password/form.tsx": {
-    "mtime": 1795045219.990974,
-    "seen": 1795063491.1894474,
-    "ast_hash": "48c8030e6b8f79e806eeb9cfb441a851",
-    "semantic_hash": "48c8030e6b8f79e806eeb9cfb441a851"
+    "mtime": 1795064169.5213506,
+    "seen": 1795064696.070996,
+    "ast_hash": "6014ca38f84822167a7917c22e4ec803",
+    "semantic_hash": ""
   },
   "apps/web/src/app/change-password/page.tsx": {
     "mtime": 1795045208.641045,
@@ -1590,10 +1578,10 @@
     "semantic_hash": "b1bbd0942cdff06db404a52bc177d4d0"
   },
   "apps/web/src/app/login/page.tsx": {
-    "mtime": 1795045208.4830258,
-    "seen": 1795063491.189463,
-    "ast_hash": "20de713ac9b53f628bdaac0c2f710875",
-    "semantic_hash": "20de713ac9b53f628bdaac0c2f710875"
+    "mtime": 1795064287.3170226,
+    "seen": 1795064696.0716805,
+    "ast_hash": "5c3a54ea9892558df625f7b83517674e",
+    "semantic_hash": ""
   },
   "apps/web/src/components/attendance-sheet.tsx": {
     "mtime": 1795061033.5916927,
@@ -1632,10 +1620,10 @@
     "semantic_hash": "eee708582fffaaee6926831ca336b11b"
   },
   "apps/web/src/components/shell.tsx": {
-    "mtime": 1795045936.474826,
-    "seen": 1795063491.189488,
-    "ast_hash": "e63e26db443acd742714817df5a8f351",
-    "semantic_hash": "e63e26db443acd742714817df5a8f351"
+    "mtime": 1795064169.6252677,
+    "seen": 1795064696.0726998,
+    "ast_hash": "b2b41cc26352f101b80a0e5555d62ee1",
+    "semantic_hash": ""
   },
   "apps/web/src/components/student-picker.tsx": {
     "mtime": 1795045958.5330331,
@@ -1686,16 +1674,16 @@
     "semantic_hash": "d73062e4983362812ec1469fecda898c"
   },
   "apps/web/src/lib/nav.ts": {
-    "mtime": 1795045185.6765466,
-    "seen": 1795063491.1895187,
-    "ast_hash": "f53d82d5455c20915b3491bda2fd9466",
-    "semantic_hash": "f53d82d5455c20915b3491bda2fd9466"
+    "mtime": 1795064169.3611255,
+    "seen": 1795064696.0739598,
+    "ast_hash": "1437a73de3d13cf12603b83c87e6b3aa",
+    "semantic_hash": ""
   },
   "apps/web/src/lib/safe-next.ts": {
-    "mtime": 1795061401.2931013,
-    "seen": 1795063491.189523,
-    "ast_hash": "3e8b95a3af54195f9e56ea00e092c7d9",
-    "semantic_hash": "3e8b95a3af54195f9e56ea00e092c7d9"
+    "mtime": 1795064297.898937,
+    "seen": 1795064696.073963,
+    "ast_hash": "853f90c9b825dbf10c3f15074895218c",
+    "semantic_hash": ""
   },
   "apps/web/src/lib/session.tsx": {
     "mtime": 1795045162.919322,
@@ -1710,16 +1698,16 @@
     "semantic_hash": "2942968d6861c4a5db3ccec48817c4ca"
   },
   "apps/web/src/proxy.ts": {
-    "mtime": 1795044634.0717583,
-    "seen": 1795063491.1895359,
-    "ast_hash": "6522030702a272f094e4a719b0694283",
-    "semantic_hash": "6522030702a272f094e4a719b0694283"
+    "mtime": 1795064169.965944,
+    "seen": 1795064696.0742738,
+    "ast_hash": "9a0a17a095cd385c1a090f5490a64bb0",
+    "semantic_hash": ""
   },
   "apps/web/test/bff.test.ts": {
-    "mtime": 1795061431.1877413,
-    "seen": 1795063491.18954,
-    "ast_hash": "384bd0553053fa992c7cb9c9b0308771",
-    "semantic_hash": "384bd0553053fa992c7cb9c9b0308771"
+    "mtime": 1795064169.8642614,
+    "seen": 1795064696.0742788,
+    "ast_hash": "f776178c0beaaf96ee6f843de3f2bff2",
+    "semantic_hash": ""
   },
   "apps/web/test/empty.ts": {
     "mtime": 1795061431.8511944,
@@ -1760,13 +1748,37 @@
   "apps/api/drizzle/0015_notifications.sql": {
     "mtime": 1795041630.4142222,
     "seen": 1795063491.1880658,
-    "ast_hash": "8b11abadb988710d0d2e072a64f9bb11",
-    "semantic_hash": "8b11abadb988710d0d2e072a64f9bb11"
+    "ast_hash": "",
+    "semantic_hash": ""
   },
   "apps/api/drizzle/0016_settings_throttle.sql": {
     "mtime": 1795042611.863032,
     "seen": 1795063491.1880698,
-    "ast_hash": "c8b8c9378a4b69216328daf7e95b7e7c",
-    "semantic_hash": "c8b8c9378a4b69216328daf7e95b7e7c"
+    "ast_hash": "",
+    "semantic_hash": ""
+  },
+  "apps/web/src/app/(panel)/dashboard/dashboard.tsx": {
+    "mtime": 1795061324.8730783,
+    "seen": 1795064696.0596683,
+    "ast_hash": "10f5c9a7fd2b02968e2d4323197f5ab8",
+    "semantic_hash": ""
+  },
+  "apps/web/src/app/(panel)/dashboard/page.tsx": {
+    "mtime": 1795064160.258209,
+    "seen": 1795064696.059672,
+    "ast_hash": "ccb39e94f6ca1dafd3b130cd0f95458a",
+    "semantic_hash": ""
+  },
+  "apps/web/src/app/page.tsx": {
+    "mtime": 1795064276.9207566,
+    "seen": 1795064696.0716836,
+    "ast_hash": "893795b448fe985ffc4c8b8b7701d5c9",
+    "semantic_hash": ""
+  },
+  "pnpm-lock.yaml": {
+    "mtime": 1795061409.1390316,
+    "seen": 1795064696.0774198,
+    "ast_hash": "f38f2f4b3ec364c004c9d83a0edbdbd7",
+    "semantic_hash": ""
   }
 }
