@@ -1,0 +1,115 @@
+# Deploy qo'llanmasi
+
+Tizim uch qismdan iborat: **API** (NestJS), **web panel** (Next.js, BFF) va **PostgreSQL**. Brauzer faqat web panel bilan gaplashadi; tokenlar `httpOnly` cookie'da turadi, web panel ularni ichki tarmoq orqali API'ga uzatadi.
+
+```
+Internet ──443──► Caddy (HTTPS) ──► web:3000 ──/api/*──► api:3001 ──► db:5432
+                     │
+                     └── /telegram/webhook, /notifications/cron ──► api:3001 (sir sarlavhasi bilan)
+```
+
+## 1-variant: bitta VPS + Docker Compose (tavsiya)
+
+Talablar: Linux server (2 GB RAM yetarli), Docker va Docker Compose, domen (A yozuvi server IP'siga).
+
+```bash
+git clone https://github.com/<foydalanuvchi>/ERP.git && cd ERP
+cp .env.production.example .env.production
+# .env.production ni to'ldiring: sirlar uchun   openssl rand -hex 32
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Birinchi ishga tushirishda `migrate` xizmati migratsiyalarni va ruxsatlar ro'yxatini yozadi, so'ng `api`, `web` va `caddy` ko'tariladi. Caddy HTTPS sertifikatini o'zi oladi.
+
+**Birinchi super admin** (bir marta):
+
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm \
+  -e DATABASE_MIGRATION_URL="postgresql://erp:<POSTGRES_PASSWORD>@db:5432/erp" \
+  -e SUPER_ADMIN_LOGIN=superadmin api node dist/db/create-super-admin.js
+```
+
+Vaqtinchalik parol terminalga bir marta chiqadi; birinchi kirishda almashtirish so'raladi. So'ng `https://<DOMAIN>/login` orqali kirib, **Platforma → Tariflar** va **Markazlar** bo'limida birinchi markazni yarating.
+
+**Yangilash:**
+
+```bash
+git pull
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+```
+
+Migratsiyalar har safar avtomatik qo'llanadi (allaqachon qo'llanganlari o'tkazib yuboriladi).
+
+## 2-variant: boshqariladigan xizmatlar (Neon + konteyner hosting)
+
+- **Baza:** Neon (yoki Supabase) Postgres 17. Egasi rolining ulanishi `DATABASE_MIGRATION_URL`, ilova uchun alohida rol yarating:
+  ```sql
+  CREATE ROLE erp_app LOGIN PASSWORD '<hex parol>' NOSUPERUSER NOBYPASSRLS;
+  GRANT CONNECT ON DATABASE <baza> TO erp_app;
+  ```
+  Migratsiyalar superuser bo'lmagan egasi bilan ishlaydi (lokal Postgres 17 da sinalgan).
+- **API:** `apps/api/Dockerfile` obrazi. Ishga tushirishdan oldin `node dist/db/migrate.js && node dist/db/seed.js`. Muhit: `DATABASE_URL` (erp_app), JWT sirlari, `TRUST_PROXY=1` (faqat API'ga tashqaridan to'g'ridan-to'g'ri kirib bo'lmasa).
+- **Web:** `apps/web/Dockerfile` obrazi. Muhit: `API_URL` (API'ning ichki manzili), `WEB_SECURE_COOKIES=true`.
+
+## Muhit o'zgaruvchilari
+
+| O'zgaruvchi | Qayerda | Izoh |
+|---|---|---|
+| `DATABASE_URL` | api | `erp_app` roli (RLS ishlashi uchun superuser EMAS) |
+| `DATABASE_MIGRATION_URL` | migrate | baza egasi |
+| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | api | kamida 32 belgi; `change-me` bilan boshlansa prod'da ishga tushmaydi |
+| `TRUST_PROXY` | api | API oldidagi ishonchli proksilar soni; compose'da `1` |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | api | ixtiyoriy |
+| `CRON_SECRET` | api | tashqi cron uchun |
+| `API_URL` | web | masalan `http://api:3001` |
+| `WEB_SECURE_COOKIES` | web | HTTPS orqasida `true` |
+
+## Telegram bot
+
+1. BotFather'da bot yarating, tokenni `TELEGRAM_BOT_TOKEN` ga, bot nomini (`@` siz) `TELEGRAM_BOT_USERNAME` ga yozing.
+2. `TELEGRAM_WEBHOOK_SECRET` ga tasodifiy qiymat (`openssl rand -hex 32`).
+3. Webhook'ni o'rnating:
+   ```bash
+   curl "https://api.telegram.org/bot<TOKEN>/setWebhook" \
+     -d "url=https://<DOMAIN>/telegram/webhook" -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
+   ```
+4. Foydalanuvchi panelda **Profil → Telegram** (yoki rahbar o'quvchi kartochkasida) kod oladi va botga `/start KOD` yuboradi.
+
+## Avtomatik eslatmalar (cron)
+
+Bepul hostingda fon jarayoni kafolatsiz, shuning uchun eslatmalar tashqi trigger bilan yuboriladi. cron-job.org (yoki serverdagi `cron`) kuniga bir marta:
+
+```bash
+curl -X POST "https://<DOMAIN>/notifications/cron" -H "x-cron-secret: <CRON_SECRET>" -H "content-type: application/json" -d '{}'
+```
+
+Rahbar ham panelda **Telegram xabarlar → Eslatmalarni hozir yuborish** tugmasi bilan qo'lda yuborishi mumkin.
+
+## Zaxira nusxa
+
+Kunlik `pg_dump` (serverdagi cron):
+
+```bash
+docker compose -f docker-compose.prod.yml exec -T db pg_dump -U erp -Fc erp > backup-$(date +%F).dump
+```
+
+Nusxalarni boshqa joyga (masalan obyekt saqlash) ko'chiring va tiklashni vaqti-vaqti bilan sinab turing:
+`pg_restore -U erp -d erp --clean backup-YYYY-MM-DD.dump`.
+
+## Tekshirish
+
+- `https://<DOMAIN>/login` ochiladi; API holati: `docker compose ... exec api wget -qO- http://127.0.0.1:3001/health` → `{"status":"ok"}`.
+- Staging'da to'liq oqim: `SMOKE_API=<api manzili> SMOKE_LOGIN=... SMOKE_PASSWORD=... node apps/api/scripts/smoke.mjs` (yangi markaz yaratadi, faqat staging uchun).
+- CI (`.github/workflows/ci.yml`): lint, unit, build, e2e (PGlite va haqiqiy Postgres 17) va ikkala Docker obrazini yig'ish.
+
+## Lokal ishlab chiqish
+
+```bash
+pnpm install
+pnpm --filter @erp/api pg:local          # Docker'siz Postgres 17 (54329-port); ulanish satrlarini chiqaradi
+# boshqa terminalda: chiqarilgan DATABASE_MIGRATION_URL bilan
+pnpm db:migrate && pnpm db:seed && pnpm db:create-super-admin
+pnpm dev:api                              # API: 3001
+pnpm dev:web                              # panel: 3000 (apps/web/.env.local da API_URL)
+node apps/api/scripts/demo-seed.mjs      # ixtiyoriy: namuna markaz (DEMO_* o'zgaruvchilari bilan)
+```

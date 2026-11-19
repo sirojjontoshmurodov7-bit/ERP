@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi), 23 (haqiqiy Postgres'da sinash) tayyor; keyingi: frontend). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi), 23 (haqiqiy Postgres'da sinash), 24 (web panel), 25 (Docker, CI, deploy qo'llanmasi) tayyor; keyingi: haqiqiy serverga deploy va haqiqiy Telegram bot). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -28,6 +28,8 @@ Oxirgi yangilanish: 2026-11-19 (skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar
 | 21. Telegram bot va bildirishnomalar (`/notifications`, `/telegram/webhook`) | tayyor | `apps/api/src/notifications/`, `drizzle/0015`, `test/notifications.e2e-spec.ts` |
 | 22. Kichik backend bo'shliqlari (`/center/settings`, `/admin/plans`, dars qulfi, filtrlar, `login_throttle`) | tayyor | `apps/api/src/{centers/center-settings.*,plans}/`, `auth/login-throttle.ts`, `drizzle/0016`, `test/settings-plans.e2e-spec.ts` |
 | 23. Haqiqiy Postgres'da sinash (embedded PG 17, smoke, e2e ikki rejimda) | tayyor | `apps/api/scripts/{pg-local.ts,smoke.mjs}`, `test/helpers/test-db.ts` |
+| 24. Web panel (BFF, dizayn tizimi, barcha rollar va bo'limlar) | tayyor | `apps/web/src/{app,components,lib}`, `apps/web/test/bff.test.ts` |
+| 25. Docker, CI, deploy qo'llanmasi | tayyor | `apps/{api,web}/Dockerfile`, `docker-compose.prod.yml`, `docker/`, `.github/workflows/ci.yml`, `DEPLOY.md` |
 
 Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`. Commitni foydalanuvchi so'raganda qil.
 
@@ -42,7 +44,11 @@ Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a
 ```bash
 pnpm build                                   # hamma paket
 pnpm --filter @erp/api test                  # unit (tez)
-pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~80 s, 534 test; unit 65 ta
+pnpm --filter @erp/api test:e2e              # integratsiya (PGlite), ~100 s, 535 test; unit 66 ta
+TEST_DATABASE_URL=<superuser url> pnpm --filter @erp/api test:e2e   # xuddi shu, haqiqiy Postgres'da (pg:local yoki CI)
+pnpm --filter @erp/api pg:local              # Docker'siz Postgres 17 (54329)
+pnpm --filter @erp/web dev | build | lint | typecheck | test   # panel (dev: apps/web/.env.local da API_URL)
+node apps/api/scripts/demo-seed.mjs          # namuna markaz (DEMO_API, DEMO_ROOT_PASSWORD)
 pnpm --filter @erp/api lint                  # oxlint
 pnpm --filter @erp/api db:generate           # drizzle-kit: sxemadan migratsiya; custom: `drizzle-kit generate --custom --name=...`
 pnpm db:migrate | db:seed | db:create-super-admin   # haqiqiy bazani talab qiladi
@@ -241,11 +247,28 @@ Qoidalar manbasi: ERD 2.4 ("Sozlamalar, tariflar, qulf, login cheklovi (implemen
 - **Topilgan va tuzatilgan xato:** `GET /assignments?status=open|overdue` production drayverida (postgres-js) 500 berardi: xom `sql` shabloniga `Date` uzatilgan (PGlite buni qabul qiladi, postgres-js yo'q). Drizzle operatorlariga (`gt/lt/isNull`) o'tkazildi. **Qoida:** xom `sql\`\`` ichiga `Date` uzatma — ustun operatori yoki `iso::timestamptz` ishlat.
 - **Sinalmagan:** haqiqiy Telegram bot (token kerak), Neon (akkaunt kerak). CI'da e2e haqiqiy Postgres xizmat konteynerida ham yuradi (25-qadam).
 
+### 24-qadam: web panel (tayyor)
+- **Arxitektura (BFF):** brauzer faqat Next.js bilan gaplashadi. `app/api/auth/{login,logout}` tokenlarni faqat `httpOnly`, `SameSite=Strict` cookie'ga yozadi (`erp_at` access, `erp_rt` refresh); `app/api/[...path]` hamma so'rovni API'ga `Authorization` bilan uzatadi, 401 da bir marta yangilaydi. Parallel yangilashlar bitta so'rovga birlashtiriladi va natija 60 s eslab qolinadi (API ishlatilgan refresh'ni qayta ko'rsa HAMMA sessiyani yopadi). CSRF: `x-erp-request: 1` sarlavhasi + Origin tekshiruvi. `telegram/webhook`, `notifications/cron`, `auth/login|refresh|logout` BFF orqali yopiq. `proxy.ts` sessiyasiz `/login` ga yo'naltiradi (faqat qulaylik). Xavfsizlik sarlavhalari `next.config.ts` da.
+- **Backend qo'shimchalari:** `GET /auth/me` endi samarali ruxsatlar (`permissions`) va markaz (`center`) qaytaradi (menyular uchun); `TRUST_PROXY` (Express `trust proxy`) mijoz IP'si uchun; `GET /health` (baza ping'i bilan).
+- **Dizayn:** Hallmark, app doirasi, Coral mavzusi (iliq kulrang qog'oz, ink "board" asosiy tugma, faqat to'langan holat koral muhr bilan). Shriftlar Onest + Geist Mono `next/font` bilan o'zimizda (tashqi CDN yo'q). Tokenlar `src/styles/tokens.css`, panel uslublari `src/app/globals.css` (tamg'a, critique). `sloplint --scope app`: 0 FAIL.
+- **Sahifalar** (`src/app/(panel)/`): bosh sahifa (rol bo'yicha: rahbar oy ko'rsatkichlari va qarzdorlar, kassir/admin bugungi kassa, ustoz bugungi darslar va tekshiriladigan vazifalar, o'quvchi balans/guruh/vazifa, super admin markazlar), o'quvchilar (filtrlar URL'da, yaratish va bir martalik parol, kartochka: yozilishlar bilan muzlatish/ko'chirish/chiqarish/chegirma, hisoblar, to'lovlar, davomat), guruhlar (jadval, ustozlar, ro'yxat, **davomat varag'i**, qulf/bekor), kurslar, davomat, vazifalar (topshirish, baholash), reyting, to'lovlar (kvitansiya, chop etish, qaytarish), qarzdorlar, xarajatlar, hisobotlar (umumiy, moliya, kassa kitobi, filiallar), maosh (hisoblash, tasdiqlash, bonus/jarima, to'lash, qoidalar; ustozga o'z maoshi), filiallar, xodimlar, ruxsatlar (rol shabloni va istisnolar), import (sinov, CSV loginlar), Telegram xabarlar, audit, markaz sozlamalari, profil, platforma (markazlar, tariflar).
+- **Naqshlar:** dialoglar faqat ochiq paytda mount bo'ladi (`whenOpen`); `useApi` holatni faqat javobda yozadi, `loading` hosila; har ma'lumot bloki 4 holat (yuklanish skeleti, bo'sh, xato + qayta urinish, to'liq). Next 16 cache components: panel segmentlarida `export const instant = false` (sessiyaga bog'liq mijoz sahifalari).
+- **Topilgan xato:** to'lov dialogi to'lovdan keyin formani tozalab, kvitansiyani yashirardi (ota komponent har chizilganda yangi obyekt) — kassir ikki marta to'lov olishi mumkin edi; tuzatildi.
+- **Test:** `apps/web/test/bff.test.ts` (7: CSRF, refresh birlashtirish, cookie muddati, ochiq redirect). Brauzerda rahbar, ustoz, o'quvchi, super admin rollari va 375px mobil kenglik qo'lda tekshirildi; Next production build va standalone server (BFF login, CSRF, webhook blok) sinaldi.
+- **Ochiq:** rus/ingliz tarjimasi (sozlama bor, matnlar o'zbekcha); CSP (Next inline skriptlari uchun nonce kerak); Playwright e2e; jadvallarda saralash ustunlari; o'quvchi kabinetida to'lov tarixi bo'yicha qo'shimcha ko'rinishlar.
+
+### 25-qadam: Docker, CI, deploy qo'llanmasi (tayyor)
+- `apps/api/Dockerfile` (multi-stage, `pnpm deploy --prod`, root bo'lmagan foydalanuvchi, `/health` healthcheck), `apps/web/Dockerfile` (Next standalone, `NEXT_OUTPUT=standalone` faqat Docker'da), `.dockerignore`.
+- `docker-compose.prod.yml`: `db` (Postgres 17, `docker/initdb/01-app-role.sh` `APP_DB_PASSWORD` bilan `erp_app` rolini yaratadi), `migrate` (migratsiya + seed, keyin chiqadi), `api` (`TRUST_PROXY=1`), `web`, `caddy` (`docker/Caddyfile`: avtomatik HTTPS, webhook va cron to'g'ridan-to'g'ri API'ga, qolgani web'ga). Faqat 80/443 ochiq. `.env.production.example`.
+- `.github/workflows/ci.yml`: install, build, lint, web typecheck, unit, e2e PGlite va **haqiqiy Postgres 17** xizmat konteynerida, ikkala Docker obrazini yig'ish.
+- `DEPLOY.md`: VPS + compose, Neon + konteyner hosting, muhit o'zgaruvchilari, super admin, Telegram webhook, cron, zaxira nusxa, tekshirish, lokal ishlab chiqish. `.gitattributes`: `.sh`/Dockerfile/yml LF.
+- **Sinalmagan:** Docker obrazlari lokal yig'ilmagan (WSL yo'q) — CI'da yig'iladi. Ularning ichidagi qadamlar alohida sinaldi: `pnpm deploy --prod` paketidan migratsiya va API ishga tushdi; standalone web server ishladi. initdb skriptining `format()` qismi haqiqiy bazada tekshirildi, psql (`\gexec`) qismi konteynerda sinalmagan.
+
 ## Qolgan ishlar (yo'l xaritasi, 2026-11-19 holati)
-Backend asosiy funksiyalar (1-23) tayyor. Qolgani, tavsiya etilgan tartibda:
+Backend (1-23), web panel (24) va deploy tayyorgarligi (25) tayyor. Qolgani, tavsiya etilgan tartibda:
 1. **Haqiqiy Telegram bot va Neon bilan sinash** (token va akkaunt kerak; lokal haqiqiy Postgres 23-qadamda sinalgan).
-2. **Frontend (`apps/web`, Next.js)** hozir faqat skelet: kirish va majburiy parol almashtirish, rahbar paneli (filial, xodim, ruxsatlar), o'quvchi/guruh/yozilish, davomat belgilash, to'lov va qarzdorlar, maosh, hisobotlar, import, vazifa va reyting, o'quvchi kabineti. Eng katta qism; API shartnomasi `packages/shared` dan tiplar bilan.
-3. **Deploy va ekspluatatsiya:** host-agnostik Docker obrazi, `.env`, migratsiyani ishga tushirish, zaxira nusxa, monitoring, xatolar hisoboti; keyin xavfsizlik tekshiruvi (OWASP) va yuk sinovi (hisobotlar agregatsiyasi, `/debtors`).
+2. **Birinchi haqiqiy deploy:** server yoki Neon + hosting tanlash, `DEPLOY.md` bo'yicha ko'tarish, CI'ning Docker job'i yashil bo'lishini kuzatish, zaxira nusxa cron'i, monitoring/xatolar hisoboti (masalan Uptime Kuma, Sentry).
+3. **Sifat:** xavfsizlik tekshiruvi (OWASP, CSP), Playwright e2e (asosiy oqimlar), yuk sinovi (hisobotlar agregatsiyasi, `/debtors`), rus tili tarjimasi.
 Kod konvensiyalari yangi chat uchun: migratsiya = drizzle-kit (jadvallar) + qo'lda SQL (RLS, trigger, huquq); har yangi tenant jadvali `TENANT_TABLES` ga va izolyatsiya testiga qo'shiladi; pul yozuvi append-only; yangi ruxsat kodi `packages/shared` da; har qadam oxirida testlar, lint, build, PROGRESS.md + ERD, `graphify update .`.
 
 ## Ochiq savollar

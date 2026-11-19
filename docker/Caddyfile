@@ -1,0 +1,23 @@
+# HTTPS avtomatik (Let's Encrypt). DOMAIN serverga yo'naltirilgan bo'lishi kerak (A yozuv).
+# Caddy mijoz IP'sini X-Forwarded-For ga yozadi (kiruvchi soxta sarlavhaga ishonmaydi).
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Sir sarlavhasi bilan himoyalangan tashqi kirishlar: to'g'ridan-to'g'ri API'ga (web BFF ularni yopadi)
+	handle /telegram/webhook {
+		reverse_proxy api:3001
+	}
+	handle /notifications/cron {
+		reverse_proxy api:3001
+	}
+
+	# Qolgan hammasi: web panel (u /api/* ni ichki tarmoq orqali API'ga uzatadi)
+	handle {
+		reverse_proxy web:3000
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

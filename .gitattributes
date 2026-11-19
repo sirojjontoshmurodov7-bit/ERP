@@ -1,0 +1,6 @@
+# Linux konteynerlarda ishlaydigan fayllar har doim LF bilan (Windows checkout CRLF qilmasin)
+*.sh text eol=lf
+Dockerfile text eol=lf
+**/Dockerfile text eol=lf
+docker/Caddyfile text eol=lf
+*.yml text eol=lf

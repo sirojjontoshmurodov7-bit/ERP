@@ -1,0 +1,14 @@
+**/node_modules
+**/.next
+**/dist
+**/coverage
+**/*.tsbuildinfo
+apps/api/.pg-data
+.git
+.env
+.env.*
+!.env.example
+graphify-out
+.hallmark
+.claude
+*.log

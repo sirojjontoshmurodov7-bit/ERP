@@ -10,3 +10,4 @@ graphify-out/cache/
 apps/api/.pg-data/
 .env*.local
 .hallmark/
+.env.production

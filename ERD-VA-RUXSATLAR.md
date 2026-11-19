@@ -633,6 +633,8 @@ Rollar: **SA** Super admin · **R** Rahbar (OWNER) · **A** Admin · **K** Kassi
 
 ## 5. Ruxsatni tekshirish qatlami (implementatsiya)
 
+- **UI uchun (24-qadam):** `GET /auth/me` foydalanuvchining samarali ruxsat kodlari ro'yxatini (`permissions`) va markaz qisqa ma'lumotini qaytaradi; web panel menyu va tugmalarni shu bilan yashiradi. Bu faqat qulaylik: har API so'rovida ruxsat va qamrov serverda qayta tekshiriladi.
+
 1. **Ruxsat kodi** (`payment.create`) — NestJS guard/decorator.
 2. **Qamrov (scope)** — `center` (har doim), `branch` (`user_branches`), `own_group` (`group_teachers`), `own_record` (`student_id = user.id`). Bu so'rov darajasida filtr sifatida qo'llanadi, faqat guard bilan emas.
 3. **Samarali ruxsat** = `center_role_permissions` (rol shabloni) ± `user_permissions` (istisno); kesh bilan, o'zgarganda bekor qilinadi.

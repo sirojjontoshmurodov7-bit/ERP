@@ -1,0 +1,84 @@
+# Production: bitta server (VPS) uchun. Batafsil: DEPLOY.md
+#   cp .env.production.example .env.production   # qiymatlarni to'ldiring
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Faqat Caddy (80/443) tashqariga ochiq; API va baza ichki tarmoqda.
+name: erp
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-erp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD kerak}
+      POSTGRES_DB: ${POSTGRES_DB:-erp}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?APP_DB_PASSWORD kerak}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erp} -d ${POSTGRES_DB:-erp}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Har ishga tushirishda migratsiya va ruxsatlar ro'yxati (idempotent), keyin chiqadi.
+  migrate:
+    build: { context: ., dockerfile: apps/api/Dockerfile }
+    image: erp-api
+    restart: "no"
+    command: ["sh", "-c", "node dist/db/migrate.js && node dist/db/seed.js"]
+    environment:
+      DATABASE_MIGRATION_URL: postgresql://${POSTGRES_USER:-erp}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-erp}
+    depends_on:
+      db: { condition: service_healthy }
+
+  api:
+    image: erp-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://erp_app:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-erp}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT_ACCESS_SECRET kerak}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET kerak}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-30d}
+      # Oldida bitta ishonchli proksi (web yoki Caddy) bor: mijoz IP'si X-Forwarded-For dan olinadi
+      TRUST_PROXY: "1"
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
+      CRON_SECRET: ${CRON_SECRET:-}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  web:
+    build: { context: ., dockerfile: apps/web/Dockerfile }
+    image: erp-web
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:3001
+      WEB_SECURE_COOKIES: "true"
+    depends_on:
+      api: { condition: service_healthy }
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN kerak (masalan erp.example.uz)}
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
