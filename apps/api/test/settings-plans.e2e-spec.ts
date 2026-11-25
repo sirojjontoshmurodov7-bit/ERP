@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { eq, sql } from 'drizzle-orm';
 import request from 'supertest';
 import { AppModule } from '../src/app.module.js';
+import { LOGIN_ACCOUNT_MAX_FAILURES, LoginThrottle } from '../src/auth/login-throttle.js';
 import { hashPassword } from '../src/auth/password.js';
 import { addDays, todayLocal } from '../src/common/dates.js';
 import { APP_CONFIG, type AppConfig } from '../src/config/app-config.js';
@@ -393,6 +394,18 @@ describe('Sozlamalar, tariflar, qulf, filtrlar, login cheklovi (PGlite, RLS yoqi
       await login(lg, pw).expect(200);
       for (let i = 0; i < 4; i++) await login(lg, 'xato-parol-1').expect(401);
       await login(lg, pw).expect(200);
+    });
+
+    it("IP almashtirib bo'lmaydi: bitta loginga 20 xato (har biri boshqa IP'dan) dan keyin har qanday IP bloklanadi", async () => {
+      const t = app.get(LoginThrottle);
+      const lg = 'cheklov.hisob';
+      for (let i = 0; i < LOGIN_ACCOUNT_MAX_FAILURES - 1; i++) await t.recordFailure(`10.0.0.${i}`, lg);
+      await t.assertAllowed('10.9.9.9', lg); // 19 ta: hali ochiq
+      await t.recordFailure('10.0.1.1', lg);
+      await expect(t.assertAllowed('10.9.9.8', lg)).rejects.toMatchObject({ status: 429 });
+      await t.assertAllowed('10.9.9.8', 'cheklov.boshqa'); // boshqa login ta'sirlanmaydi
+      await t.reset('10.9.9.8', lg); // muvaffaqiyatli kirish ikkala hisoblagichni nolga tushiradi
+      await t.assertAllowed('10.9.9.7', lg);
     });
 
     it("parallel urinishlar yo'qolmaydi: 8 ta parallel xato so'rovdan keyin bloklangan", async () => {
