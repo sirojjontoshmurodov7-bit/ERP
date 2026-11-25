@@ -1,41 +1,75 @@
+/* TST_ERP design tokens (Stitch "Prism" system): electric violet + neon cyan, emerald/amber/coral signals.
+ * Dark is the default; html[data-theme="light"] switches the palette. Every colour on the site comes from here. */
 :root {
   color-scheme: dark;
-  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px; --space-4xl: 144px;
-  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem; --text-2xl: 1.728rem; --text-3xl: 2.074rem;
-  --text-display-s: 1.44rem; --text-display: 1.728rem; --text-section: 1.2rem; --text-title: 1rem; --text-lead: 1rem;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in: cubic-bezier(0.7, 0, 0.84, 0); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
-  --container: 1440px; --gutter: 32px; --gap-columns: 32px; --section-gap-s: 120px; --section-gap: 144px; --section-gap-l: 176px;
+  --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 32px; --space-2xl: 48px; --space-3xl: 96px; --space-4xl: 144px;
+  /* type scale (px values from the design: display 40, headline 28/22, title 18/15, body 14/13, label 14/12) */
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 0.9375rem; --text-lg: 1.125rem; --text-xl: 1.375rem; --text-2xl: 1.75rem; --text-3xl: 2.5rem;
+  --text-display: 2.5rem; --text-section: 1.375rem; --text-title: 1.125rem; --text-lead: 1rem;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1); --ease-in: cubic-bezier(0.3, 0, 1, 1); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 150ms; --dur-short: 280ms; --dur-long: 320ms;
+  --container: 1440px; --gutter: 24px; --gap-columns: 24px; --section-gap-s: 120px; --section-gap: 144px; --section-gap-l: 176px;
   --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+  --font-display: var(--font-inter), ui-sans-serif, system-ui, sans-serif; --font-body: var(--font-display);
+  --font-outlier: var(--font-jetbrains), ui-monospace, monospace;
+  --radius-sm: 6px; --radius-input: 10px; --radius-md: 12px; --radius-card: 16px; --radius-xl: 20px; --radius-pill: 999px; --radius-stock: 10px; --rule-hair: 1px;
+  --tracking-display: -0.02em; --display-weight: 600;
 
-  /* Teal night: #006666 stays the anchor (fills, buttons); the page is a deep teal-black space, surfaces are glass lit from above */
-  --color-brand: #006666; --color-brand-deep: oklch(16% 0.035 205); --color-brand-deeper: oklch(12% 0.03 210); --color-brand-soft: oklch(25% 0.05 195); --color-brand-bright: oklch(82% 0.13 185);
-  --color-paper: oklch(13.5% 0.025 215); --color-paper-2: oklch(18% 0.03 210); --color-paper-3: oklch(22.5% 0.035 205);
-  --color-ink: oklch(96% 0.01 190); --color-ink-2: oklch(86% 0.018 195); --color-muted: oklch(71% 0.03 200);
-  --color-rule: oklch(100% 0 0 / 0.09); --color-rule-2: oklch(100% 0 0 / 0.17);
-  --color-accent: oklch(82% 0.13 185); --color-accent-ink: oklch(15% 0.03 205); --color-accent-2: oklch(82% 0.13 185); --color-focus: oklch(82% 0.13 185);
-  --color-signal: oklch(80% 0.15 75); --color-signal-ink: oklch(25% 0.06 70);
-  --color-cotton: oklch(20% 0.032 210); --color-desk: oklch(16% 0.03 210); --color-print: oklch(95% 0.012 190);
-  --color-board: var(--color-brand); --color-board-type: oklch(98.8% 0.008 190); --color-paid: oklch(82% 0.15 80);
-  --shade: 5% 0.02 215; --lit: 100% 0.005 195; --deep: 7% 0.02 200;
-  --color-error: oklch(72% 0.17 25); --color-success: oklch(79% 0.16 155); --color-warn: oklch(82% 0.13 80);
-  --color-backdrop: oklch(8% 0.02 215 / 0.62);
-  --color-green: oklch(80% 0.18 145); --color-blue: oklch(68% 0.16 245); --color-amber: oklch(80% 0.15 75);
-  /* glass: translucent fill, hairline edge, light from the top */
-  --glass: linear-gradient(155deg, oklch(100% 0 0 / 0.085), oklch(100% 0 0 / 0.025) 60%);
-  --glass-side: linear-gradient(180deg, oklch(100% 0 0 / 0.06), oklch(100% 0 0 / 0.015));
-  --glass-solid: oklch(20% 0.034 210);
-  --glass-edge: oklch(100% 0 0 / 0.11); --glass-hi: oklch(100% 0 0 / 0.2); --glass-glow: oklch(82% 0.13 185 / 0.22); --glass-spot: oklch(100% 0 0 / 0.09);
-  --aurora-1: oklch(42% 0.12 195 / 0.42); --aurora-2: oklch(36% 0.1 235 / 0.3); --aurora-3: oklch(40% 0.11 165 / 0.28);
-  /* globe: read by the canvas */
-  --globe-land: oklch(88% 0.1 190); --globe-city: oklch(88% 0.14 85); --globe-line: oklch(78% 0.12 215); --globe-glow: oklch(70% 0.13 200); --globe-body: oklch(19% 0.045 215); --globe-body-2: oklch(11% 0.03 225);
+  /* fixed signal hues (same in both themes, used for fills, dots, bars) */
+  --violet: #7957FF; --violet-strong: #6039E5; --cyan: #36D8F5; --emerald: #42D6A4; --amber: #F0B85B; --coral: #F16B82;
+  --on-fill: #FFFFFF;
 
-  --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif; --font-body: var(--font-display);
-  --font-outlier: var(--font-geist-mono), ui-monospace, monospace;
-  --radius-card: 18px; --radius-input: 10px; --radius-pill: 999px; --radius-stock: 12px; --rule-hair: 1px;
-  --shadow-card: 0 1px 2px oklch(var(--shade) / 0.4);
-  --edge-stock: 0 0 0 1px var(--glass-edge), inset 0 1px 0 var(--glass-hi);
-  --cast-stock: 0 18px 40px -18px oklch(var(--shade) / 0.9), 0 2px 6px oklch(var(--shade) / 0.35); --cast-stock-lift: 0 26px 50px -16px oklch(var(--shade) / 0.95), 0 0 36px -8px var(--glass-glow);
-  --press-groove: inset 0 1px 3px oklch(var(--shade) / 0.6), 0 0 0 1px var(--glass-edge);
-  --tracking-display: -0.03em; --display-weight: 600;
+  /* dark surfaces */
+  --color-paper: #100D20; --color-paper-2: #171329; --color-paper-3: #211B37;
+  --surface: #211B37; --surface-high: #2B2345; --surface-highest: #362D54; --surface-lowest: #100D20;
+  --surface-glass: rgb(33 27 55 / 0.75); --surface-side: rgb(23 19 41 / 0.9); --surface-bar: rgb(16 13 32 / 0.8);
+  --color-ink: #F7F5FF; --color-ink-2: #D7D2E8; --color-muted: #AAA4BD;
+  --color-rule: rgb(255 255 255 / 0.1); --color-rule-2: rgb(255 255 255 / 0.16); --color-rule-soft: rgb(255 255 255 / 0.05);
+  --field: rgb(33 27 55 / 0.7); --field-hover: #2B2345;
+
+  /* semantic: text colours readable on the surfaces */
+  --tone-violet: #CABEFF; --tone-cyan: #36D8F5; --tone-emerald: #42D6A4; --tone-amber: #F0B85B; --tone-coral: #F16B82;
+  --color-brand: var(--violet); --color-brand-text: #CABEFF; --color-brand-bright: #CABEFF; --color-brand-deeper: #171329; --color-brand-deep: #171329; --color-brand-soft: rgb(121 87 255 / 0.15);
+  --color-accent: var(--cyan); --color-accent-2: var(--cyan); --color-accent-ink: #100D20; --color-focus: var(--cyan);
+  --color-success: var(--emerald); --color-warn: var(--amber); --color-error: var(--coral); --color-paid: var(--emerald);
+  --color-signal: var(--amber); --color-board: var(--violet); --color-board-type: #FFFFFF; --color-cotton: var(--surface); --color-print: var(--color-ink);
+  --color-green: var(--emerald); --color-blue: var(--violet); --color-amber: var(--amber);
+  --color-backdrop: rgb(16 13 32 / 0.75);
+
+  /* depth: soft glow, hairline edges (no heavy 3D) */
+  --shade: 8% 0.03 290; --lit: 100% 0 0;
+  --glass: var(--surface-glass); --glass-side: var(--surface-side); --glass-solid: var(--surface-high);
+  --glass-edge: rgb(255 255 255 / 0.1); --glass-hi: rgb(255 255 255 / 0.08); --glass-glow: rgb(121 87 255 / 0.3); --glass-spot: rgb(255 255 255 / 0.05);
+  --edge-stock: 0 0 0 1px var(--glass-edge);
+  --cast-stock: 0 1px 2px rgb(0 0 0 / 0.25);
+  --cast-stock-lift: 0 12px 32px -12px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(121 87 255 / 0.35);
+  --glow-violet: 0 0 20px rgb(121 87 255 / 0.35); --glow-cyan: 0 0 8px rgb(54 216 245 / 0.85);
+  --press-light: #8B6DFF; --press-groove: inset 0 0 0 1px var(--color-rule);
+  --aurora-1: rgb(121 87 255 / 0.22); --aurora-2: rgb(54 216 245 / 0.1); --aurora-3: rgb(66 214 164 / 0.08);
+  --stars: 0.85;
+
+  /* globe (read by the canvas) */
+  --globe-land: #CABEFF; --globe-city: #36D8F5; --globe-line: #36D8F5; --globe-glow: #7957FF; --globe-body: #211B37; --globe-body-2: #100D20;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-paper: #F7F5FF; --color-paper-2: #F4EEFF; --color-paper-3: #EBE5FF;
+  --surface: #EBE5FF; --surface-high: #E2DAFA; --surface-highest: #D8CFF5; --surface-lowest: #FFFFFF;
+  --surface-glass: rgb(255 255 255 / 0.82); --surface-side: rgb(244 238 255 / 0.92); --surface-bar: rgb(247 245 255 / 0.82);
+  --color-ink: #171329; --color-ink-2: #2E2942; --color-muted: #5C5770;
+  --color-rule: #DCD6EE; --color-rule-2: #C9C3DE; --color-rule-soft: #ECE7F8;
+  --field: #FFFFFF; --field-hover: #F4EEFF;
+  --tone-violet: #6039E5; --tone-cyan: #006878; --tone-emerald: #006B4E; --tone-amber: #8A5700; --tone-coral: #BA1A1A;
+  --color-brand-text: #6039E5; --color-brand-bright: #6039E5; --color-brand-deeper: #F4EEFF; --color-brand-deep: #F4EEFF; --color-brand-soft: rgb(121 87 255 / 0.12);
+  --color-accent: #006878; --color-accent-2: #006878; --color-focus: #6039E5;
+  --color-success: #006B4E; --color-warn: #8A5700; --color-error: #BA1A1A; --color-paid: #006B4E;
+  --color-backdrop: rgb(23 19 41 / 0.45);
+  --glass-edge: #DCD6EE; --glass-hi: rgb(255 255 255 / 0.7); --glass-glow: rgb(121 87 255 / 0.18); --glass-spot: rgb(121 87 255 / 0.04);
+  --cast-stock: 0 1px 2px rgb(23 19 41 / 0.06);
+  --cast-stock-lift: 0 12px 28px -14px rgb(23 19 41 / 0.25), 0 0 0 1px rgb(121 87 255 / 0.35);
+  --glow-violet: 0 6px 18px -6px rgb(121 87 255 / 0.55); --glow-cyan: 0 0 6px rgb(0 104 120 / 0.5);
+  --aurora-1: rgb(121 87 255 / 0.12); --aurora-2: rgb(54 216 245 / 0.1); --aurora-3: rgb(66 214 164 / 0.06);
+  --stars: 0;
+  --globe-land: #6039E5; --globe-city: #006878; --globe-line: #7957FF; --globe-glow: #7957FF; --globe-body: #EBE5FF; --globe-body-2: #FFFFFF;
 }

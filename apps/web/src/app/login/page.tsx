@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Globe } from '@/components/globe';
+import { Icon } from '@/components/icons';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Kirish' };
@@ -11,8 +12,10 @@ export default function LoginPage() {
     <main className="login">
       <aside className="login-side">
         <Link className="login-brand" href="/">
-          <span className="login-mark" aria-hidden />
-          O&apos;quv markazi
+          <span className="brand-mark" aria-hidden>
+            <Icon.cube />
+          </span>
+          TST_ERP
         </Link>
         <Globe className="login-globe" />
         <p className="login-claim">Guruh, davomat, to&apos;lov va maosh: hammasi bitta tizimda.</p>

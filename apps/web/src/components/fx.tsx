@@ -3,8 +3,8 @@
 // Skriptsiz yoki "harakatni kamaytirish" yoqilganda hech narsa ishlamaydi: kontent baribir ko'rinadi.
 import { useEffect, useRef } from 'react';
 
-const SPOT = '.panel, .stats, .stat, .table-wrap, [data-tilt], .btn--primary';
-const TILT = '.stat, [data-tilt]';
+const SPOT = '[data-tilt]';
+const TILT = '[data-tilt]';
 
 export function Fx() {
   const stars = useRef<HTMLCanvasElement>(null);

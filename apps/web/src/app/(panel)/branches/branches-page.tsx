@@ -1,4 +1,5 @@
 'use client';
+import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Button, Confirm, DataView, Dialog, Empty, PageHead, SelectInput, Skeleton, Tag, TextInput, whenOpen } from '@/components/ui';
@@ -13,7 +14,9 @@ export function BranchesPage() {
   const { can } = useSession();
   const [archived, setArchived] = useState('false');
   const list = useApi<{ items: Branch[] }>('/branches', { includeArchived: archived });
-  const [edit, setEdit] = useState<Branch | 'new' | null>(null);
+  const params = useSearchParams();
+  // /branches?new=1 (bosh sahifadagi "Yangi filial" tugmasi) dialogni ochib keladi
+  const [edit, setEdit] = useState<Branch | 'new' | null>(() => (params.get('new') === '1' ? 'new' : null));
   const [toggle, setToggle] = useState<Branch | null>(null);
   const manage = can('branch.manage');
   return (

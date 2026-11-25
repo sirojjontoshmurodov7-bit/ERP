@@ -8,7 +8,7 @@ import { RoleDeck } from './role-deck';
 import './landing.css';
 
 export const metadata: Metadata = {
-  title: "O'quv markazlari uchun boshqaruv tizimi",
+  title: { absolute: "TST_ERP: o'quv markazlari uchun boshqaruv tizimi" },
   description: "Guruh, davomat, to'lov, maosh va Telegram bildirishnomalari bitta tizimda. Ko'p markazli va ko'p filialli.",
   robots: { index: true, follow: true },
 };
@@ -62,8 +62,10 @@ export default function Landing() {
       <header className="lp-nav">
         <div className="lp-container lp-nav-row">
           <Link className="lp-brand" href="/">
-            <span className="lp-mark" aria-hidden />
-            O&apos;quv markazi
+            <span className="brand-mark" aria-hidden>
+              <Icon.cube />
+            </span>
+            TST_ERP
           </Link>
           <nav className="lp-nav-links" aria-label="Bo'limlar">
             <a href="#imkoniyatlar">Imkoniyatlar</a>
@@ -145,8 +147,10 @@ export default function Landing() {
       <footer className="lp-foot">
         <div className="lp-container lp-foot-row">
           <span className="lp-brand">
-            <span className="lp-mark" aria-hidden />
-            O&apos;quv markazi
+            <span className="brand-mark" aria-hidden>
+              <Icon.cube />
+            </span>
+            TST_ERP
           </span>
           <Action variant="plain" />
         </div>

@@ -361,7 +361,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 // ---------------------------------------------------------------- holat yorlig'i
-export function Tag({ kind = 'default', children }: { kind?: 'default' | 'ok' | 'warn' | 'bad' | 'mute'; children: ReactNode }) {
+export function Tag({ kind = 'default', children }: { kind?: 'default' | 'ok' | 'warn' | 'bad' | 'mute' | 'info' | 'violet'; children: ReactNode }) {
   return <span className={kind === 'default' ? 'tag' : `tag tag--${kind}`}>{children}</span>;
 }
 

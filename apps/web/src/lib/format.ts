@@ -34,6 +34,23 @@ export function monthLabel(ym: string): string {
   return `${name.charAt(0).toUpperCase()}${name.slice(1)} ${ym.slice(0, 4)}`;
 }
 export const monthShort = (ym: string) => `${MONTHS_SHORT[Number(ym.slice(5, 7)) - 1] ?? ''} ${ym.slice(2, 4)}`;
+/** "2026-11" -> "Noy" (grafik o'qi uchun) */
+export const monthAbbr = (ym: string) => {
+  const s = MONTHS_SHORT[Number(ym.slice(5, 7)) - 1] ?? '';
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+/** Ixcham pul: 642 000 000 -> "642 mln", 4 820 000 000 -> "4,82 mlrd", 18 500 -> "18,5 ming" (kartochka va grafiklar uchun). */
+export function compact(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return "yo'q";
+  const a = Math.abs(n);
+  const sign = n < 0 ? '−' : '';
+  const fmt = (v: number, unit: string) => `${sign}${(Math.round(v * 100) / 100).toString().replace('.', ',')} ${unit}`;
+  if (a >= 1e9) return fmt(a / 1e9, 'mlrd');
+  if (a >= 1e6) return fmt(a >= 1e8 ? Math.round(a / 1e6) : a / 1e6, 'mln');
+  if (a >= 1e4) return fmt(Math.round(a / 100) / 10, 'ming');
+  return sign + money(a);
+}
 
 const TZ = 5 * 3_600_000;
 const tashkent = (v: string | Date) => new Date(new Date(v).getTime() + TZ);
@@ -46,6 +63,8 @@ export function dateTime(v: string | Date | null | undefined): string {
 export const todayLocal = () => tashkent(new Date()).toISOString().slice(0, 10);
 export const addDays = (iso: string, n: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
 export const thisMonth = () => todayLocal().slice(0, 7);
+/** Ikki biznes sanasi orasidagi kunlar (b - a). */
+export const daysBetweenIso = (a: string, b: string) => Math.round((Date.parse(`${b.slice(0, 10)}T00:00:00Z`) - Date.parse(`${a.slice(0, 10)}T00:00:00Z`)) / 86_400_000);
 
 export const WEEKDAYS = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba'];
 export const WEEKDAYS_SHORT = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
@@ -58,4 +77,6 @@ export function plural(n: number, word: string) {
 }
 
 /** Vaqt tamg'asining Toshkent sanasi: "19.11.2026" */
+/** Vaqt tamg'asi -> Toshkent biznes sanasi "YYYY-MM-DD". */
+export const tsDay = (v: string) => tashkent(v).toISOString().slice(0, 10);
 export const tsDate = (v: string | Date | null | undefined) => (v ? dateTime(v).slice(0, 10) : "yo'q");
