@@ -97,3 +97,13 @@ h1 { text-shadow: 0 0 40px var(--glass-glow); }
 @media (prefers-reduced-motion: reduce) {
   .space-aurora, .space-stars { transform: none; transition: none; }
 }
+
+/* password show/hide */
+.input-wrap { position: relative; display: flex; }
+.input--eye { padding-right: var(--space-2xl); }
+.eye-btn { position: absolute; right: 4px; top: 50%; translate: 0 -50%; width: 32px; height: 32px; display: grid; place-items: center; border: 0; border-radius: var(--radius-input); background: transparent; color: var(--color-muted); cursor: pointer; transition: color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+.eye-btn svg { width: 18px; height: 18px; }
+.eye-btn:hover { color: var(--color-ink); background: var(--field-hover); }
+.eye-btn:active { background: var(--field); }
+.eye-btn:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 1px; }
+.eye-btn[aria-pressed="true"] { color: var(--color-brand-bright); }

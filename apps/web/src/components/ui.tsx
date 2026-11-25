@@ -63,8 +63,31 @@ type InputProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string;
 export function TextInput({ label, error, hint, optional, fieldClass, className, ...rest }: InputProps) {
   return (
     <Field label={label} error={error} hint={hint} optional={optional} className={fieldClass}>
-      {(id, d, invalid) => <input id={id} aria-describedby={d} aria-invalid={invalid || undefined} className={['input', className].filter(Boolean).join(' ')} {...rest} />}
+      {(id, d, invalid) =>
+        rest.type === 'password' ? (
+          <PasswordField id={id} describedBy={d} invalid={invalid} className={className} {...rest} />
+        ) : (
+          <input id={id} aria-describedby={d} aria-invalid={invalid || undefined} className={['input', className].filter(Boolean).join(' ')} {...rest} />
+        )
+      }
     </Field>
+  );
+}
+
+// Parol maydoni: ko'rsatish/yashirish tugmasi bilan
+function PasswordField({ id, describedBy, invalid, className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { id: string; describedBy?: string; invalid?: boolean }) {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="input-wrap">
+      <input id={id} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={['input', 'input--eye', className].filter(Boolean).join(' ')} {...props} type={shown ? 'text' : 'password'} />
+      <button type="button" className="eye-btn" aria-label={shown ? 'Parolni yashirish' : "Parolni ko'rsatish"} aria-pressed={shown} onClick={() => setShown((v) => !v)}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+          <circle cx="12" cy="12" r="3" />
+          {shown ? <path d="M4 4l16 16" /> : null}
+        </svg>
+      </button>
+    </div>
   );
 }
 
