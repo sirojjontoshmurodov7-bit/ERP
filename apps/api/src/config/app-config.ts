@@ -16,6 +16,10 @@ export interface AppConfig {
   telegramWebhookSecret?: string;
   /** Tashqi cron-trigger (POST /notifications/cron) sirri. */
   cronSecret?: string;
+  /** Webhook o'rniga long polling (getUpdates): ommaviy HTTPS manzil kerak emas; faqat bitta API nusxasida yoqing. */
+  telegramPolling?: boolean;
+  /** Ichki kundalik eslatma vaqti 'HH:MM' (Asia/Tashkent); berilsa tashqi cron kerak emas. */
+  notifyDailyAt?: string;
   /**
    * Express `trust proxy`: API oldidagi ishonchli proksilar (masalan web BFF) soni yoki ro'yxati. Berilmasa o'chiq
    * (X-Forwarded-For e'tiborsiz). Faqat API'ga to'g'ridan-to'g'ri tashqaridan kirib bo'lmasa yoqing: aks holda IP soxtalanadi.
@@ -45,7 +49,9 @@ const envSchema = z.object({
   TELEGRAM_BOT_USERNAME: optionalEnv(z.string().min(3)),
   TELEGRAM_WEBHOOK_SECRET: optionalEnv(z.string().regex(/^[A-Za-z0-9_-]{16,256}$/)),
   CRON_SECRET: optionalEnv(z.string().min(16)),
-  TRUST_PROXY: optionalEnv(z.string().regex(/^(true|false|d{1,2}|[a-z0-9.:/, ]{1,200})$/i)),
+  TELEGRAM_POLLING: optionalEnv(z.enum(['true', 'false', '1', '0'])),
+  NOTIFY_DAILY_AT: optionalEnv(z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/)),
+  TRUST_PROXY: optionalEnv(z.string().regex(/^(true|false|\d{1,2}|[a-z0-9.:/, ]{1,200})$/i)),
   NODE_ENV: z.string().optional(),
 });
 
@@ -53,7 +59,7 @@ export function parseTrustProxy(v: string | undefined): boolean | number | strin
   if (v === undefined) return undefined;
   if (/^true$/i.test(v)) return true;
   if (/^false$/i.test(v)) return false;
-  if (/^d+$/.test(v)) return Number(v);
+  if (/^\d+$/.test(v)) return Number(v); // hop soni (Express raqam kutadi; "1" satri IP ro'yxati deb o'qiladi)
   return v;
 }
 
@@ -80,6 +86,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     telegramBotUsername: e.TELEGRAM_BOT_USERNAME?.replace(/^@/, ''),
     telegramWebhookSecret: e.TELEGRAM_WEBHOOK_SECRET,
     cronSecret: e.CRON_SECRET,
+    telegramPolling: e.TELEGRAM_POLLING === 'true' || e.TELEGRAM_POLLING === '1',
+    notifyDailyAt: e.NOTIFY_DAILY_AT,
     trustProxy: parseTrustProxy(e.TRUST_PROXY),
   };
 }

@@ -49,6 +49,10 @@ services:
       TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       CRON_SECRET: ${CRON_SECRET:-}
+      # true: webhook o'rniga polling (compose'da api bitta nusxa, ommaviy webhook sozlash shart emas)
+      TELEGRAM_POLLING: ${TELEGRAM_POLLING:-}
+      # Server doim ishlaydi: kundalik eslatmalar ichki jadval bilan (bo'sh = faqat tashqi cron yoki qo'lda)
+      NOTIFY_DAILY_AT: ${NOTIFY_DAILY_AT:-09:00}
     depends_on:
       migrate: { condition: service_completed_successfully }
 

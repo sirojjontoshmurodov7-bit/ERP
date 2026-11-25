@@ -30,10 +30,10 @@
     "semantic_hash": "fa439650fa28a1a7aa8c2b6d81c8cc20"
   },
   "apps/api/package.json": {
-    "mtime": 1795043706.3089235,
-    "seen": 1795063491.1880786,
-    "ast_hash": "f3d51fbe24d3f9b57a983dda120a5732",
-    "semantic_hash": "f3d51fbe24d3f9b57a983dda120a5732"
+    "mtime": 1795649540.1554317,
+    "seen": 1795650238.6724615,
+    "ast_hash": "7d58c87bcdcbd412e3f504e436bd1ff0",
+    "semantic_hash": ""
   },
   "apps/api/src/app.controller.spec.ts": {
     "mtime": 1795061766.6385424,
@@ -234,10 +234,10 @@
     "semantic_hash": "09fa1700e7825eeb3797efc8377d2da5"
   },
   "apps/api/src/config/app-config.ts": {
-    "mtime": 1795044356.660766,
-    "seen": 1795063491.1883388,
-    "ast_hash": "e78fc9ea8856881e6b5c77868ab85be2",
-    "semantic_hash": "e78fc9ea8856881e6b5c77868ab85be2"
+    "mtime": 1795649331.0840936,
+    "seen": 1795650238.689756,
+    "ast_hash": "e1867d34bb3d011cc2cc5a24ef0c4c8a",
+    "semantic_hash": ""
   },
   "apps/api/src/db/create-super-admin.ts": {
     "mtime": 1795014109.5551045,
@@ -396,9 +396,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795642325.6532612,
-    "seen": 1795642342.7426147,
-    "ast_hash": "3cd9cb0782cec11b1a965b89534c14f1",
+    "mtime": 1795650209.490898,
+    "seen": 1795650238.7444086,
+    "ast_hash": "5d32c026fb075b46dbdc97f33c3cf87b",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -1098,10 +1098,10 @@
     "semantic_hash": "f5153630dee6c43f09ea45398d21520d"
   },
   "apps/api/src/notifications/notifications.module.ts": {
-    "mtime": 1795041746.7361357,
-    "seen": 1795063491.1885328,
-    "ast_hash": "8d6f8fdbd6127ce76869cb361b05e292",
-    "semantic_hash": "8d6f8fdbd6127ce76869cb361b05e292"
+    "mtime": 1795649366.368912,
+    "seen": 1795650238.6983023,
+    "ast_hash": "4a1489fd97e99ae9ff05667661160041",
+    "semantic_hash": ""
   },
   "apps/api/src/notifications/notifications.schemas.ts": {
     "mtime": 1795041763.9908953,
@@ -1188,9 +1188,9 @@
     "semantic_hash": "3e30d639fb3fcb5c1a23cc2553b1a583"
   },
   ".claude/launch.json": {
-    "mtime": 1795642101.38234,
-    "seen": 1795642342.6400747,
-    "ast_hash": "e4019179384360475d00fa98609e7734",
+    "mtime": 1795642348.8854487,
+    "seen": 1795650238.6703408,
+    "ast_hash": "c520f6975a86cac6e69ec8e68cae3e5d",
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
@@ -1722,10 +1722,10 @@
     "semantic_hash": "fbff295ec01884e5cc5ccd4e05211715"
   },
   "docker-compose.prod.yml": {
-    "mtime": 1795061976.1909282,
-    "seen": 1795063491.1895683,
-    "ast_hash": "e23b85b01a1fb7fc172683e61d006ebc",
-    "semantic_hash": "e23b85b01a1fb7fc172683e61d006ebc"
+    "mtime": 1795649572.9349954,
+    "seen": 1795650238.7418993,
+    "ast_hash": "516f672f4104769f987b9897601b4354",
+    "semantic_hash": ""
   },
   "docker/initdb/01-app-role.sh": {
     "mtime": 1795061926.2486,
@@ -1734,10 +1734,10 @@
     "semantic_hash": "15159069d56ad6ee1819b1acf5b88b83"
   },
   "DEPLOY.md": {
-    "mtime": 1795062028.0818481,
-    "seen": 1795063491.1896312,
-    "ast_hash": "deb24b518b71577897f4e27a404e56c7",
-    "semantic_hash": "deb24b518b71577897f4e27a404e56c7"
+    "mtime": 1795649560.3722725,
+    "seen": 1795650238.744203,
+    "ast_hash": "ad48b1e855d28fec6281707eaa234e45",
+    "semantic_hash": ""
   },
   "README.md": {
     "mtime": 1795062340.0717154,
@@ -1833,6 +1833,36 @@
     "mtime": 1795642131.9319768,
     "seen": 1795642342.7354753,
     "ast_hash": "92be79e4a4d5040d6a7fda50612d10b1",
+    "semantic_hash": ""
+  },
+  "apps/api/scripts/telegram-setup.mjs": {
+    "mtime": 1795649539.4020457,
+    "seen": 1795650238.6733456,
+    "ast_hash": "fa7cc38195018234e4712ce61d8bb8a6",
+    "semantic_hash": ""
+  },
+  "apps/api/src/config/app-config.spec.ts": {
+    "mtime": 1795649390.8296933,
+    "seen": 1795650238.6897526,
+    "ast_hash": "34635ea3263c4cc6caa33fe76b5b0bf6",
+    "semantic_hash": ""
+  },
+  "apps/api/src/notifications/notify.scheduler.ts": {
+    "mtime": 1795649361.1373482,
+    "seen": 1795650238.6986914,
+    "ast_hash": "b78570c81a728fe4f05c758faef1e124",
+    "semantic_hash": ""
+  },
+  "apps/api/src/notifications/telegram.poller.spec.ts": {
+    "mtime": 1795649416.5755098,
+    "seen": 1795650238.6990707,
+    "ast_hash": "993d0749b678d710ec88111f3a931c8d",
+    "semantic_hash": ""
+  },
+  "apps/api/src/notifications/telegram.poller.ts": {
+    "mtime": 1795649361.010279,
+    "seen": 1795650238.6990733,
+    "ast_hash": "55acd745c331649bbcef3f03332889fe",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

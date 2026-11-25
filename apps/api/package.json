@@ -24,7 +24,8 @@
     "db:migrate": "tsx --env-file=../../.env src/db/migrate.ts",
     "db:seed": "tsx --env-file=../../.env src/db/seed.ts",
     "db:create-super-admin": "tsx --env-file=../../.env src/db/create-super-admin.ts",
-    "pg:local": "tsx scripts/pg-local.ts"
+    "pg:local": "tsx scripts/pg-local.ts",
+    "telegram:setup": "node scripts/telegram-setup.mjs"
   },
   "dependencies": {
     "@erp/shared": "workspace:*",

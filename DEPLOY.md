@@ -60,28 +60,33 @@ Migratsiyalar har safar avtomatik qo'llanadi (allaqachon qo'llanganlari o'tkazib
 | `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | api | kamida 32 belgi; `change-me` bilan boshlansa prod'da ishga tushmaydi |
 | `TRUST_PROXY` | api | API oldidagi ishonchli proksilar soni; compose'da `1` |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | api | ixtiyoriy |
+| `TELEGRAM_POLLING` | api | `true`: webhook o’rniga polling (bitta nusxa) |
+| `NOTIFY_DAILY_AT` | api | ichki kundalik eslatma vaqti, masalan `09:00` |
 | `CRON_SECRET` | api | tashqi cron uchun |
 | `API_URL` | web | masalan `http://api:3001` |
 | `WEB_SECURE_COOKIES` | web | HTTPS orqasida `true` |
 
 ## Telegram bot
 
-1. BotFather'da bot yarating, tokenni `TELEGRAM_BOT_TOKEN` ga, bot nomini (`@` siz) `TELEGRAM_BOT_USERNAME` ga yozing.
-2. `TELEGRAM_WEBHOOK_SECRET` ga tasodifiy qiymat (`openssl rand -hex 32`).
-3. Webhook'ni o'rnating:
-   ```bash
-   curl "https://api.telegram.org/bot<TOKEN>/setWebhook" \
-     -d "url=https://<DOMAIN>/telegram/webhook" -d "secret_token=<TELEGRAM_WEBHOOK_SECRET>"
-   ```
-4. Foydalanuvchi panelda **Profil → Telegram** (yoki rahbar o'quvchi kartochkasida) kod oladi va botga `/start KOD` yuboradi.
+1. Telegram'da **@BotFather** → `/newbot` → bot nomi va `..._bot` bilan tugaydigan username. Tokenni `TELEGRAM_BOT_TOKEN` ga, username'ni (`@` siz) `TELEGRAM_BOT_USERNAME` ga yozing.
+2. Rejimni tanlang:
+   - **Polling (eng oson, ommaviy HTTPS manzil kerak emas):** `TELEGRAM_POLLING=true`. API o'zi Telegram'dan yangilanishlarni so'raydi (webhook avtomatik o'chiriladi). Faqat **bitta** API nusxasida yoqing (ikkinchisi 409 oladi). Lokal ishlab chiqish va oddiy VPS uchun.
+   - **Webhook (bir nechta nusxa yoki serverless):** `TELEGRAM_WEBHOOK_SECRET` ga tasodifiy qiymat (`openssl rand -hex 32`), `TELEGRAM_POLLING` bo'sh, so'ng:
+     ```bash
+     pnpm --filter @erp/api telegram:setup webhook https://<DOMAIN>
+     ```
+3. Tekshirish: `pnpm --filter @erp/api telegram:setup info` (bot nomi, webhook holati, oxirgi xato; token chiqmaydi).
+4. Foydalanuvchi panelda **Profil → Telegram** (yoki rahbar o'quvchi kartochkasida) kod oladi va botga `/start KOD` yuboradi. `/stop` uzadi.
 
-## Avtomatik eslatmalar (cron)
+## Avtomatik eslatmalar
 
-Bepul hostingda fon jarayoni kafolatsiz, shuning uchun eslatmalar tashqi trigger bilan yuboriladi. cron-job.org (yoki serverdagi `cron`) kuniga bir marta:
+Ikki yo'l (birini tanlang; ikkalasi birga bo'lsa ham takror xabar ketmaydi, `notification_log` eslab qoladi):
 
-```bash
-curl -X POST "https://<DOMAIN>/notifications/cron" -H "x-cron-secret: <CRON_SECRET>" -H "content-type: application/json" -d '{}'
-```
+- **Ichki jadval:** `NOTIFY_DAILY_AT=09:00` (Asia/Tashkent). API jarayoni har kuni shu vaqtda hamma faol markaz uchun qarz, ertangi dars, vazifa va maosh eslatmalarini yuboradi. Server o'sha vaqtdan keyin yoqilsa, o'sha kuni bir marta ishlaydi. Doim ishlab turadigan server (VPS, compose) uchun.
+- **Tashqi trigger:** uxlab qoladigan bepul hostingda cron-job.org (yoki serverdagi `cron`) kuniga bir marta:
+  ```bash
+  curl -X POST "https://<DOMAIN>/notifications/cron" -H "x-cron-secret: <CRON_SECRET>" -H "content-type: application/json" -d '{}'
+  ```
 
 Rahbar ham panelda **Telegram xabarlar → Eslatmalarni hozir yuborish** tugmasi bilan qo'lda yuborishi mumkin.
 
