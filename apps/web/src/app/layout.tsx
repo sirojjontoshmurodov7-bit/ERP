@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist_Mono, Onest } from 'next/font/google';
+import { Fx } from '@/components/fx';
 import './globals.css';
+import '../styles/depth.css';
 
 // Shriftlar build vaqtida o'zimizga joylanadi (brauzer Google'ga murojaat qilmaydi)
 const onest = Onest({ variable: '--font-onest', subsets: ['latin', 'cyrillic'], display: 'swap' });
@@ -17,7 +19,10 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1 };
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="uz" className={`${onest.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Fx />
+        {children}
+      </body>
     </html>
   );
 }

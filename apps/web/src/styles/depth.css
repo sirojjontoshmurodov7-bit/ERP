@@ -1,0 +1,99 @@
+/* 3D layer: space, glass, depth. Palette lives in tokens.css; nothing here sets a literal colour. Imported by layout.tsx after globals.css so it wins on equal specificity. */
+:root {
+  --field: oklch(100% 0 0 / 0.05);
+  --field-hover: oklch(100% 0 0 / 0.08);
+  --press-light: color-mix(in oklab, var(--color-brand) 70%, var(--color-board-type) 14%);
+}
+
+.space { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.space-aurora { position: absolute; inset: -12%; background: radial-gradient(52% 46% at 16% 6%, var(--aurora-1), transparent 70%), radial-gradient(46% 42% at 90% 16%, var(--aurora-2), transparent 70%), radial-gradient(62% 52% at 56% 108%, var(--aurora-3), transparent 70%); transform: translate3d(calc(var(--px, 0) * -28px), calc(var(--py, 0) * -20px), 0); transition: transform 700ms var(--ease-out); }
+.space-stars { position: absolute; inset: 0; width: 100%; height: 100%; color: var(--color-ink); opacity: 0.85; transform: translate3d(calc(var(--px, 0) * -12px), calc(var(--py, 0) * -9px), 0); transition: transform 700ms var(--ease-out); }
+
+.globe { display: block; width: 100%; height: 100%; touch-action: pan-y; }
+
+/* glass surfaces */
+.panel, .table-wrap, .stat { background: var(--glass); backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%); }
+.panel { position: relative; }
+.panel .table-wrap { background: transparent; backdrop-filter: none; }
+.panel::before, .stat::before, [data-tilt]::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(340px circle at var(--mx, 50%) var(--my, -60%), var(--glass-spot), transparent 62%); opacity: 0; transition: opacity var(--dur-short) var(--ease-out); pointer-events: none; z-index: 0; }
+.panel:hover::before, .stat:hover::before, [data-tilt]:hover::before { opacity: 1; }
+.table th { background: transparent; }
+
+/* stat tiles: separate glass slabs that tilt toward the cursor */
+.stats { background: none; box-shadow: none; border-radius: 0; gap: var(--space-md); }
+.stat { position: relative; border: 0; border-radius: var(--radius-card); padding: var(--space-md) var(--space-lg); box-shadow: var(--edge-stock), var(--cast-stock); transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 380ms var(--ease-out), box-shadow var(--dur-short) var(--ease-out); }
+.stat:first-child { border-left: 0; }
+.stat[data-live="1"] { transition: transform 90ms linear, box-shadow var(--dur-short) var(--ease-out); }
+.stat:hover { box-shadow: var(--edge-stock), var(--cast-stock-lift); }
+.stat-value { font-size: clamp(1.1rem, 1.7vw, var(--text-xl)); white-space: nowrap; text-shadow: 0 0 28px var(--glass-glow); }
+.stat-value--debt { text-shadow: none; }
+.stats--col .stat { border-top: 0; }
+
+/* sidebar and topbar */
+.sidebar { background: var(--glass-side), color-mix(in oklab, var(--color-brand-deeper) 82%, transparent); backdrop-filter: blur(24px) saturate(140%); -webkit-backdrop-filter: blur(24px) saturate(140%); box-shadow: inset -1px 0 0 var(--glass-edge); }
+.brand-name { font-size: var(--text-lg); }
+.nav-link { position: relative; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), transform var(--dur-short) var(--ease-out); }
+.nav-link:hover { transform: translateX(3px); }
+.nav-link[aria-current="page"] { background: linear-gradient(90deg, color-mix(in oklab, var(--color-brand) 90%, transparent), color-mix(in oklab, var(--color-brand) 12%, transparent)); box-shadow: inset 0 1px 0 var(--glass-hi), 0 8px 24px -10px var(--color-brand-bright); }
+.nav-link[aria-current="page"]::before { content: ""; position: absolute; left: -12px; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: var(--color-brand-bright); box-shadow: 0 0 14px var(--color-brand-bright); }
+.nav-link[aria-current="page"] svg, .nav-link:hover svg { color: var(--color-brand-bright); filter: drop-shadow(0 0 6px var(--color-brand-bright)); }
+.topbar { background: color-mix(in oklab, var(--color-paper) 55%, transparent); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); }
+.topbar-title { color: var(--color-ink-2); }
+
+/* controls */
+.btn { background: var(--glass); }
+.btn--primary { background: linear-gradient(180deg, var(--press-light), var(--color-brand)); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px color-mix(in oklab, var(--color-brand-bright) 35%, transparent), 0 10px 28px -8px color-mix(in oklab, var(--color-brand-bright) 55%, transparent); }
+.btn--primary:hover { background: linear-gradient(180deg, color-mix(in oklab, var(--press-light) 85%, var(--color-board-type) 12%), var(--color-brand)); box-shadow: inset 0 1px 0 var(--glass-hi), 0 0 0 1px var(--color-brand-bright), 0 14px 36px -8px color-mix(in oklab, var(--color-brand-bright) 70%, transparent); }
+.btn--ghost { background: transparent; }
+.btn--ghost:hover { background: var(--field-hover); }
+.btn--danger.btn--primary { background: var(--color-error); color: var(--color-accent-ink); }
+.input, .select, .textarea { background-color: var(--field); border-color: var(--color-rule-2); }
+.input:hover, .select:hover, .textarea:hover { background-color: var(--field-hover); border-color: var(--color-muted); }
+.input:focus-visible, .select:focus-visible, .textarea:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-focus) 28%, transparent), 0 0 24px -6px var(--color-focus); }
+.segmented button[aria-pressed="true"], .att button[aria-checked="true"] { background: var(--field-hover); box-shadow: var(--edge-stock), 0 0 18px -6px var(--color-brand-bright); }
+.tab[aria-selected="true"], .tab[aria-current="page"] { color: var(--color-brand-bright); border-bottom-color: var(--color-brand-bright); }
+.bar-fill { background: linear-gradient(90deg, var(--color-brand), var(--color-brand-bright)); box-shadow: 0 0 12px -2px var(--color-brand-bright); }
+.stamp { text-shadow: 0 0 14px var(--color-paid); }
+.tag { background: var(--field); }
+.picker-list { background: var(--glass-solid); }
+.dialog { background: var(--glass-solid); box-shadow: var(--edge-stock), 0 40px 80px -20px oklch(var(--shade) / 0.9), 0 0 60px -20px var(--glass-glow); }
+.dialog::backdrop { backdrop-filter: blur(6px); }
+.toast { background: linear-gradient(180deg, var(--press-light), var(--color-brand)); }
+.toast--error { background: var(--color-error); color: var(--color-accent-ink); }
+a.cell-main:hover, .link:hover, .link-btn:hover { text-decoration-color: var(--color-brand-bright); }
+.skeleton { background: linear-gradient(90deg, var(--field), var(--field-hover), var(--field)); background-size: 200% 100%; }
+.json, .code-box { background: var(--field); }
+.check input { accent-color: var(--color-brand-bright); }
+h1 { text-shadow: 0 0 40px var(--glass-glow); }
+
+/* panel content rises in */
+.content > * { animation: rise 560ms var(--ease-out) both; }
+.content > *:nth-child(2) { animation-delay: 60ms; }
+.content > *:nth-child(3) { animation-delay: 120ms; }
+.content > *:nth-child(4) { animation-delay: 180ms; }
+.content > *:nth-child(n + 5) { animation-delay: 240ms; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px) perspective(900px) rotateX(5deg); } to { opacity: 1; transform: none; } }
+
+/* dashboard cockpit: the globe is the menu */
+.cockpit { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; overflow: hidden; min-height: 360px; background: radial-gradient(70% 90% at 78% 50%, color-mix(in oklab, var(--color-brand) 38%, transparent), transparent 70%), var(--glass); }
+.cockpit-text { display: flex; flex-direction: column; gap: var(--space-sm); padding: var(--space-xl); position: relative; z-index: 1; }
+.cockpit-text h2 { font-size: var(--text-2xl); max-width: 14ch; }
+.cockpit-hint { color: var(--color-muted); max-width: 30ch; }
+.cockpit-globe { position: relative; height: 400px; margin-block: -20px; }
+@media (max-width: 60rem) { .cockpit { grid-template-columns: minmax(0, 1fr); } .cockpit-text { padding: var(--space-lg) var(--space-lg) 0; } .cockpit-globe { height: 320px; } }
+
+/* login */
+.auth, .login { background: transparent; }
+.login-side { position: relative; overflow: hidden; background: var(--glass), color-mix(in oklab, var(--color-brand-deeper) 70%, transparent); box-shadow: inset -1px 0 0 var(--glass-edge); }
+.login-side .login-globe { position: absolute; inset: 14% -22% -6% -22%; width: auto; height: auto; }
+.login-brand, .login-claim { position: relative; z-index: 1; }
+.login-mark { background: radial-gradient(circle at 35% 30%, var(--color-brand-bright), var(--color-brand) 60%, var(--color-brand-deeper)); box-shadow: 0 0 18px -2px var(--color-brand-bright); }
+.login-claim { text-shadow: 0 2px 30px oklch(var(--shade) / 0.9); }
+.login-main { perspective: 1200px; }
+.login-card { position: relative; }
+.login-card { padding: var(--space-xl) var(--space-lg); border-radius: var(--radius-card); background: var(--glass); box-shadow: var(--edge-stock), var(--cast-stock); backdrop-filter: blur(22px) saturate(140%); transform: rotateY(var(--ry, 0deg)) rotateX(var(--rx, 0deg)); transition: transform 380ms var(--ease-out); }
+.login-card[data-live="1"] { transition: transform 90ms linear; }
+
+@media (prefers-reduced-motion: reduce) {
+  .space-aurora, .space-stars { transform: none; transition: none; }
+}

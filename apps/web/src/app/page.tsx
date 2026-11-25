@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { Icon } from '@/components/icons';
+import { LandingStage } from './landing-stage';
+import { RoleDeck } from './role-deck';
 import './landing.css';
 
 export const metadata: Metadata = {
@@ -10,13 +13,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-const FEATURES = [
-  { title: 'Davomat', text: "Ustoz darsni ochib, o'quvchilarni belgilaydi. Bir necha kundan keyin dars qulflanadi, o'tgan sanani faqat ruxsati borlar tuzatadi va har tuzatish yoziladi." },
-  { title: "To'lov va qarz", text: "Qarz alohida saqlanmaydi, hisoblardan chiqariladi. To'lov guruh sikli yoki o'quvchi sikli bo'yicha, xato esa teskari yozuv bilan tuzatiladi." },
-  { title: 'Maosh', text: "Ustozning maoshi davomat va qoidalardan hisoblanadi, tasdiqlanadi, bonus va jarima qo'shiladi. Ustoz faqat o'z maoshini ko'radi." },
-  { title: 'Vazifa va reyting', text: "Ustoz vazifa beradi va baholaydi, o'quvchi topshiradi. Reyting shu ballardan tuziladi." },
-  { title: 'Telegram bot', text: "Qarz, dars va vazifa haqida eslatma o'quvchining o'z Telegramiga boradi. Bir marta ulash kodi yetadi." },
-  { title: 'Excel va CSV', text: "Eski o'quvchilar ro'yxatini jadvaldan yuklang: avval sinab ko'rasiz, keyin saqlaysiz." },
+const FEATURES: { title: string; text: string; icon: keyof typeof Icon; tone: string; span: string }[] = [
+  { title: 'Davomat', icon: 'calendar', tone: 'blue', span: 'a', text: "Ustoz darsni ochib, o'quvchilarni belgilaydi. Bir necha kundan keyin dars qulflanadi, o'tgan sanani faqat ruxsati borlar tuzatadi va har tuzatish yoziladi." },
+  { title: "To'lov va qarz", icon: 'cash', tone: 'green', span: 'b', text: "Qarz alohida saqlanmaydi, hisoblardan chiqariladi. To'lov guruh sikli yoki o'quvchi sikli bo'yicha, xato esa teskari yozuv bilan tuzatiladi." },
+  { title: 'Maosh', icon: 'wallet', tone: 'amber', span: 'c', text: "Ustozning maoshi davomat va qoidalardan hisoblanadi, tasdiqlanadi, bonus va jarima qo'shiladi. Ustoz faqat o'z maoshini ko'radi." },
+  { title: 'Vazifa va reyting', icon: 'trophy', tone: 'blue', span: 'c', text: "Ustoz vazifa beradi va baholaydi, o'quvchi topshiradi. Reyting shu ballardan tuziladi." },
+  { title: 'Telegram bot', icon: 'send', tone: 'green', span: 'c', text: "Qarz, dars va vazifa haqida eslatma o'quvchining o'z Telegramiga boradi. Bir marta ulash kodi yetadi." },
+  { title: 'Excel va CSV', icon: 'upload', tone: 'amber', span: 'd', text: "Eski o'quvchilar ro'yxatini jadvaldan yuklang: avval sinab ko'rasiz, keyin saqlaysiz." },
 ];
 
 const ROLES = [
@@ -84,9 +87,8 @@ export default function Landing() {
                 </a>
               </div>
             </div>
-            <div className="lp-shot" data-slot>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/screens/dashboard.png" alt="Rahbarning bosh sahifasi: oy ko'rsatkichlari va qarzdorlar" width={1440} height={900} fetchPriority="high" />
+            <div className="lp-stage">
+              <LandingStage />
             </div>
           </div>
         </section>
@@ -94,38 +96,37 @@ export default function Landing() {
         <section className="lp-section" id="imkoniyatlar">
           <div className="lp-container lp-split">
             <h2>Kundalik ish uchun kerak narsalar</h2>
-            <ul className="lp-rows">
-              {FEATURES.map((f) => (
-                <li key={f.title}>
-                  <h3>{f.title}</h3>
-                  <p>{f.text}</p>
-                </li>
-              ))}
+            <ul className="lp-bento">
+              {FEATURES.map((f) => {
+                const I = Icon[f.icon];
+                return (
+                  <li key={f.title} className={`lp-tile lp-tile--${f.span}`} data-tilt data-reveal>
+                    <span className={`lp-ico lp-ico--${f.tone}`}>
+                      <I />
+                    </span>
+                    <h3>{f.title}</h3>
+                    <p>{f.text}</p>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </section>
 
-        <section className="lp-section lp-section--tint" id="rollar">
+        <section className="lp-section" id="rollar">
           <div className="lp-container lp-split">
             <h2>Har kim o&apos;ziga kerakligini ko&apos;radi</h2>
-            <dl className="lp-roles">
-              {ROLES.map((r) => (
-                <div key={r.role}>
-                  <dt>{r.role}</dt>
-                  <dd>{r.text}</dd>
-                </div>
-              ))}
-            </dl>
+            <RoleDeck roles={ROLES} />
           </div>
         </section>
 
         <section className="lp-section lp-dark" id="xavfsizlik">
           <div className="lp-container lp-secure">
             <h2>Har markazning ma&apos;lumoti o&apos;z qulfi ostida</h2>
-            <ul className="lp-points">
-              <li>Bir markaz boshqasining yozuvini ko&apos;ra olmaydi, buni bazaning o&apos;zi ta&apos;minlaydi.</li>
-              <li>To&apos;lov, maosh va audit jurnali o&apos;chirilmaydi, tuzatish alohida yozuv bo&apos;ladi.</li>
-              <li>Birinchi kirishda parol almashtiriladi.</li>
+            <ul className="lp-vault" data-tilt>
+              <li className="lp-plate">Bir markaz boshqasining yozuvini ko&apos;ra olmaydi, buni bazaning o&apos;zi ta&apos;minlaydi.</li>
+              <li className="lp-plate">To&apos;lov, maosh va audit jurnali o&apos;chirilmaydi, tuzatish alohida yozuv bo&apos;ladi.</li>
+              <li className="lp-plate">Birinchi kirishda parol almashtiriladi.</li>
             </ul>
           </div>
         </section>

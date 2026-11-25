@@ -1,9 +1,10 @@
-/* Hallmark · shape: app screen · genre: modern-minimal · theme: Teal (custom, anchor #006666 by request, redesign: full 2026-11-19)
+/* Hallmark · shape: app screen · genre: modern-minimal · theme: Teal Night (custom, anchor #006666 by request, 3D glass redesign by request 2026-11-25; depth layer in styles/depth.css)
  * nav: sidebar (14+ destinations, grouped, collapses to a menu under 60rem) and a top bar with the centre and the account · signature: the ledger row, money in mono with the settled state stamped in amber on teal · states: loading, empty, error, full
- * axes: light/grotesk-sans/warm · posture: restrained · contrast: pass · v2.0.0
+ * axes: dark/grotesk-sans/teal-glass · posture: expressive · contrast: pass · v2.0.0
  */
 /* Hallmark · dismissed F4 · .btn--danger.btn--primary renders only inside the confirmation dialog · the panel screens keep one filled primary action per screen */
 /* Hallmark · pre-emit critique: P4 H4 E4 S3 R4 V4 · weakest: S, Onest stands in for General Sans (self-hosted via next/font, no third-party font CDN); kept one family plus Geist Mono for figures */
+/* Hallmark · note 2a · cyan glow gradients are the 3D look the user asked for from their reference, a known open finding · waive 62 · the reveal is hidden only under [data-fx=on], which the script sets itself; without script everything is visible · waive 29 · focus and hover glows are the requested look */
 @import url("../styles/tokens.css");
 @import url("../styles/base.css");
 

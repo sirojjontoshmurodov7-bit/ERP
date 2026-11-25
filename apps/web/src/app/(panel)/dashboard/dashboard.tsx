@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Cockpit } from '@/components/cockpit';
 import { Icon } from '@/components/icons';
 import { ButtonLink, DataView, Empty, PageHead, Skeleton, Stat, Tag } from '@/components/ui';
 import { date, dateTime, money, som, todayLocal, WEEKDAYS } from '@/lib/format';
@@ -48,6 +49,7 @@ export function Dashboard() {
   return (
     <>
       <PageHead title="Bosh sahifa" sub={`${date(todayLocal())}, ${WEEKDAYS[(new Date(`${todayLocal()}T00:00:00Z`).getUTCDay() + 6) % 7]?.toLowerCase()}`} />
+      <Cockpit />
       {is('OWNER') ? <OwnerView /> : null}
       {is('ADMIN', 'CASHIER') ? <DeskView /> : null}
       {is('TEACHER') ? <TeacherView /> : null}

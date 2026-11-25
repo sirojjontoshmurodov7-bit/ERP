@@ -1,30 +1,41 @@
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   --space-3xs: 2px; --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px; --space-3xl: 96px; --space-4xl: 144px;
   --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.2rem; --text-xl: 1.44rem; --text-2xl: 1.728rem; --text-3xl: 2.074rem;
   --text-display-s: 1.44rem; --text-display: 1.728rem; --text-section: 1.2rem; --text-title: 1rem; --text-lead: 1rem;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1); --ease-in: cubic-bezier(0.7, 0, 0.84, 0); --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms;
-  --color-error: oklch(52% 0.19 27); --color-success: oklch(50% 0.12 155);
   --container: 1440px; --gutter: 32px; --gap-columns: 32px; --section-gap-s: 120px; --section-gap: 144px; --section-gap-l: 176px;
   --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200; --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
 
-  /* Teal system: #006666 is the anchor, every other colour is the same hue (195) at another lightness, plus one warm amber signal */
-  --color-brand: #006666; --color-brand-deep: oklch(29% 0.06 196); --color-brand-deeper: oklch(22% 0.05 198); --color-brand-soft: oklch(94.5% 0.028 192); --color-brand-bright: oklch(78% 0.11 186);
-  --color-paper: oklch(98.2% 0.005 195); --color-paper-2: oklch(95.8% 0.009 195); --color-paper-3: oklch(92.5% 0.013 195);
-  --color-ink: oklch(21% 0.03 205); --color-ink-2: oklch(31% 0.03 205); --color-muted: oklch(47% 0.026 200);
-  --color-rule: oklch(89% 0.011 195); --color-rule-2: oklch(82% 0.015 195);
-  --color-accent: oklch(78% 0.11 186); --color-accent-ink: oklch(21% 0.03 205); --color-accent-2: var(--color-brand); --color-focus: oklch(55% 0.1 192);
-  --color-signal: oklch(78% 0.15 75); --color-signal-ink: oklch(30% 0.07 70);
-  --color-cotton: oklch(99.4% 0.003 195); --color-desk: oklch(96% 0.008 195); --color-print: oklch(23% 0.03 205);
-  --color-board: var(--color-brand); --color-board-type: oklch(98.8% 0.008 190); --color-paid: oklch(56% 0.14 62);
-  --shade: 30% 0.045 200; --lit: 100% 0.005 195; --deep: 7% 0.02 200;
+  /* Teal night: #006666 stays the anchor (fills, buttons); the page is a deep teal-black space, surfaces are glass lit from above */
+  --color-brand: #006666; --color-brand-deep: oklch(16% 0.035 205); --color-brand-deeper: oklch(12% 0.03 210); --color-brand-soft: oklch(25% 0.05 195); --color-brand-bright: oklch(82% 0.13 185);
+  --color-paper: oklch(13.5% 0.025 215); --color-paper-2: oklch(18% 0.03 210); --color-paper-3: oklch(22.5% 0.035 205);
+  --color-ink: oklch(96% 0.01 190); --color-ink-2: oklch(86% 0.018 195); --color-muted: oklch(71% 0.03 200);
+  --color-rule: oklch(100% 0 0 / 0.09); --color-rule-2: oklch(100% 0 0 / 0.17);
+  --color-accent: oklch(82% 0.13 185); --color-accent-ink: oklch(15% 0.03 205); --color-accent-2: oklch(82% 0.13 185); --color-focus: oklch(82% 0.13 185);
+  --color-signal: oklch(80% 0.15 75); --color-signal-ink: oklch(25% 0.06 70);
+  --color-cotton: oklch(20% 0.032 210); --color-desk: oklch(16% 0.03 210); --color-print: oklch(95% 0.012 190);
+  --color-board: var(--color-brand); --color-board-type: oklch(98.8% 0.008 190); --color-paid: oklch(82% 0.15 80);
+  --shade: 5% 0.02 215; --lit: 100% 0.005 195; --deep: 7% 0.02 200;
+  --color-error: oklch(72% 0.17 25); --color-success: oklch(79% 0.16 155); --color-warn: oklch(82% 0.13 80);
+  --color-backdrop: oklch(8% 0.02 215 / 0.62);
+  --color-green: oklch(80% 0.18 145); --color-blue: oklch(68% 0.16 245); --color-amber: oklch(80% 0.15 75);
+  /* glass: translucent fill, hairline edge, light from the top */
+  --glass: linear-gradient(155deg, oklch(100% 0 0 / 0.085), oklch(100% 0 0 / 0.025) 60%);
+  --glass-side: linear-gradient(180deg, oklch(100% 0 0 / 0.06), oklch(100% 0 0 / 0.015));
+  --glass-solid: oklch(20% 0.034 210);
+  --glass-edge: oklch(100% 0 0 / 0.11); --glass-hi: oklch(100% 0 0 / 0.2); --glass-glow: oklch(82% 0.13 185 / 0.22); --glass-spot: oklch(100% 0 0 / 0.09);
+  --aurora-1: oklch(42% 0.12 195 / 0.42); --aurora-2: oklch(36% 0.1 235 / 0.3); --aurora-3: oklch(40% 0.11 165 / 0.28);
+  /* globe: read by the canvas */
+  --globe-land: oklch(88% 0.1 190); --globe-city: oklch(88% 0.14 85); --globe-line: oklch(78% 0.12 215); --globe-glow: oklch(70% 0.13 200); --globe-body: oklch(19% 0.045 215); --globe-body-2: oklch(11% 0.03 225);
+
   --font-display: var(--font-onest), ui-sans-serif, system-ui, sans-serif; --font-body: var(--font-display);
   --font-outlier: var(--font-geist-mono), ui-monospace, monospace;
-  --radius-card: 12px; --radius-input: 8px; --radius-pill: 999px; --radius-stock: 10px; --rule-hair: 1px;
-  --shadow-card: 0 1px 2px oklch(var(--shade) / 0.06);
-  --edge-stock: 0 0 0 1px oklch(var(--shade) / 0.11), 0 1px 2px oklch(var(--shade) / 0.06);
-  --cast-stock: 0 6px 16px -10px oklch(var(--shade) / 0.22); --cast-stock-lift: 0 14px 30px -14px oklch(var(--shade) / 0.32);
-  --press-groove: inset 0 1px 2px oklch(var(--shade) / 0.12), 0 0 0 1px oklch(var(--shade) / 0.08);
+  --radius-card: 18px; --radius-input: 10px; --radius-pill: 999px; --radius-stock: 12px; --rule-hair: 1px;
+  --shadow-card: 0 1px 2px oklch(var(--shade) / 0.4);
+  --edge-stock: 0 0 0 1px var(--glass-edge), inset 0 1px 0 var(--glass-hi);
+  --cast-stock: 0 18px 40px -18px oklch(var(--shade) / 0.9), 0 2px 6px oklch(var(--shade) / 0.35); --cast-stock-lift: 0 26px 50px -16px oklch(var(--shade) / 0.95), 0 0 36px -8px var(--glass-glow);
+  --press-groove: inset 0 1px 3px oklch(var(--shade) / 0.6), 0 0 0 1px var(--glass-edge);
   --tracking-display: -0.03em; --display-weight: 600;
 }

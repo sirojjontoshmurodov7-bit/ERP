@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { Globe } from '@/components/globe';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Kirish' };
@@ -13,10 +14,11 @@ export default function LoginPage() {
           <span className="login-mark" aria-hidden />
           O&apos;quv markazi
         </Link>
+        <Globe className="login-globe" />
         <p className="login-claim">Guruh, davomat, to&apos;lov va maosh: hammasi bitta tizimda.</p>
       </aside>
       <section className="login-main">
-        <div className="login-card">
+        <div className="login-card" data-tilt>
           <div>
             <h1>Tizimga kirish</h1>
             <p className="auth-sub">Login va parolni markaz rahbari yoki administrator beradi.</p>
