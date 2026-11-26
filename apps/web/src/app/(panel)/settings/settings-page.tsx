@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { Button, DataView, PageHead, SelectInput, Skeleton, TextInput, useToast } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -28,6 +29,7 @@ export function SettingsPage() {
 }
 
 function SettingsForm({ data, onSaved }: { data: CenterSettings; onSaved: () => void }) {
+  const t = useT();
   const { is } = useSession();
   const toast = useToast();
   const readOnly = !is('OWNER');
@@ -48,7 +50,7 @@ function SettingsForm({ data, onSaved }: { data: CenterSettings; onSaved: () => 
   return (
     <div className="split">
       <form className="panel panel-body form" onSubmit={submit} noValidate>
-        <h2>Hisob-kitob</h2>
+        <h2>{t("Hisob-kitob")}</h2>
         <div className="form-grid">
           <SelectInput
             label="Yangi guruhlar uchun hisob sikli"
@@ -74,7 +76,7 @@ function SettingsForm({ data, onSaved }: { data: CenterSettings; onSaved: () => 
             hint="Guruh siklidagi birinchi hisobga ta'sir qiladi"
           />
         </div>
-        <h2>Davomat va til</h2>
+        <h2>{t("Davomat va til")}</h2>
         <div className="form-grid">
           <TextInput label="Davomat necha kundan keyin qulflanadi" type="number" min={0} max={365} value={v.attendanceLockDays} disabled={readOnly} onChange={set('attendanceLockDays')} error={s.fields.attendanceLockDays} hint="Qulflangan darsni faqat ruxsati bor xodim tuzatadi" />
           <SelectInput
@@ -87,40 +89,40 @@ function SettingsForm({ data, onSaved }: { data: CenterSettings; onSaved: () => 
               { value: 'ru', label: 'Ruscha' },
               { value: 'en', label: 'Inglizcha' },
             ]}
-            hint="Hozircha interfeys o'zbekcha; sozlama Telegram xabarlari va kelajakdagi tarjima uchun saqlanadi"
+            hint="Markaz tili Telegram xabarlari uchun; interfeys tilini har kim profil menyusida tanlaydi"
           />
         </div>
         {s.error ? <p className="form-error" role="alert">{s.error}</p> : null}
         {!readOnly ? (
           <div>
             <Button type="submit" variant="primary" busy={s.busy}>
-              Saqlash
+              {t("Saqlash")}
             </Button>
           </div>
         ) : (
-          <p className="muted small">Sozlamalarni faqat rahbar o&apos;zgartiradi.</p>
+          <p className="muted small">{t("Sozlamalarni faqat rahbar o'zgartiradi.")}</p>
         )}
       </form>
       <aside className="panel panel-body stack-sm">
-        <h2>Obuna</h2>
+        <h2>{t("Obuna")}</h2>
         <dl className="kv">
-          <dt>Markaz</dt>
+          <dt>{t("Markaz")}</dt>
           <dd>{data.name}</dd>
-          <dt>Holat</dt>
-          <dd>{data.status === 'TRIAL' ? 'Sinov muddati' : data.status === 'ACTIVE' ? 'Faol' : 'Bloklangan'}</dd>
+          <dt>{t("Holat")}</dt>
+          <dd>{t(data.status === 'TRIAL' ? 'Sinov muddati' : data.status === 'ACTIVE' ? 'Faol' : 'Bloklangan')}</dd>
           {data.trialEndsAt ? (
             <>
-              <dt>Sinov tugaydi</dt>
+              <dt>{t("Sinov tugaydi")}</dt>
               <dd className="fig">{date(data.trialEndsAt.slice(0, 10))}</dd>
             </>
           ) : null}
-          <dt>Tarif</dt>
-          <dd>{data.plan?.name ?? 'Biriktirilmagan'}</dd>
+          <dt>{t("Tarif")}</dt>
+          <dd>{data.plan?.name ?? t('Biriktirilmagan')}</dd>
           {data.plan ? (
             <>
-              <dt>O&apos;quvchi chegarasi</dt>
+              <dt>{t("O'quvchi chegarasi")}</dt>
               <dd className="fig">{data.plan.maxStudents === null ? 'cheksiz' : money(data.plan.maxStudents)}</dd>
-              <dt>Filial chegarasi</dt>
+              <dt>{t("Filial chegarasi")}</dt>
               <dd className="fig">{data.plan.maxBranches === null ? 'cheksiz' : money(data.plan.maxBranches)}</dd>
             </>
           ) : null}

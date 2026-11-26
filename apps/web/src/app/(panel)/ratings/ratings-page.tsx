@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Button, DataView, Dialog, Empty, PageHead, Pager, Segmented, SelectInput, Skeleton, Stat, TextInput, whenOpen } from '@/components/ui';
@@ -25,6 +26,7 @@ interface Events {
 const LIMIT = 50;
 
 export function RatingsPage() {
+  const t = useT();
   const { can, is, me } = useSession();
   const groups = useGroupsLite();
   const branches = useBranches(!is('STUDENT', 'TEACHER'));
@@ -39,10 +41,10 @@ export function RatingsPage() {
 
   return (
     <>
-      <PageHead title="Reyting" sub="Ballar: vazifa baholari, davomat va ustozning qo'shimcha ballari." actions={can('rating.adjust') ? <Button icon={<Icon.plus />} onClick={() => setAdjust(true)}>Ball berish</Button> : null} />
+      <PageHead title="Reyting" sub="Ballar: vazifa baholari, davomat va ustozning qo'shimcha ballari." actions={can('rating.adjust') ? <Button icon={<Icon.plus />} onClick={() => setAdjust(true)}>{t("Ball berish")}</Button> : null} />
       <div className="toolbar">
         <div className="field">
-          <span className="field-label">Kesim</span>
+          <span className="field-label">{t("Kesim")}</span>
           <Segmented
             label="Kesim"
             value={f.scope}
@@ -57,7 +59,7 @@ export function RatingsPage() {
         {f.scope === 'group' ? <SelectInput label="Guruh" value={groupId} onChange={(e) => setF({ groupId: e.target.value })} options={opts(groups.data?.items)} /> : null}
         {f.scope === 'branch' ? <SelectInput label="Filial" value={branchId} onChange={(e) => setF({ branchId: e.target.value })} options={opts(branches.data?.items)} /> : null}
         <div className="field">
-          <span className="field-label">Davr</span>
+          <span className="field-label">{t("Davr")}</span>
           <Segmented label="Davr" value={f.period} onChange={(v) => setF({ period: v })} options={[{ value: 'month', label: 'Oy' }, { value: 'all', label: 'Umumiy' }]} />
         </div>
         {f.period === 'month' ? <TextInput label="Oy" type="month" value={f.month} max={thisMonth()} onChange={(e) => e.target.value && setF({ month: e.target.value })} /> : null}
@@ -78,12 +80,12 @@ export function RatingsPage() {
                 <table className="table">
                   <thead>
                     <tr>
-                      <th className="num">O&apos;rin</th>
-                      <th>O&apos;quvchi</th>
-                      <th className="num">Vazifa</th>
-                      <th className="num">Davomat</th>
-                      <th className="num">Qo&apos;shimcha</th>
-                      <th className="num">Jami</th>
+                      <th className="num">{t("O'rin")}</th>
+                      <th>{t("O'quvchi")}</th>
+                      <th className="num">{t("Vazifa")}</th>
+                      <th className="num">{t("Davomat")}</th>
+                      <th className="num">{t("Qo'shimcha")}</th>
+                      <th className="num">{t("Jami")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -115,16 +117,17 @@ export function RatingsPage() {
 }
 
 const EventsDialog = whenOpen(function EventsInner({ open, student, onClose }: { open: boolean; student: { id: string; name: string } | null; onClose: () => void }) {
+  const t = useT();
   const ev = useApi<Events>(`/ratings/students/${student!.id}/events`, { limit: 50 });
   return (
-    <Dialog open={open} onClose={onClose} title={`${student!.name}: ballar tarixi`} footer={<Button onClick={onClose}>Yopish</Button>}>
-      <DataView state={ev} skeleton={<Skeleton rows={4} cols={2} />} empty={(d) => (d.items.length ? null : <p className="muted">Vazifa va qo&apos;shimcha ballar yo&apos;q (davomat balli reytingda alohida hisoblanadi).</p>)}>
+    <Dialog open={open} onClose={onClose} title={t('{name}: ballar tarixi', { name: student!.name })} footer={<Button onClick={onClose}>{t("Yopish")}</Button>}>
+      <DataView state={ev} skeleton={<Skeleton rows={4} cols={2} />} empty={(d) => (d.items.length ? null : <p className="muted">{t("Vazifa va qo'shimcha ballar yo'q (davomat balli reytingda alohida hisoblanadi).")}</p>)}>
         {(d) => (
           <ul className="list-plain">
             {d.items.map((e) => (
               <li key={e.id} className="row" data-between>
                 <span>
-                  {e.source === 'HOMEWORK' ? 'Vazifa' : 'Ustoz'}
+                  {e.source === 'HOMEWORK' ? t('Vazifa') : t('Ustoz')}
                   {e.reason ? `: ${e.reason}` : ''}
                   <div className="cell-sub fig">
                     {dateTime(e.at)}
@@ -142,6 +145,7 @@ const EventsDialog = whenOpen(function EventsInner({ open, student, onClose }: {
 });
 
 const AdjustDialog = whenOpen(function AdjustInner({ open, defaultGroupId, onClose, onDone }: { open: boolean; defaultGroupId: string; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const groups = useGroupsLite();
   const [groupId, setGroupId] = useState(defaultGroupId);
   const [studentId, setStudentId] = useState('');
@@ -153,8 +157,8 @@ const AdjustDialog = whenOpen(function AdjustInner({ open, defaultGroupId, onClo
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const n = Number(points);
-    if (!groupId || !studentId) return s.setError("Guruh va o'quvchini tanlang");
-    if (!Number.isInteger(n) || n <= 0 || n > 1000) return s.setError('Ball 1 dan 1000 gacha butun son');
+    if (!groupId || !studentId) return s.setError(t("Guruh va o'quvchini tanlang"));
+    if (!Number.isInteger(n) || n <= 0 || n > 1000) return s.setError(t('Ball 1 dan 1000 gacha butun son'));
     const r = await s.run(() => api.post('/ratings/adjust', { groupId, studentId, points: sign === 'plus' ? n : -n, reason: reason.trim() }));
     if (r) {
       onDone();
@@ -162,7 +166,7 @@ const AdjustDialog = whenOpen(function AdjustInner({ open, defaultGroupId, onClo
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Ball berish" footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="adjust-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Ball berish" footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="adjust-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="adjust-form" className="form" onSubmit={submit} noValidate>
         <SelectInput label="Guruh" value={groupId} onChange={(e) => { setGroupId(e.target.value); setStudentId(''); }} options={opts(groups.data?.items)} placeholder="Tanlang" />
         <SelectInput label="O'quvchi" value={studentId} onChange={(e) => setStudentId(e.target.value)} options={(roster.data?.items ?? []).map((x) => ({ value: x.studentId, label: x.studentName }))} placeholder={groupId ? 'Tanlang' : 'Avval guruhni tanlang'} disabled={!groupId} />

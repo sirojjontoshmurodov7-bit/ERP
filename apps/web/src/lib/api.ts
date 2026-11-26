@@ -1,5 +1,6 @@
 // Brauzer tomoni: hamma so'rov o'z hostimizdagi /api/* (BFF) orqali. Token yo'q, cookie avtomatik ketadi.
 'use client';
+import { tr } from './i18n';
 
 export interface ApiErrorBody {
   code?: string;
@@ -98,7 +99,12 @@ export const auth = {
 };
 
 /** Xatoni foydalanuvchiga ko'rsatiladigan matnga aylantirish. */
+/** Foydalanuvchiga ko'rsatiladigan xato matni (joriy tilda: API xabarlari ham lug'atda). */
 export function errorText(e: unknown): string {
+  return tr(rawErrorText(e));
+}
+
+function rawErrorText(e: unknown): string {
   if (e instanceof ApiError) {
     if (e.status === 0) return e.message;
     if (e.status === 403 && e.code === 'FORBIDDEN') return e.body.message ?? "Bu amal uchun ruxsatingiz yo'q";

@@ -1,4 +1,5 @@
 'use client';
+import { tr, useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,6 +17,7 @@ import type { Student } from './types';
 const LIMIT = 50;
 
 export function StudentsList() {
+  const t = useT();
   const { can, is } = useSession();
   const router = useRouter();
   const [f, setF] = useUrlState({ q: '', branchId: '', status: 'ACTIVE', groupId: '', enrolled: '', sort: 'name', offset: '0', new: '' });
@@ -44,11 +46,11 @@ export function StudentsList() {
             <>
               {can('import.run') ? (
                 <Button onClick={() => router.push('/imports')} icon={<Icon.upload />}>
-                  Exceldan import
+                  {t("Exceldan import")}
                 </Button>
               ) : null}
               <Button variant="primary" onClick={() => setF({ new: '1' })} icon={<Icon.plus />}>
-                Yangi o&apos;quvchi
+                {t("Yangi o'quvchi")}
               </Button>
             </>
           ) : null
@@ -95,9 +97,9 @@ export function StudentsList() {
           skeleton={<Skeleton rows={8} cols={5} />}
           empty={(d) =>
             d.items.length ? null : f.q || f.groupId || f.branchId || f.enrolled ? (
-              <Empty title="Hech narsa topilmadi" text="Filtrlarni o'zgartirib ko'ring." action={<Button size="sm" onClick={() => { setQ(''); setF({ q: '', groupId: '', branchId: '', enrolled: '' }); }}>Filtrlarni tozalash</Button>} />
+              <Empty title="Hech narsa topilmadi" text="Filtrlarni o'zgartirib ko'ring." action={<Button size="sm" onClick={() => { setQ(''); setF({ q: '', groupId: '', branchId: '', enrolled: '' }); }}>{t("Filtrlarni tozalash")}</Button>} />
             ) : (
-              <Empty title="Hali o'quvchi yo'q" text="Birinchi o'quvchini qo'shing yoki Excel fayldan import qiling." action={can('student.create') ? <Button variant="primary" size="sm" onClick={() => setF({ new: '1' })}>Yangi o&apos;quvchi</Button> : undefined} />
+              <Empty title="Hali o'quvchi yo'q" text="Birinchi o'quvchini qo'shing yoki Excel fayldan import qiling." action={can('student.create') ? <Button variant="primary" size="sm" onClick={() => setF({ new: '1' })}>{t("Yangi o'quvchi")}</Button> : undefined} />
             )
           }
         >
@@ -106,12 +108,12 @@ export function StudentsList() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>O&apos;quvchi</th>
-                    <th>Telefon</th>
-                    <th>Ota-ona</th>
-                    {!is('TEACHER') ? <th>Filial</th> : null}
-                    <th>Qo&apos;shilgan</th>
-                    <th>Holat</th>
+                    <th>{t("O'quvchi")}</th>
+                    <th>{t("Telefon")}</th>
+                    <th>{t("Ota-ona")}</th>
+                    {!is('TEACHER') ? <th>{t("Filial")}</th> : null}
+                    <th>{t("Qo'shilgan")}</th>
+                    <th>{t("Holat")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -123,14 +125,14 @@ export function StudentsList() {
                         </Link>
                         <div className="cell-sub fig">{s.login}</div>
                       </td>
-                      <td className="fig">{s.phone ?? <span className="muted">{"yo'q"}</span>}</td>
+                      <td className="fig">{s.phone ?? <span className="muted">{t("yo'q")}</span>}</td>
                       <td>
-                        {s.parentName ?? <span className="muted">{"yo'q"}</span>}
+                        {s.parentName ?? <span className="muted">{t("yo'q")}</span>}
                         {s.parentPhone ? <div className="cell-sub fig">{s.parentPhone}</div> : null}
                       </td>
-                      {!is('TEACHER') ? <td className="muted">{s.branchIds.map((b) => branchName.get(b) ?? '').filter(Boolean).join(', ') || "yo'q"}</td> : null}
+                      {!is('TEACHER') ? <td className="muted">{s.branchIds.map((b) => branchName.get(b) ?? '').filter(Boolean).join(', ') || t("yo'q")}</td> : null}
                       <td className="fig muted">{tsDate(s.createdAt)}</td>
-                      <td>{s.status === 'ACTIVE' ? (s.mustChangePassword ? <Tag kind="mute">Kirmagan</Tag> : <Tag kind="ok">Faol</Tag>) : <Tag kind="mute">Arxivda</Tag>}</td>
+                      <td>{s.status === 'ACTIVE' ? (s.mustChangePassword ? <Tag kind="mute">{t("Kirmagan")}</Tag> : <Tag kind="ok">{t("Faol")}</Tag>) : <Tag kind="mute">{t("Arxivda")}</Tag>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -156,6 +158,7 @@ export function StudentsList() {
 }
 
 const CreateStudent = whenOpen(function CreateStudentInner({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (c: Credentials & { id: string }) => void }) {
+  const t = useT();
   const branches = useBranches(open);
   const groups = useGroupsLite(open);
   const empty = { fullName: '', branchId: '', phone: '', birthDate: '', parentName: '', parentPhone: '', note: '', groupId: '' };
@@ -179,7 +182,7 @@ const CreateStudent = whenOpen(function CreateStudentInner({ open, onClose, onCr
       try {
         await api.post('/enrollments', { groupId, studentId: r.student.id });
       } catch (err) {
-        toast(`O'quvchi qo'shildi, lekin guruhga yozilmadi: ${errorText(err)}`, 'error');
+        toast(tr("O'quvchi qo'shildi, lekin guruhga yozilmadi: {error}", { error: errorText(err) }), 'error');
       }
     }
     onCreated({ id: r.student.id, fullName: r.student.fullName, login: r.student.login, temporaryPassword: r.temporaryPassword });
@@ -193,9 +196,9 @@ const CreateStudent = whenOpen(function CreateStudentInner({ open, onClose, onCr
       wide
       footer={
         <>
-          <Button onClick={onClose}>Bekor qilish</Button>
+          <Button onClick={onClose}>{t("Bekor qilish")}</Button>
           <Button variant="primary" type="submit" form="new-student" busy={s.busy}>
-            Qo&apos;shish
+            {t("Qo'shish")}
           </Button>
         </>
       }

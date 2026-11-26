@@ -1,3 +1,4 @@
+import { T } from '@/components/t';
 import type { Metadata } from 'next';
 import { ChangePasswordForm } from './form';
 
@@ -8,8 +9,8 @@ export default function ChangePasswordPage() {
     <main className="auth">
       <div className="panel auth-card">
         <div>
-          <h1>Yangi parol o&apos;rnating</h1>
-          <p className="auth-sub">Vaqtinchalik parol bilan kirdingiz. Davom etish uchun o&apos;zingizning parolingizni o&apos;rnating.</p>
+          <h1><T>{"Yangi parol o'rnating"}</T></h1>
+          <p className="auth-sub"><T>{"Vaqtinchalik parol bilan kirdingiz. Davom etish uchun o'zingizning parolingizni o'rnating."}</T></p>
         </div>
         <ChangePasswordForm />
       </div>

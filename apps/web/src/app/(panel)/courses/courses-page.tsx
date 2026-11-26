@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Button, Confirm, DataView, Dialog, Empty, MoneyInput, PageHead, SelectInput, Skeleton, Tag, TextInput, whenOpen } from '@/components/ui';
@@ -10,6 +11,7 @@ import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
 export function CoursesPage() {
+  const t = useT();
   const { can } = useSession();
   const [archived, setArchived] = useState('false');
   const list = useApi<{ items: Course[] }>('/courses', { includeArchived: archived });
@@ -21,35 +23,35 @@ export function CoursesPage() {
       <PageHead
         title="Kurslar"
         sub="Kurs guruhlar uchun yo'nalish va sukut narxi."
-        actions={manage ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setEdit('new')}>Yangi kurs</Button> : null}
+        actions={manage ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setEdit('new')}>{t("Yangi kurs")}</Button> : null}
       />
       <div className="toolbar">
         <SelectInput label="Arxiv" value={archived} onChange={(e) => setArchived(e.target.value)} options={[{ value: 'false', label: "Ko'rsatilmaydi" }, { value: 'true', label: "Ko'rsatiladi" }]} />
       </div>
       <div className="table-wrap">
-        <DataView state={list} skeleton={<Skeleton rows={4} cols={3} />} empty={(d) => (d.items.length ? null : <Empty title="Kurs yo'q" text="Masalan: Ingliz tili, Matematika. Guruh yaratishda kurs tanlanadi." action={manage ? <Button size="sm" variant="primary" onClick={() => setEdit('new')}>Yangi kurs</Button> : undefined} />)}>
+        <DataView state={list} skeleton={<Skeleton rows={4} cols={3} />} empty={(d) => (d.items.length ? null : <Empty title="Kurs yo'q" text="Masalan: Ingliz tili, Matematika. Guruh yaratishda kurs tanlanadi." action={manage ? <Button size="sm" variant="primary" onClick={() => setEdit('new')}>{t("Yangi kurs")}</Button> : undefined} />)}>
           {(d) => (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Kurs</th>
-                  <th className="num">Sukut narx, so&apos;m</th>
-                  <th>Holat</th>
-                  {manage ? <th className="actions-cell" aria-label="Amallar" /> : null}
+                  <th>{t("Kurs")}</th>
+                  <th className="num">{t("Sukut narx, so'm")}</th>
+                  <th>{t("Holat")}</th>
+                  {manage ? <th className="actions-cell" aria-label={t("Amallar")} /> : null}
                 </tr>
               </thead>
               <tbody>
                 {d.items.map((c) => (
                   <tr key={c.id}>
                     <td className="cell-main">{c.name}</td>
-                    <td className="num">{c.defaultPrice !== null ? money(c.defaultPrice) : "yo'q"}</td>
-                    <td>{c.archivedAt ? <Tag kind="mute">Arxivda</Tag> : <Tag kind="ok">Faol</Tag>}</td>
+                    <td className="num">{c.defaultPrice !== null ? money(c.defaultPrice) : t("yo'q")}</td>
+                    <td>{c.archivedAt ? <Tag kind="mute">{t("Arxivda")}</Tag> : <Tag kind="ok">{t("Faol")}</Tag>}</td>
                     {manage ? (
                       <td className="actions-cell">
                         <span className="row">
                           {!c.archivedAt ? (
                             <Button size="sm" variant="ghost" onClick={() => setEdit(c)}>
-                              Tahrirlash
+                              {t("Tahrirlash")}
                             </Button>
                           ) : null}
                           <Button size="sm" variant="ghost" onClick={() => setToggle(c)}>
@@ -82,6 +84,7 @@ export function CoursesPage() {
 }
 
 const CourseDialog = whenOpen(function CourseDialogInner({ open, course, onClose, onSaved }: { open: boolean; course: Course | null; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const [name, setName] = useState(course?.name ?? '');
   const [price, setPrice] = useState<number | ''>(course?.defaultPrice ?? '');
   const s = useSubmit();
@@ -96,7 +99,7 @@ const CourseDialog = whenOpen(function CourseDialogInner({ open, course, onClose
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={course ? 'Kursni tahrirlash' : 'Yangi kurs'} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="course-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={course ? 'Kursni tahrirlash' : 'Yangi kurs'} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="course-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="course-form" className="form" onSubmit={submit} noValidate>
         <TextInput label="Nomi" value={name} onChange={(e) => setName(e.target.value)} error={s.fields.name} autoFocus />
         <MoneyInput label="Sukut oylik narx" optional value={price} onChange={setPrice} error={s.fields.defaultPrice} hint="Yangi guruh yaratishda taklif qilinadi" />

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PaymentDialog } from '@/components/payment-dialog';
@@ -23,6 +24,7 @@ interface Debtor {
 const LIMIT = 50;
 
 export function DebtorsPage() {
+  const t = useT();
   const { can, is } = useSession();
   const teacher = is('TEACHER');
   const [f, setF] = useUrlState({ q: '', branchId: '', groupId: '', minDebt: '', offset: '0' });
@@ -63,12 +65,12 @@ export function DebtorsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>O&apos;quvchi</th>
-                    <th>Guruhlar</th>
-                    {!teacher ? <th>Eng eski muddat</th> : null}
-                    {!teacher ? <th className="num">Kechikish</th> : null}
-                    {!teacher ? <th className="num">Qarz, so&apos;m</th> : null}
-                    {can('payment.create') ? <th className="actions-cell" aria-label="Amallar" /> : null}
+                    <th>{t("O'quvchi")}</th>
+                    <th>{t("Guruhlar")}</th>
+                    {!teacher ? <th>{t("Eng eski muddat")}</th> : null}
+                    {!teacher ? <th className="num">{t("Kechikish")}</th> : null}
+                    {!teacher ? <th className="num">{t("Qarz, so'm")}</th> : null}
+                    {can('payment.create') ? <th className="actions-cell" aria-label={t("Amallar")} /> : null}
                   </tr>
                 </thead>
                 <tbody>
@@ -92,7 +94,7 @@ export function DebtorsPage() {
                       {can('payment.create') ? (
                         <td className="actions-cell">
                           <Button size="sm" onClick={() => setPay({ id: r.studentId, fullName: r.studentName, login: '', phone: r.phone ?? null, branchIds: [] })}>
-                            To&apos;lov
+                            {t("To'lov")}
                           </Button>
                         </td>
                       ) : null}

@@ -1,4 +1,5 @@
 import type { Slot } from '@/components/schedule-editor';
+import { trMap } from '@/lib/i18n';
 
 export interface Group {
   id: string;
@@ -27,7 +28,7 @@ export const GROUP_STATUS: Record<Group['status'], { label: string; kind: 'ok' |
   FINISHED: { label: 'Tugagan', kind: 'mute' },
 };
 
-export const BILLING_MODE: Record<string, string> = { GROUP_CYCLE: 'Guruh sikli', STUDENT_CYCLE: "O'quvchi sikli" };
+export const BILLING_MODE: Record<string, string> = trMap({ GROUP_CYCLE: 'Guruh sikli', STUDENT_CYCLE: "O'quvchi sikli" });
 
 export const mainTeacher = (g: Group) => g.teachers.find((t) => t.kind === 'MAIN' && !t.toDate)?.fullName ?? null;
 

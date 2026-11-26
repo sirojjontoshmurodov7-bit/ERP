@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -50,6 +51,7 @@ const CHARGE_STATUS: Record<Charge['status'], { label: string; kind: 'ok' | 'war
 };
 
 export function StudentCard() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { can } = useSession();
   const toast = useToast();
@@ -97,22 +99,22 @@ export function StudentCard() {
         sub={
           <span className="row">
             <span className="fig">{s.login}</span>
-            {s.status !== 'ACTIVE' ? <Tag kind="mute">Arxivda</Tag> : s.mustChangePassword ? <Tag kind="mute">Hali kirmagan</Tag> : null}
+            {s.status !== 'ACTIVE' ? <Tag kind="mute">{t("Arxivda")}</Tag> : s.mustChangePassword ? <Tag kind="mute">{t("Hali kirmagan")}</Tag> : null}
           </span>
         }
         actions={
           <>
             {can('payment.create') && s.status === 'ACTIVE' ? (
               <Button variant="primary" icon={<Icon.cash />} onClick={() => setPay(true)}>
-                To&apos;lov qabul qilish
+                {t("To'lov qabul qilish")}
               </Button>
             ) : null}
-            {can('student.edit') ? <Button onClick={() => setEdit(true)}>Tahrirlash</Button> : null}
-            {can('user.reset_password') && s.status === 'ACTIVE' ? <Button onClick={resetPassword}>Parolni tiklash</Button> : null}
-            {can('telegram.settings') && s.status === 'ACTIVE' ? <Button onClick={telegramCode}>Telegram kodi</Button> : null}
+            {can('student.edit') ? <Button onClick={() => setEdit(true)}>{t("Tahrirlash")}</Button> : null}
+            {can('user.reset_password') && s.status === 'ACTIVE' ? <Button onClick={resetPassword}>{t("Parolni tiklash")}</Button> : null}
+            {can('telegram.settings') && s.status === 'ACTIVE' ? <Button onClick={telegramCode}>{t("Telegram kodi")}</Button> : null}
             {can('student.archive') ? (
               <Button variant="ghost" onClick={() => setArchive(true)}>
-                {s.status === 'ACTIVE' ? 'Arxivlash' : 'Arxivdan qaytarish'}
+                {s.status === 'ACTIVE' ? t('Arxivlash') : t('Arxivdan qaytarish')}
               </Button>
             ) : null}
           </>
@@ -155,9 +157,9 @@ export function StudentCard() {
       <Confirm
         open={archive}
         onClose={() => setArchive(false)}
-        title={s.status === 'ACTIVE' ? "O'quvchini arxivlash" : 'Arxivdan qaytarish'}
-        text={s.status === 'ACTIVE' ? "O'quvchi tizimga kira olmaydi va ro'yxatlarda ko'rinmaydi. Ma'lumotlari va to'lov tarixi saqlanadi; keyin qaytarish mumkin." : "O'quvchi yana faol bo'ladi va tizimga kira oladi."}
-        confirmLabel={s.status === 'ACTIVE' ? 'Arxivlash' : 'Qaytarish'}
+        title={s.status === 'ACTIVE' ? t("O'quvchini arxivlash") : t('Arxivdan qaytarish')}
+        text={s.status === 'ACTIVE' ? t("O'quvchi tizimga kira olmaydi va ro'yxatlarda ko'rinmaydi. Ma'lumotlari va to'lov tarixi saqlanadi; keyin qaytarish mumkin.") : t("O'quvchi yana faol bo'ladi va tizimga kira oladi.")}
+        confirmLabel={s.status === 'ACTIVE' ? t('Arxivlash') : t('Qaytarish')}
         danger={s.status === 'ACTIVE'}
         onConfirm={async () => {
           await api.post(`/students/${s.id}/${s.status === 'ACTIVE' ? 'archive' : 'unarchive'}`);
@@ -165,14 +167,14 @@ export function StudentCard() {
         }}
       />
       <CredentialsDialog value={creds} onClose={() => setCreds(null)} />
-      <Dialog open={tgCode !== null} onClose={() => setTgCode(null)} title="Telegram'ga ulash" footer={<Button variant="primary" onClick={() => setTgCode(null)}>Tayyor</Button>}>
+      <Dialog open={tgCode !== null} onClose={() => setTgCode(null)} title="Telegram'ga ulash" footer={<Button variant="primary" onClick={() => setTgCode(null)}>{t("Tayyor")}</Button>}>
         {tgCode ? (
           <div className="stack">
-            <p>O&apos;quvchi yoki ota-ona botga quyidagi kodni yuborsin. Kod {dateTime(tgCode.expiresAt).slice(11)} gacha (15 daqiqa) amal qiladi.</p>
+            <p>{t("O'quvchi yoki ota-ona botga quyidagi kodni yuborsin. Kod {time} gacha (15 daqiqa) amal qiladi.", { time: dateTime(tgCode.expiresAt).slice(11) })}</p>
             <span className="code-box">/start {tgCode.code}</span>
             {tgCode.deepLink ? (
               <a className="link" href={tgCode.deepLink} target="_blank" rel="noreferrer">
-                Botni ochish havolasi
+                {t("Botni ochish havolasi")}
               </a>
             ) : null}
           </div>
@@ -183,6 +185,7 @@ export function StudentCard() {
 }
 
 function GroupsTab({ student, onChange }: { student: Student; onChange: () => void }) {
+  const t = useT();
   const { can } = useSession();
   const list = useApi<{ items: Enrollment[] }>('/enrollments', { studentId: student.id, limit: 100 });
   const [enroll, setEnroll] = useState(false);
@@ -197,7 +200,7 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
       {can('enrollment.manage') && student.status === 'ACTIVE' ? (
         <div className="actions">
           <Button icon={<Icon.plus />} onClick={() => setEnroll(true)}>
-            Guruhga yozish
+            {t("Guruhga yozish")}
           </Button>
         </div>
       ) : null}
@@ -207,11 +210,11 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
             <table className="table">
               <thead>
                 <tr>
-                  <th>Guruh</th>
-                  <th>Qo&apos;shilgan</th>
-                  <th>Holat</th>
-                  <th className="num">Maxsus narx</th>
-                  {can('enrollment.manage') ? <th className="actions-cell" aria-label="Amallar" /> : null}
+                  <th>{t("Guruh")}</th>
+                  <th>{t("Qo'shilgan")}</th>
+                  <th>{t("Holat")}</th>
+                  <th className="num">{t("Maxsus narx")}</th>
+                  {can('enrollment.manage') ? <th className="actions-cell" aria-label={t("Amallar")} /> : null}
                 </tr>
               </thead>
               <tbody>
@@ -227,35 +230,35 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
                     </td>
                     <td className="fig">
                       {date(e.joinedAt)}
-                      {e.leftAt ? <div className="cell-sub">chiqdi {date(e.leftAt)}</div> : null}
+                      {e.leftAt ? <div className="cell-sub">{t('chiqdi {date}', { date: date(e.leftAt) })}</div> : null}
                     </td>
                     <td>
                       <Tag kind={ENROLL_STATUS[e.status].kind}>{ENROLL_STATUS[e.status].label}</Tag>
                     </td>
-                    <td className="num">{e.priceOverride !== null ? money(e.priceOverride) : "yo'q"}</td>
+                    <td className="num">{e.priceOverride !== null ? money(e.priceOverride) : t("yo'q")}</td>
                     {can('enrollment.manage') ? (
                       <td className="actions-cell">
                         {e.status !== 'LEFT' ? (
                           <span className="row">
                             {e.status === 'ACTIVE' ? (
                               <Button size="sm" variant="ghost" onClick={() => setAction({ kind: 'freeze', e })}>
-                                Muzlatish
+                                {t("Muzlatish")}
                               </Button>
                             ) : (
                               <Button size="sm" variant="ghost" onClick={() => setAction({ kind: 'unfreeze', e })}>
-                                Davom ettirish
+                                {t("Davom ettirish")}
                               </Button>
                             )}
                             <Button size="sm" variant="ghost" onClick={() => setAction({ kind: 'transfer', e })}>
-                              Ko&apos;chirish
+                              {t("Ko'chirish")}
                             </Button>
                             {can('discount.grant') ? (
                               <Button size="sm" variant="ghost" onClick={() => setAction({ kind: 'discount', e })}>
-                                Chegirma
+                                {t("Chegirma")}
                               </Button>
                             ) : null}
                             <Button size="sm" variant="danger" onClick={() => setAction({ kind: 'leave', e })}>
-                              Chiqarish
+                              {t("Chiqarish")}
                             </Button>
                           </span>
                         ) : null}
@@ -273,7 +276,7 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
         open={action?.kind === 'freeze'}
         onClose={() => setAction(null)}
         title="Yozilishni muzlatish"
-        text={`${action?.e.groupName ?? ''}: muzlatilgan davrda yangi hisob yaratilmaydi. Davom ettirilganda hisob yana boshlanadi.`}
+        text={t('{group}: muzlatilgan davrda yangi hisob yaratilmaydi. Davom ettirilganda hisob yana boshlanadi.', { group: action?.e.groupName ?? '' })}
         confirmLabel="Muzlatish"
         onConfirm={async () => {
           await api.post(`/enrollments/${action!.e.id}/freeze`);
@@ -284,7 +287,7 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
         open={action?.kind === 'unfreeze'}
         onClose={() => setAction(null)}
         title="Davom ettirish"
-        text={`${action?.e.groupName ?? ''}: o'quvchi yana faol bo'ladi va hisob qayta boshlanadi.`}
+        text={t("{group}: o'quvchi yana faol bo'ladi va hisob qayta boshlanadi.", { group: action?.e.groupName ?? '' })}
         confirmLabel="Davom ettirish"
         onConfirm={async () => {
           await api.post(`/enrollments/${action!.e.id}/unfreeze`);
@@ -295,7 +298,7 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
         open={action?.kind === 'leave'}
         onClose={() => setAction(null)}
         title="Guruhdan chiqarish"
-        text={`${action?.e.groupName ?? ''}: bugundan boshlab yangi hisob yaratilmaydi. Mavjud qarz saqlanadi.`}
+        text={t('{group}: bugundan boshlab yangi hisob yaratilmaydi. Mavjud qarz saqlanadi.', { group: action?.e.groupName ?? '' })}
         confirmLabel="Chiqarish"
         danger
         reason={{ label: 'Sabab' }}
@@ -311,6 +314,7 @@ function GroupsTab({ student, onChange }: { student: Student; onChange: () => vo
 }
 
 const EnrollDialog = whenOpen(function EnrollDialogInner({ open, student, onClose, onDone }: { open: boolean; student: Student; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const groups = useGroupsLite(open);
   const [groupId, setGroupId] = useState('');
   const [joinedAt, setJoinedAt] = useState(todayLocal());
@@ -318,12 +322,12 @@ const EnrollDialog = whenOpen(function EnrollDialogInner({ open, student, onClos
   const options = (groups.data?.items ?? []).filter((g) => g.status !== 'FINISHED' && !g.archivedAt && student.branchIds.includes(g.branchId));
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!groupId) return s.setError('Guruhni tanlang');
+    if (!groupId) return s.setError(t('Guruhni tanlang'));
     const r = await s.run(() => api.post('/enrollments', { groupId, studentId: student.id, joinedAt }));
     if (r) onDone();
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Guruhga yozish" footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="enroll-form" busy={s.busy}>Yozish</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Guruhga yozish" footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="enroll-form" busy={s.busy}>{t("Yozish")}</Button></>}>
       <form id="enroll-form" className="form" onSubmit={submit} noValidate>
         <SelectInput label="Guruh" value={groupId} onChange={(e) => setGroupId(e.target.value)} options={options.map((g) => ({ value: g.id, label: `${g.name} (${g.courseName})` }))} placeholder="Tanlang" hint="O'quvchi filialidagi guruhlar" />
         <TextInput label="Qo'shilgan sana" type="date" value={joinedAt} max={todayLocal()} onChange={(e) => setJoinedAt(e.target.value)} error={s.fields.joinedAt} hint="Birinchi hisob shu sanadan boshlanadi" />
@@ -338,6 +342,7 @@ function TransferDialog(p: ValueDialog) {
   return p.value ? <TransferInner {...p} value={p.value} /> : null;
 }
 function TransferInner({ value, onClose, onDone }: ValueDialog & { value: Enrollment }) {
+  const t = useT();
   const open = true;
   const groups = useGroupsLite(open);
   const [toGroupId, setTo] = useState('');
@@ -346,15 +351,15 @@ function TransferInner({ value, onClose, onDone }: ValueDialog & { value: Enroll
   const options = (groups.data?.items ?? []).filter((g) => g.id !== value.groupId && g.status !== 'FINISHED' && !g.archivedAt);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!toGroupId) return s.setError('Yangi guruhni tanlang');
+    if (!toGroupId) return s.setError(t('Yangi guruhni tanlang'));
     const r = await s.run(() => api.post(`/enrollments/${value.id}/transfer`, clean({ toGroupId, reason })));
     if (r) onDone();
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Boshqa guruhga ko'chirish" footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="transfer-form" busy={s.busy}>Ko&apos;chirish</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Boshqa guruhga ko'chirish" footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="transfer-form" busy={s.busy}>{t("Ko'chirish")}</Button></>}>
       <form id="transfer-form" className="form" onSubmit={submit} noValidate>
         <p className="muted">
-          {value.groupName} guruhidan bugungi sana bilan chiqariladi va yangi guruhga yoziladi.
+          {t('{group} guruhidan bugungi sana bilan chiqariladi va yangi guruhga yoziladi.', { group: value.groupName })}
         </p>
         <SelectInput label="Yangi guruh" value={toGroupId} onChange={(e) => setTo(e.target.value)} options={options.map((g) => ({ value: g.id, label: `${g.name} (${g.branchName})` }))} placeholder="Tanlang" />
         <TextInput label="Sabab" optional value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} />
@@ -377,6 +382,7 @@ function DiscountDialog(p: ValueDialog) {
   return p.value ? <DiscountInner {...p} value={p.value} /> : null;
 }
 function DiscountInner({ value, onClose, onDone }: ValueDialog & { value: Enrollment }) {
+  const t = useT();
   const open = true;
   const list = useApi<{ items: Discount[] }>(`/enrollments/${value.id}/discounts`);
   const [type, setType] = useState<'PERCENT' | 'AMOUNT' | 'FREE'>('PERCENT');
@@ -396,23 +402,23 @@ function DiscountInner({ value, onClose, onDone }: ValueDialog & { value: Enroll
     list.reload();
   };
   return (
-    <Dialog open={open} onClose={onClose} title={`Chegirma: ${value.groupName}`} wide footer={<><Button onClick={onClose}>Yopish</Button><Button variant="primary" type="submit" form="discount-form" busy={s.busy}>Chegirma berish</Button></>}>
+    <Dialog open={open} onClose={onClose} title={t('Chegirma: {group}', { group: value.groupName })} wide footer={<><Button onClick={onClose}>{t("Yopish")}</Button><Button variant="primary" type="submit" form="discount-form" busy={s.busy}>{t("Chegirma berish")}</Button></>}>
       <div className="stack">
-        <DataView state={list} skeleton={<Skeleton rows={1} />} empty={(d) => (d.items.length ? null : <p className="muted">Bu yozilishda chegirma yo&apos;q.</p>)}>
+        <DataView state={list} skeleton={<Skeleton rows={1} />} empty={(d) => (d.items.length ? null : <p className="muted">{t("Bu yozilishda chegirma yo'q.")}</p>)}>
           {(d) => (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Chegirma</th>
-                  <th>Sabab</th>
-                  <th>Muddat</th>
-                  <th className="actions-cell" aria-label="Amallar" />
+                  <th>{t("Chegirma")}</th>
+                  <th>{t("Sabab")}</th>
+                  <th>{t("Muddat")}</th>
+                  <th className="actions-cell" aria-label={t("Amallar")} />
                 </tr>
               </thead>
               <tbody>
                 {d.items.map((x) => (
                   <tr key={x.id}>
-                    <td className="fig">{x.type === 'PERCENT' ? `${x.value}%` : x.type === 'AMOUNT' ? `${money(x.value)} so'm` : 'Bepul'}</td>
+                    <td className="fig">{x.type === 'PERCENT' ? `${x.value}%` : x.type === 'AMOUNT' ? `${money(x.value)} ${t("so'm")}` : t('Bepul')}</td>
                     <td>{x.reason}</td>
                     <td className="fig">
                       {x.fromDate ? `${date(x.fromDate)} dan` : 'boshidan'} {x.toDate ? `${date(x.toDate)} gacha` : 'muddatsiz'}
@@ -420,10 +426,10 @@ function DiscountInner({ value, onClose, onDone }: ValueDialog & { value: Enroll
                     <td className="actions-cell">
                       {x.active ? (
                         <Button size="sm" variant="ghost" onClick={() => end(x.id)}>
-                          Tugatish
+                          {t("Tugatish")}
                         </Button>
                       ) : (
-                        <Tag kind="mute">Tugagan</Tag>
+                        <Tag kind="mute">{t("Tugagan")}</Tag>
                       )}
                     </td>
                   </tr>
@@ -458,6 +464,7 @@ function DiscountInner({ value, onClose, onDone }: ValueDialog & { value: Enroll
 }
 
 function ChargesTab({ studentId }: { studentId: string }) {
+  const t = useT();
   const list = useApi<{ items: Charge[] }>('/charges', { studentId, limit: 100 });
   return (
     <div className="table-wrap">
@@ -466,13 +473,13 @@ function ChargesTab({ studentId }: { studentId: string }) {
           <table className="table">
             <thead>
               <tr>
-                <th>Davr</th>
-                <th>Guruh</th>
-                <th>Muddat</th>
-                <th className="num">Narx</th>
-                <th className="num">Chegirma</th>
-                <th className="num">Hisob, so&apos;m</th>
-                <th>Holat</th>
+                <th>{t("Davr")}</th>
+                <th>{t("Guruh")}</th>
+                <th>{t("Muddat")}</th>
+                <th className="num">{t("Narx")}</th>
+                <th className="num">{t("Chegirma")}</th>
+                <th className="num">{t("Hisob, so'm")}</th>
+                <th>{t("Holat")}</th>
               </tr>
             </thead>
             <tbody>
@@ -487,9 +494,9 @@ function ChargesTab({ studentId }: { studentId: string }) {
                   <td>{c.groupName}</td>
                   <td className="fig">{date(c.dueDate)}</td>
                   <td className="num">{money(c.baseAmount)}</td>
-                  <td className="num">{c.discountAmount ? money(c.discountAmount) : "yo'q"}</td>
+                  <td className="num">{c.discountAmount ? money(c.discountAmount) : t("yo'q")}</td>
                   <td className="num">{money(c.amount)}</td>
-                  <td>{c.status === 'PAID' ? <span className="stamp">To&apos;langan</span> : <Tag kind={CHARGE_STATUS[c.status].kind}>{CHARGE_STATUS[c.status].label}</Tag>}</td>
+                  <td>{c.status === 'PAID' ? <span className="stamp">{t("To'langan")}</span> : <Tag kind={CHARGE_STATUS[c.status].kind}>{CHARGE_STATUS[c.status].label}</Tag>}</td>
                 </tr>
               ))}
             </tbody>
@@ -501,6 +508,7 @@ function ChargesTab({ studentId }: { studentId: string }) {
 }
 
 function PaymentsTab({ studentId }: { studentId: string }) {
+  const t = useT();
   const list = useApi<{ items: PaymentView[] }>('/payments', { studentId, limit: 100 });
   return (
     <div className="table-wrap">
@@ -509,11 +517,11 @@ function PaymentsTab({ studentId }: { studentId: string }) {
           <table className="table">
             <thead>
               <tr>
-                <th>Chek</th>
-                <th>Sana</th>
-                <th>Usul</th>
-                <th>Qabul qildi</th>
-                <th className="num">Summa, so&apos;m</th>
+                <th>{t("Chek")}</th>
+                <th>{t("Sana")}</th>
+                <th>{t("Usul")}</th>
+                <th>{t("Qabul qildi")}</th>
+                <th className="num">{t("Summa, so'm")}</th>
               </tr>
             </thead>
             <tbody>
@@ -523,7 +531,7 @@ function PaymentsTab({ studentId }: { studentId: string }) {
                     <Link className="cell-main" href={`/payments/${p.id}`}>
                       №{p.receiptNo}
                     </Link>
-                    {p.reversesPaymentId ? <div className="cell-sub">qaytarish</div> : p.status === 'REVERSED' ? <div className="cell-sub">qaytarilgan</div> : null}
+                    {p.reversesPaymentId ? <div className="cell-sub">{t("qaytarish")}</div> : p.status === 'REVERSED' ? <div className="cell-sub">{t("qaytarilgan")}</div> : null}
                   </td>
                   <td className="fig">{dateTime(p.paidAt)}</td>
                   <td>{METHOD_LABEL[p.method] ?? p.method}</td>
@@ -540,6 +548,7 @@ function PaymentsTab({ studentId }: { studentId: string }) {
 }
 
 function AttendanceTab({ studentId }: { studentId: string }) {
+  const t = useT();
   const list = useApi<{ items: AttRow[] }>('/attendance', { studentId, limit: 200 });
   return (
     <div className="table-wrap">
@@ -548,10 +557,10 @@ function AttendanceTab({ studentId }: { studentId: string }) {
           <table className="table">
             <thead>
               <tr>
-                <th>Sana</th>
-                <th>Guruh</th>
-                <th>Holat</th>
-                <th>Izoh</th>
+                <th>{t("Sana")}</th>
+                <th>{t("Guruh")}</th>
+                <th>{t("Holat")}</th>
+                <th>{t("Izoh")}</th>
               </tr>
             </thead>
             <tbody>
@@ -574,29 +583,31 @@ function AttendanceTab({ studentId }: { studentId: string }) {
 }
 
 function InfoTab({ s }: { s: Student }) {
+  const t = useT();
   return (
     <div className="panel panel-body">
       <dl className="kv">
-        <dt>Telefon</dt>
-        <dd className="fig">{s.phone ?? "yo'q"}</dd>
-        <dt>Tug&apos;ilgan sana</dt>
+        <dt>{t("Telefon")}</dt>
+        <dd className="fig">{s.phone ?? t("yo'q")}</dd>
+        <dt>{t("Tug'ilgan sana")}</dt>
         <dd className="fig">{date(s.birthDate)}</dd>
-        <dt>Ota-ona</dt>
-        <dd>{s.parentName ?? "yo'q"}</dd>
-        <dt>Ota-ona telefoni</dt>
-        <dd className="fig">{s.parentPhone ?? "yo'q"}</dd>
-        <dt>Izoh</dt>
-        <dd>{s.note ?? "yo'q"}</dd>
-        <dt>Ro&apos;yxatga olingan</dt>
+        <dt>{t("Ota-ona")}</dt>
+        <dd>{s.parentName ?? t("yo'q")}</dd>
+        <dt>{t("Ota-ona telefoni")}</dt>
+        <dd className="fig">{s.parentPhone ?? t("yo'q")}</dd>
+        <dt>{t("Izoh")}</dt>
+        <dd>{s.note ?? t("yo'q")}</dd>
+        <dt>{t("Ro'yxatga olingan")}</dt>
         <dd className="fig">{dateTime(s.createdAt)}</dd>
-        <dt>Oxirgi kirish</dt>
-        <dd className="fig">{s.lastLoginAt ? dateTime(s.lastLoginAt) : 'hali kirmagan'}</dd>
+        <dt>{t("Oxirgi kirish")}</dt>
+        <dd className="fig">{s.lastLoginAt ? dateTime(s.lastLoginAt) : t('hali kirmagan')}</dd>
       </dl>
     </div>
   );
 }
 
 const EditStudent = whenOpen(function EditStudentInner({ open, student, onClose, onSaved }: { open: boolean; student: Student; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const init = () => ({ fullName: student.fullName, phone: student.phone ?? '', birthDate: student.birthDate ?? '', parentName: student.parentName ?? '', parentPhone: student.parentPhone ?? '', note: student.note ?? '' });
   const [v, setV] = useState(init);
   const s = useSubmit();
@@ -610,7 +621,7 @@ const EditStudent = whenOpen(function EditStudentInner({ open, student, onClose,
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title="O'quvchini tahrirlash" wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="edit-student" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title="O'quvchini tahrirlash" wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="edit-student" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="edit-student" className="form" onSubmit={submit} noValidate>
         <div className="form-grid">
           <TextInput label="Ism familiya" fieldClass="span-2" value={v.fullName} onChange={set('fullName')} error={s.fields.fullName} />

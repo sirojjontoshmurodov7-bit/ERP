@@ -1,5 +1,6 @@
 'use client';
 // To'lov qabul qilish: o'quvchi, summa, usul, filial. Natija kvitansiya (chek raqami va qaysi oylarga taqsimlangani).
+import { trMap, useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { dateTime, money, monthLabel } from '@/lib/format';
@@ -33,10 +34,11 @@ export const METHODS = [
   { value: 'CARD', label: 'Karta' },
   { value: 'TRANSFER', label: "O'tkazma" },
 ] as const;
-export const METHOD_LABEL: Record<string, string> = { CASH: 'Naqd', CARD: 'Karta', TRANSFER: "O'tkazma", CLICK: 'Click', PAYME: 'Payme' };
+export const METHOD_LABEL: Record<string, string> = trMap({ CASH: 'Naqd', CARD: 'Karta', TRANSFER: "O'tkazma", CLICK: 'Click', PAYME: 'Payme' });
 
 type PaymentDialogProps = { open: boolean; onClose: () => void; onDone: () => void; student?: PickedStudent | null };
 export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClose, onDone, student }: PaymentDialogProps) {
+  const t = useT();
   const [picked, setPicked] = useState<PickedStudent | null>(student ?? null);
   const [amount, setAmount] = useState<number | ''>('');
   const [method, setMethod] = useState<'CASH' | 'CARD' | 'TRANSFER'>('CASH');
@@ -56,8 +58,8 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!picked) return s.setError("O'quvchini tanlang");
-    if (!amount) return s.setError('Summani kiriting');
+    if (!picked) return s.setError(t("O'quvchini tanlang"));
+    if (!amount) return s.setError(t('Summani kiriting'));
     const r = await s.run(() => api.post<PaymentView>('/payments', { studentId: picked.id, amount, method, ...(branchId ? { branchId } : {}), ...(note.trim() ? { note: note.trim() } : {}) }));
     if (r) {
       setReceipt(r);
@@ -70,12 +72,12 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
       <Dialog
         open={open}
         onClose={onClose}
-        title={`Kvitansiya №${receipt.receiptNo}`}
+        title={t('Kvitansiya №{n}', { n: receipt.receiptNo })}
         footer={
           <>
-            <Button onClick={() => window.print()}>Chop etish</Button>
+            <Button onClick={() => window.print()}>{t("Chop etish")}</Button>
             <Button variant="primary" onClick={onClose}>
-              Tayyor
+              {t("Tayyor")}
             </Button>
           </>
         }
@@ -92,9 +94,9 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
       title="To'lov qabul qilish"
       footer={
         <>
-          <Button onClick={onClose}>Bekor qilish</Button>
+          <Button onClick={onClose}>{t("Bekor qilish")}</Button>
           <Button variant="primary" type="submit" form="pay-form" busy={s.busy}>
-            Qabul qilish
+            {t("Qabul qilish")}
           </Button>
         </>
       }
@@ -105,19 +107,19 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
           <p className="small">
             {balance.data.debt > 0 ? (
               <>
-                Qarz: <span className="fig debt">{money(balance.data.debt)}</span> so&apos;m{' '}
+                {t("Qarz:")}{' '}<span className="fig debt">{money(balance.data.debt)}</span> {t("so'm")}{' '}
                 <button type="button" className="link-btn" onClick={() => setAmount(balance.data!.debt)}>
-                  To&apos;liq summa
+                  {t("To'liq summa")}
                 </button>
               </>
             ) : (
-              <span className="muted">Qarz yo&apos;q{balance.data.advance ? `, oldindan to'lov ${money(balance.data.advance)} so'm` : ''}</span>
+              <span className="muted">{balance.data.advance ? t("Qarz yo'q, oldindan to'lov {sum} so'm", { sum: money(balance.data.advance) }) : t("Qarz yo'q")}</span>
             )}
           </p>
         ) : null}
         <MoneyInput label="Summa" value={amount} onChange={setAmount} error={s.fields.amount} />
         <div className="field">
-          <span className="field-label">To&apos;lov usuli</span>
+          <span className="field-label">{t("To'lov usuli")}</span>
           <Segmented label="To'lov usuli" value={method} onChange={setMethod} options={METHODS.map((m) => ({ value: m.value, label: m.label }))} />
         </div>
         {studentBranches.length > 1 ? <SelectInput label="Filial" value={branchId} onChange={(e) => setBranchId(e.target.value)} options={opts(studentBranches)} placeholder="Tanlang" error={s.fields.branchId} /> : null}
@@ -129,6 +131,7 @@ export const PaymentDialog = whenOpen(function PaymentDialogInner({ open, onClos
 });
 
 export function Receipt({ p }: { p: PaymentView }) {
+  const t = useT();
   return (
     <div className="receipt">
       <div className="receipt-head">
@@ -136,22 +139,22 @@ export function Receipt({ p }: { p: PaymentView }) {
         <span className="muted fig">{dateTime(p.paidAt)}</span>
       </div>
       <dl className="kv">
-        <dt>O&apos;quvchi</dt>
+        <dt>{t("O'quvchi")}</dt>
         <dd>{p.studentName}</dd>
-        <dt>Filial</dt>
+        <dt>{t("Filial")}</dt>
         <dd>{p.branchName}</dd>
-        <dt>Usul</dt>
+        <dt>{t("Usul")}</dt>
         <dd>{METHOD_LABEL[p.method] ?? p.method}</dd>
-        <dt>Qabul qildi</dt>
+        <dt>{t("Qabul qildi")}</dt>
         <dd>{p.receivedByName}</dd>
       </dl>
       {p.allocations?.length ? (
         <table className="table">
           <thead>
             <tr>
-              <th>Guruh</th>
-              <th>Davr</th>
-              <th className="num">So&apos;m</th>
+              <th>{t("Guruh")}</th>
+              <th>{t("Davr")}</th>
+              <th className="num">{t("So'm")}</th>
             </tr>
           </thead>
           <tbody>
@@ -165,12 +168,12 @@ export function Receipt({ p }: { p: PaymentView }) {
           </tbody>
         </table>
       ) : null}
-      {p.unallocated > 0 ? <p className="small muted">Oldindan to&apos;lov (keyingi hisoblarga): {money(p.unallocated)} so&apos;m</p> : null}
+      {p.unallocated > 0 ? <p className="small muted">{t("Oldindan to'lov (keyingi hisoblarga): {sum} so'm", { sum: money(p.unallocated) })}</p> : null}
       <div className="receipt-head">
-        <span className="muted">Jami</span>
+        <span className="muted">{t("Jami")}</span>
         <span className="receipt-total">{money(p.amount)} so&apos;m</span>
       </div>
-      {p.status === 'CONFIRMED' && p.amount > 0 ? <span className="stamp" aria-label="To'langan">To&apos;landi</span> : null}
+      {p.status === 'CONFIRMED' && p.amount > 0 ? <span className="stamp" aria-label={t("To'langan")}>{t("To'landi")}</span> : null}
     </div>
   );
 }

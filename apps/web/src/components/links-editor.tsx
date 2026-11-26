@@ -1,24 +1,26 @@
 'use client';
 // Havolalar ro'yxati (vazifa biriktirmalari / topshiriq fayllari): fayl yuklash yo'q, faqat http(s) havola.
+import { useT } from '@/lib/i18n';
 import type { LinkItem } from '@/app/(panel)/assignments/types';
 import { Icon } from './icons';
 import { Button } from './ui';
 
 export function LinksEditor({ value, onChange, max = 10 }: { value: LinkItem[]; onChange: (v: LinkItem[]) => void; max?: number }) {
+  const t = useT();
   const set = (i: number, patch: Partial<LinkItem>) => onChange(value.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   return (
     <div className="stack-sm">
       {value.map((l, i) => (
         <div className="row links-row" key={i}>
-          <input className="input" aria-label="Havola nomi" placeholder="Nomi" value={l.name} maxLength={100} onChange={(e) => set(i, { name: e.target.value })} />
-          <input className="input" aria-label="Havola manzili" placeholder="https://..." inputMode="url" value={l.url} maxLength={500} onChange={(e) => set(i, { url: e.target.value })} />
+          <input className="input" aria-label={t("Havola nomi")} placeholder={t("Nomi")} value={l.name} maxLength={100} onChange={(e) => set(i, { name: e.target.value })} />
+          <input className="input" aria-label={t("Havola manzili")} placeholder={t("https://...")} inputMode="url" value={l.url} maxLength={500} onChange={(e) => set(i, { url: e.target.value })} />
           <Button variant="ghost" size="sm" aria-label="Havolani o'chirish" onClick={() => onChange(value.filter((_, j) => j !== i))} icon={<Icon.close />} />
         </div>
       ))}
       {value.length < max ? (
         <div>
           <Button size="sm" onClick={() => onChange([...value, { name: '', url: '' }])} icon={<Icon.plus />}>
-            Havola qo&apos;shish
+            {t("Havola qo'shish")}
           </Button>
         </div>
       ) : null}

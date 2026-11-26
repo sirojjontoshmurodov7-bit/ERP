@@ -1,5 +1,6 @@
 'use client';
 // O'quvchini ism/telefon bo'yicha qidirib tanlash (combobox). Natijalar qamrov bo'yicha serverdan.
+import { useT } from '@/lib/i18n';
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 
@@ -12,6 +13,7 @@ export interface PickedStudent {
 }
 
 export function StudentPicker({ value, onChange, label = "O'quvchi", error }: { value: PickedStudent | null; onChange: (s: PickedStudent | null) => void; label?: string; error?: string }) {
+  const t = useT();
   const id = useId();
   const [q, setQ] = useState('');
   const [items, setItems] = useState<PickedStudent[]>([]);
@@ -59,7 +61,7 @@ export function StudentPicker({ value, onChange, label = "O'quvchi", error }: { 
             <span className="cell-main">{value.fullName}</span> <span className="cell-sub fig">{value.phone ?? value.login}</span>
           </span>
           <button type="button" className="link-btn small" onClick={() => onChange(null)}>
-            O&apos;zgartirish
+            {t("O'zgartirish")}
           </button>
         </div>
       </div>
@@ -86,7 +88,7 @@ export function StudentPicker({ value, onChange, label = "O'quvchi", error }: { 
         aria-autocomplete="list"
         aria-invalid={error ? true : undefined}
         autoComplete="off"
-        placeholder="Ism yoki telefon (kamida 2 belgi)"
+        placeholder={t("Ism yoki telefon (kamida 2 belgi)")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onKeyDown={(e) => {
@@ -105,8 +107,8 @@ export function StudentPicker({ value, onChange, label = "O'quvchi", error }: { 
       />
       {open && !tooShort ? (
         <ul className="picker-list" id={`${id}-list`} role="listbox">
-          {loading && !items.length ? <li className="picker-empty">Qidirilmoqda</li> : null}
-          {!loading && !items.length ? <li className="picker-empty">Topilmadi</li> : null}
+          {loading && !items.length ? <li className="picker-empty">{t("Qidirilmoqda")}</li> : null}
+          {!loading && !items.length ? <li className="picker-empty">{t("Topilmadi")}</li> : null}
           {items.map((s, i) => (
             <li key={s.id} role="option" aria-selected={i === active} onMouseDown={(e) => e.preventDefault()} onClick={() => pick(s)} onMouseEnter={() => setActive(i)}>
               <span className="cell-main">{s.fullName}</span>

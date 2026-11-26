@@ -1,5 +1,6 @@
 'use client';
 // Panelning umumiy komponentlari: tugma, maydonlar, holatlar (yuklanish/bo'sh/xato), dialog, sahifalash, xabarlar.
+import { tr, useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import { errorText } from '@/lib/api';
@@ -43,24 +44,27 @@ interface FieldProps {
   children: (id: string, describedBy: string | undefined, invalid: boolean) => ReactNode;
 }
 export function Field({ label, error, hint, optional, className, children }: FieldProps) {
+  const t = useT();
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
   const errId = error ? `${id}-err` : undefined;
   return (
     <div className={['field', className].filter(Boolean).join(' ')}>
       <label className="field-label" htmlFor={id}>
-        {label}
-        {optional ? <span className="opt"> (ixtiyoriy)</span> : null}
+        {t(label)}
+        {optional ? <span className="opt"> {t("(ixtiyoriy)")}</span> : null}
       </label>
       {children(id, [hintId, errId].filter(Boolean).join(' ') || undefined, Boolean(error))}
-      {hint && !error ? <span className="field-hint" id={hintId}>{hint}</span> : null}
-      {error ? <span className="field-error" id={errId} role="alert">{error}</span> : null}
+      {hint && !error ? <span className="field-hint" id={hintId}>{typeof hint === 'string' ? t(hint) : hint}</span> : null}
+      {error ? <span className="field-error" id={errId} role="alert">{t(error)}</span> : null}
     </div>
   );
 }
 
 type InputProps = React.InputHTMLAttributes<HTMLInputElement> & { label: string; error?: string; hint?: ReactNode; optional?: boolean; fieldClass?: string };
-export function TextInput({ label, error, hint, optional, fieldClass, className, ...rest }: InputProps) {
+export function TextInput({ label, error, hint, optional, fieldClass, className, ...input }: InputProps) {
+  const t = useT();
+  const rest = { ...input, placeholder: input.placeholder ? t(input.placeholder) : undefined };
   return (
     <Field label={label} error={error} hint={hint} optional={optional} className={fieldClass}>
       {(id, d, invalid) =>
@@ -76,11 +80,12 @@ export function TextInput({ label, error, hint, optional, fieldClass, className,
 
 // Parol maydoni: ko'rsatish/yashirish tugmasi bilan
 function PasswordField({ id, describedBy, invalid, className, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { id: string; describedBy?: string; invalid?: boolean }) {
+  const t = useT();
   const [shown, setShown] = useState(false);
   return (
     <div className="input-wrap">
       <input id={id} aria-describedby={describedBy} aria-invalid={invalid || undefined} className={['input', 'input--eye', className].filter(Boolean).join(' ')} {...props} type={shown ? 'text' : 'password'} />
-      <button type="button" className="eye-btn" aria-label={shown ? 'Parolni yashirish' : "Parolni ko'rsatish"} aria-pressed={shown} onClick={() => setShown((v) => !v)}>
+      <button type="button" className="eye-btn" aria-label={shown ? t('Parolni yashirish') : t("Parolni ko'rsatish")} aria-pressed={shown} onClick={() => setShown((v) => !v)}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
           <circle cx="12" cy="12" r="3" />
@@ -93,14 +98,15 @@ function PasswordField({ id, describedBy, invalid, className, ...props }: React.
 
 type SelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; error?: string; hint?: ReactNode; optional?: boolean; fieldClass?: string; options: { value: string; label: string }[]; placeholder?: string };
 export function SelectInput({ label, error, hint, optional, fieldClass, options, placeholder, ...rest }: SelectProps) {
+  const t = useT();
   return (
     <Field label={label} error={error} hint={hint} optional={optional} className={fieldClass}>
       {(id, d, invalid) => (
         <select id={id} aria-describedby={d} aria-invalid={invalid || undefined} className="select" {...rest}>
-          {placeholder !== undefined ? <option value="">{placeholder}</option> : null}
+          {placeholder !== undefined ? <option value="">{t(placeholder)}</option> : null}
           {options.map((o) => (
             <option key={o.value} value={o.value}>
-              {o.label}
+              {t(o.label)}
             </option>
           ))}
         </select>
@@ -110,7 +116,9 @@ export function SelectInput({ label, error, hint, optional, fieldClass, options,
 }
 
 type AreaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string; error?: string; hint?: ReactNode; optional?: boolean; fieldClass?: string };
-export function TextArea({ label, error, hint, optional, fieldClass, ...rest }: AreaProps) {
+export function TextArea({ label, error, hint, optional, fieldClass, ...area }: AreaProps) {
+  const t = useT();
+  const rest = { ...area, placeholder: area.placeholder ? t(area.placeholder) : undefined };
   return (
     <Field label={label} error={error} hint={hint} optional={optional} className={fieldClass}>
       {(id, d, invalid) => <textarea id={id} aria-describedby={d} aria-invalid={invalid || undefined} className="textarea" {...rest} />}
@@ -144,11 +152,12 @@ export function MoneyInput({ label, value, onChange, error, hint, optional, fiel
 }
 
 export function Segmented<T extends string>({ value, onChange, options, label }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; label: string }) {
+  const t = useT();
   return (
-    <div className="segmented" role="group" aria-label={label}>
+    <div className="segmented" role="group" aria-label={t(label)}>
       {options.map((o) => (
         <button key={o.value} type="button" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
-          {o.label}
+          {t(o.label)}
         </button>
       ))}
     </div>
@@ -157,20 +166,21 @@ export function Segmented<T extends string>({ value, onChange, options, label }:
 
 // ---------------------------------------------------------------- sahifa sarlavhasi
 export function PageHead({ title, sub, actions, crumbs }: { title: string; sub?: ReactNode; actions?: ReactNode; crumbs?: { href: string; label: string }[] }) {
+  const t = useT();
   return (
     <div className="page-head">
       <div className="page-head-text">
         {crumbs?.length ? (
-          <nav className="crumbs" aria-label="Yo'l">
+          <nav className="crumbs" aria-label={t("Yo'l")}>
             {crumbs.map((c) => (
               <Link key={c.href} href={c.href}>
-                {c.label}
+                {t(c.label)}
               </Link>
             ))}
           </nav>
         ) : null}
-        <h1>{title}</h1>
-        {sub ? <p className="page-head-sub">{sub}</p> : null}
+        <h1>{t(title)}</h1>
+        {sub ? <p className="page-head-sub">{typeof sub === 'string' ? t(sub) : sub}</p> : null}
       </div>
       {actions ? <div className="actions">{actions}</div> : null}
     </div>
@@ -179,8 +189,9 @@ export function PageHead({ title, sub, actions, crumbs }: { title: string; sub?:
 
 // ---------------------------------------------------------------- holatlar
 export function Skeleton({ rows = 6, cols = 4 }: { rows?: number; cols?: number }) {
+  const t = useT();
   return (
-    <div className="skeleton-rows" aria-busy="true" aria-label="Yuklanmoqda">
+    <div className="skeleton-rows" aria-busy="true" aria-label={t("Yuklanmoqda")}>
       {Array.from({ length: rows }, (_, i) => (
         <div className="skeleton-row" key={i} style={{ gridTemplateColumns: `2fr repeat(${cols - 1}, 1fr)` }}>
           {Array.from({ length: cols }, (_, j) => (
@@ -193,23 +204,25 @@ export function Skeleton({ rows = 6, cols = 4 }: { rows?: number; cols?: number 
 }
 
 export function Empty({ title, text, action }: { title: string; text?: ReactNode; action?: ReactNode }) {
+  const t = useT();
   return (
     <div className="state">
-      <p className="state-title">{title}</p>
-      {text ? <p className="state-text">{text}</p> : null}
+      <p className="state-title">{t(title)}</p>
+      {text ? <p className="state-text">{typeof text === 'string' ? t(text) : text}</p> : null}
       {action}
     </div>
   );
 }
 
 export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
+  const t = useT();
   return (
     <div className="state state--error" role="alert">
-      <p className="state-title">Ma&apos;lumot yuklanmadi</p>
+      <p className="state-title">{t("Ma'lumot yuklanmadi")}</p>
       <p className="state-text">{errorText(error)}</p>
       {onRetry ? (
         <Button size="sm" onClick={onRetry}>
-          Qayta urinish
+          {t("Qayta urinish")}
         </Button>
       ) : null}
     </div>
@@ -227,6 +240,7 @@ export function DataView<T>({ state, empty, skeleton, children }: { state: { dat
 
 // ---------------------------------------------------------------- sahifalash
 export function Pager({ offset, limit, count, total, onChange }: { offset: number; limit: number; count: number; total?: number; onChange: (offset: number) => void }) {
+  const t = useT();
   if (offset === 0 && count < limit && total === undefined) return null;
   const from = count ? offset + 1 : 0;
   const to = offset + count;
@@ -239,10 +253,10 @@ export function Pager({ offset, limit, count, total, onChange }: { offset: numbe
       </span>
       <div className="pager">
         <Button size="sm" disabled={offset === 0} onClick={() => onChange(Math.max(0, offset - limit))}>
-          Oldingi
+          {t("Oldingi")}
         </Button>
         <Button size="sm" disabled={!hasNext} onClick={() => onChange(offset + limit)}>
-          Keyingi
+          {t("Keyingi")}
         </Button>
       </div>
     </div>
@@ -251,6 +265,7 @@ export function Pager({ offset, limit, count, total, onChange }: { offset: numbe
 
 // ---------------------------------------------------------------- dialog
 export function Dialog({ open, onClose, title, children, footer, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
+  const t = useT();
   const ref = useRef<HTMLDialogElement>(null);
   // id sarlavha matnidan emas: bo'shliqli id aria-labelledby'da ikki id bo'lib o'qiladi va dialog nomsiz qoladi
   const titleId = useId();
@@ -265,8 +280,8 @@ export function Dialog({ open, onClose, title, children, footer, wide }: { open:
       {open ? (
         <div className="dialog-inner">
           <div className="dialog-head">
-            <h2 id={titleId}>{title}</h2>
-            <Button variant="ghost" className="btn--icon" aria-label="Yopish" onClick={onClose} icon={<Icon.close />} />
+            <h2 id={titleId}>{t(title)}</h2>
+            <Button variant="ghost" className="btn--icon" aria-label={t('Yopish')} onClick={onClose} icon={<Icon.close />} />
           </div>
           <div className="dialog-body">{children}</div>
           {footer ? <div className="dialog-foot">{footer}</div> : null}
@@ -290,12 +305,13 @@ export function whenOpen<P extends { open: boolean }>(Inner: (p: P) => ReactNode
 type ConfirmProps = { open: boolean; onClose: () => void; title: string; text: ReactNode; confirmLabel: string; danger?: boolean; reason?: { label: string; required?: boolean }; onConfirm: (reason: string) => Promise<void> };
 /** Tasdiqlash (qaytarib bo'lmaydigan amallar uchun): ixtiyoriy sabab maydoni bilan. */
 export const Confirm = whenOpen(function ConfirmInner({ open, onClose, title, text, confirmLabel, danger, reason, onConfirm }: ConfirmProps) {
+  const t = useT();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [why, setWhy] = useState('');
   const go = async () => {
     if (reason?.required && why.trim().length < 3) {
-      setErr("Sababni yozing (kamida 3 belgi)");
+      setErr(t('Sababni yozing (kamida 3 belgi)'));
       return;
     }
     setBusy(true);
@@ -316,15 +332,15 @@ export const Confirm = whenOpen(function ConfirmInner({ open, onClose, title, te
       title={title}
       footer={
         <>
-          <Button onClick={onClose}>Bekor qilish</Button>
+          <Button onClick={onClose}>{t("Bekor qilish")}</Button>
           <Button variant={danger ? 'danger-primary' : 'primary'} busy={busy} onClick={go}>
-            {confirmLabel}
+            {t(confirmLabel)}
           </Button>
         </>
       }
     >
       <div className="stack">
-        <p>{text}</p>
+        <p>{typeof text === 'string' ? t(text) : text}</p>
         {reason ? <TextArea label={reason.label} value={why} onChange={(e) => setWhy(e.target.value)} optional={!reason.required} maxLength={500} /> : null}
         {err ? <p className="form-error">{err}</p> : null}
       </div>
@@ -345,16 +361,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
   const push = useCallback((text: string, kind: 'ok' | 'error' = 'ok') => {
     const id = Date.now() + Math.random();
-    setItems((xs) => [...xs.slice(-3), { id, text, kind }]);
+    setItems((xs) => [...xs.slice(-3), { id, text: tr(text), kind }]); // chaqiruvchi o'zbekcha matn beradi, shu yerda tarjima
     setTimeout(() => setItems((xs) => xs.filter((x) => x.id !== id)), kind === 'error' ? 7000 : 4000);
   }, []);
   return (
     <ToastCtx value={push}>
       {children}
       <div className="toasts" role="status" aria-live="polite">
-        {items.map((t) => (
-          <div key={t.id} className={t.kind === 'error' ? 'toast toast--error' : 'toast'}>
-            <span className="toast-text">{t.text}</span>
+        {items.map((x) => (
+          <div key={x.id} className={x.kind === 'error' ? 'toast toast--error' : 'toast'}>
+            <span className="toast-text">{x.text}</span>
           </div>
         ))}
       </div>
@@ -364,15 +380,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 // ---------------------------------------------------------------- holat yorlig'i
 export function Tag({ kind = 'default', children }: { kind?: 'default' | 'ok' | 'warn' | 'bad' | 'mute' | 'info' | 'violet'; children: ReactNode }) {
-  return <span className={kind === 'default' ? 'tag' : `tag tag--${kind}`}>{children}</span>;
+  const t = useT();
+  return <span className={kind === 'default' ? 'tag' : `tag tag--${kind}`}>{typeof children === 'string' ? t(children) : children}</span>;
 }
 
 export function Stat({ label, value, note, tone }: { label: string; value: ReactNode; note?: ReactNode; tone?: 'debt' }) {
+  const t = useT();
   return (
     <div className="stat">
-      <span className="stat-label">{label}</span>
+      <span className="stat-label">{t(label)}</span>
       <span className={tone === 'debt' ? 'stat-value stat-value--debt' : 'stat-value'}>{value}</span>
-      {note ? <span className="stat-note">{note}</span> : null}
+      {note ? <span className="stat-note">{typeof note === 'string' ? t(note) : note}</span> : null}
     </div>
   );
 }

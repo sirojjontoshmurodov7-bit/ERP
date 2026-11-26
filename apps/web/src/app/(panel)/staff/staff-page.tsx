@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { type Credentials, CredentialsDialog } from '@/components/credentials';
@@ -27,6 +28,7 @@ interface Staff {
 const LIMIT = 50;
 
 export function StaffPage() {
+  const t = useT();
   const { can, is } = useSession();
   const toast = useToast();
   const [f, setF] = useUrlState({ role: '', branchId: '', status: 'ACTIVE', offset: '0' });
@@ -51,25 +53,25 @@ export function StaffPage() {
 
   return (
     <>
-      <PageHead title="Xodimlar" sub="Administratorlar, kassirlar va ustozlar." actions={canCreate ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setCreate(true)}>Yangi xodim</Button> : null} />
+      <PageHead title="Xodimlar" sub="Administratorlar, kassirlar va ustozlar." actions={canCreate ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setCreate(true)}>{t("Yangi xodim")}</Button> : null} />
       <div className="toolbar">
         <SelectInput label="Rol" value={f.role} onChange={(e) => setF({ role: e.target.value })} options={(['ADMIN', 'CASHIER', 'TEACHER'] as const).map((r) => ({ value: r, label: ROLE_LABEL[r] }))} placeholder="Hammasi" />
         {(branches.data?.items.length ?? 0) > 1 ? <SelectInput label="Filial" value={f.branchId} onChange={(e) => setF({ branchId: e.target.value })} options={(branches.data?.items ?? []).map((b) => ({ value: b.id, label: b.name }))} placeholder="Hammasi" /> : null}
         <SelectInput label="Holat" value={f.status} onChange={(e) => setF({ status: e.target.value })} options={[{ value: 'ACTIVE', label: 'Faol' }, { value: 'SUSPENDED', label: "To'xtatilgan" }]} placeholder="Hammasi" />
       </div>
       <div className="table-wrap">
-        <DataView state={list} skeleton={<Skeleton rows={5} cols={5} />} empty={(d) => (d.items.length ? null : <Empty title="Xodim yo'q" action={canCreate ? <Button size="sm" variant="primary" onClick={() => setCreate(true)}>Yangi xodim</Button> : undefined} />)}>
+        <DataView state={list} skeleton={<Skeleton rows={5} cols={5} />} empty={(d) => (d.items.length ? null : <Empty title="Xodim yo'q" action={canCreate ? <Button size="sm" variant="primary" onClick={() => setCreate(true)}>{t("Yangi xodim")}</Button> : undefined} />)}>
           {(d) => (
             <>
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Xodim</th>
-                    <th>Rol</th>
-                    <th>Filial</th>
-                    <th>Oxirgi kirish</th>
-                    <th>Holat</th>
-                    <th className="actions-cell" aria-label="Amallar" />
+                    <th>{t("Xodim")}</th>
+                    <th>{t("Rol")}</th>
+                    <th>{t("Filial")}</th>
+                    <th>{t("Oxirgi kirish")}</th>
+                    <th>{t("Holat")}</th>
+                    <th className="actions-cell" aria-label={t("Amallar")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -85,25 +87,25 @@ export function StaffPage() {
                       </td>
                       <td className="muted">{s.branchIds.map((b) => branchName.get(b)).filter(Boolean).join(', ')}</td>
                       <td className="fig muted">{s.lastLoginAt ? dateTime(s.lastLoginAt) : 'kirmagan'}</td>
-                      <td>{s.status === 'ACTIVE' ? <Tag kind="ok">Faol</Tag> : <Tag kind="bad">To&apos;xtatilgan</Tag>}</td>
+                      <td>{s.status === 'ACTIVE' ? <Tag kind="ok">{t("Faol")}</Tag> : <Tag kind="bad">{t("To'xtatilgan")}</Tag>}</td>
                       <td className="actions-cell">
                         <span className="row">
                           <Button size="sm" variant="ghost" onClick={() => setEdit(s)}>
-                            Tahrirlash
+                            {t("Tahrirlash")}
                           </Button>
                           {can('user.reset_password') && s.status === 'ACTIVE' ? (
                             <Button size="sm" variant="ghost" onClick={() => reset(s)}>
-                              Parolni tiklash
+                              {t("Parolni tiklash")}
                             </Button>
                           ) : null}
                           {can('permissions.manage') ? (
                             <Link className="btn btn--ghost btn--sm" href={`/permissions?user=${s.id}`}>
-                              Ruxsatlar
+                              {t("Ruxsatlar")}
                             </Link>
                           ) : null}
                           {is('OWNER') ? (
                             <Button size="sm" variant={s.status === 'ACTIVE' ? 'danger' : 'ghost'} onClick={() => setSuspend(s)}>
-                              {s.status === 'ACTIVE' ? "To'xtatish" : 'Faollashtirish'}
+                              {s.status === 'ACTIVE' ? t("To'xtatish") : t('Faollashtirish')}
                             </Button>
                           ) : null}
                         </span>
@@ -132,7 +134,7 @@ export function StaffPage() {
         open={suspend !== null}
         onClose={() => setSuspend(null)}
         title={suspend?.status === 'ACTIVE' ? "Xodimni to'xtatish" : 'Xodimni faollashtirish'}
-        text={suspend?.status === 'ACTIVE' ? `${suspend.fullName} tizimga kira olmaydi, ochiq sessiyalari yopiladi. Tarix saqlanadi.` : `${suspend?.fullName ?? ''} yana tizimga kira oladi.`}
+        text={suspend?.status === 'ACTIVE' ? t('{name} tizimga kira olmaydi, ochiq sessiyalari yopiladi. Tarix saqlanadi.', { name: suspend.fullName }) : t('{name} yana tizimga kira oladi.', { name: suspend?.fullName ?? '' })}
         confirmLabel={suspend?.status === 'ACTIVE' ? "To'xtatish" : 'Faollashtirish'}
         danger={suspend?.status === 'ACTIVE'}
         onConfirm={async () => {
@@ -146,9 +148,10 @@ export function StaffPage() {
 }
 
 function BranchChecks({ branches, value, onChange, error }: { branches: Branch[]; value: string[]; onChange: (v: string[]) => void; error?: string }) {
+  const t = useT();
   return (
     <fieldset className="fieldset">
-      <legend>Filiallar</legend>
+      <legend>{t("Filiallar")}</legend>
       <div className="row">
         {branches.map((b) => (
           <label key={b.id} className="check">
@@ -163,6 +166,7 @@ function BranchChecks({ branches, value, onChange, error }: { branches: Branch[]
 }
 
 const StaffDialog = whenOpen(function StaffDialogInner({ open, branches, onClose, onCreated }: { open: boolean; branches: Branch[]; onClose: () => void; onCreated: (c: Credentials) => void }) {
+  const t = useT();
   const { can } = useSession();
   const roles = [...(can('staff.create') ? (['ADMIN', 'CASHIER'] as const) : []), ...(can('teacher.create') ? (['TEACHER'] as const) : [])];
   const [v, setV] = useState({ role: roles.includes('TEACHER') ? 'TEACHER' : roles[0] ?? 'TEACHER', fullName: '', login: '', phone: '', specialization: '', note: '' });
@@ -177,7 +181,7 @@ const StaffDialog = whenOpen(function StaffDialogInner({ open, branches, onClose
     if (r) onCreated({ fullName: r.user.fullName, login: r.user.login, temporaryPassword: r.temporaryPassword });
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Yangi xodim" wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="staff-form" busy={s.busy}>Yaratish</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Yangi xodim" wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="staff-form" busy={s.busy}>{t("Yaratish")}</Button></>}>
       <form id="staff-form" className="form" onSubmit={submit} noValidate>
         <div className="form-grid">
           <SelectInput label="Rol" value={v.role} onChange={set('role')} options={roles.map((r) => ({ value: r, label: ROLE_LABEL[r] }))} />
@@ -199,10 +203,11 @@ const StaffDialog = whenOpen(function StaffDialogInner({ open, branches, onClose
 });
 
 const EditStaff = whenOpen(function EditStaffInner({ open, staff, branches, onClose, onSaved }: { open: boolean; staff: Staff | null; branches: Branch[]; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const st = staff!;
   const detail = useApi<Staff>(`/staff/${st.id}`);
   return (
-    <Dialog open={open} onClose={onClose} title={`${st.fullName}: tahrirlash`} wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="edit-staff" disabled={!detail.data}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={t('{name}: tahrirlash', { name: st.fullName })} wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="edit-staff" disabled={!detail.data}>{t("Saqlash")}</Button></>}>
       <DataView state={detail} skeleton={<Skeleton rows={3} cols={2} />}>
         {(d) => <EditStaffForm detail={d} branches={branches} onDone={() => { onSaved(); onClose(); }} />}
       </DataView>

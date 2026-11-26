@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { type Credentials, CredentialsDialog } from '@/components/credentials';
 import { Icon } from '@/components/icons';
@@ -29,6 +30,7 @@ const STATUS = { TRIAL: { label: 'Sinovda', kind: 'warn' as const }, ACTIVE: { l
 const LIMIT = 50;
 
 export function CentersPage() {
+  const t = useT();
   const toast = useToast();
   const [f, setF] = useUrlState({ status: '', offset: '0', new: '' });
   const offset = Number(f.offset) || 0;
@@ -50,23 +52,23 @@ export function CentersPage() {
 
   return (
     <>
-      <PageHead title="Markazlar" actions={<Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>Yangi markaz</Button>} />
+      <PageHead title="Markazlar" actions={<Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>{t("Yangi markaz")}</Button>} />
       <div className="toolbar">
         <SelectInput label="Holat" value={f.status} onChange={(e) => setF({ status: e.target.value })} options={Object.entries(STATUS).map(([value, x]) => ({ value, label: x.label }))} placeholder="Hammasi" />
       </div>
       <div className="table-wrap">
-        <DataView state={list} skeleton={<Skeleton rows={5} cols={5} />} empty={(d) => (d.items.length ? null : <Empty title="Markaz yo'q" action={<Button size="sm" variant="primary" onClick={() => setF({ new: '1' })}>Yangi markaz</Button>} />)}>
+        <DataView state={list} skeleton={<Skeleton rows={5} cols={5} />} empty={(d) => (d.items.length ? null : <Empty title="Markaz yo'q" action={<Button size="sm" variant="primary" onClick={() => setF({ new: '1' })}>{t("Yangi markaz")}</Button>} />)}>
           {(d) => (
             <>
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Markaz</th>
-                    <th>Tarif</th>
-                    <th>Sinov tugaydi</th>
-                    <th>Ochilgan</th>
-                    <th>Holat</th>
-                    <th className="actions-cell" aria-label="Amallar" />
+                    <th>{t("Markaz")}</th>
+                    <th>{t("Tarif")}</th>
+                    <th>{t("Sinov tugaydi")}</th>
+                    <th>{t("Ochilgan")}</th>
+                    <th>{t("Holat")}</th>
+                    <th className="actions-cell" aria-label={t("Amallar")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -76,8 +78,8 @@ export function CentersPage() {
                         <span className="cell-main">{c.name}</span>
                         <div className="cell-sub fig">{c.slug}</div>
                       </td>
-                      <td>{c.planName ?? <span className="muted">{"yo'q"}</span>}</td>
-                      <td className="fig">{c.trialEndsAt ? tsDate(c.trialEndsAt) : "yo'q"}</td>
+                      <td>{c.planName ?? <span className="muted">{t("yo'q")}</span>}</td>
+                      <td className="fig">{c.trialEndsAt ? tsDate(c.trialEndsAt) : t("yo'q")}</td>
                       <td className="fig muted">{tsDate(c.createdAt)}</td>
                       <td>
                         <Tag kind={STATUS[c.status].kind}>{STATUS[c.status].label}</Tag>
@@ -86,10 +88,10 @@ export function CentersPage() {
                       <td className="actions-cell">
                         <span className="row">
                           <Button size="sm" variant="ghost" onClick={() => setEdit(c)}>
-                            Tahrirlash
+                            {t("Tahrirlash")}
                           </Button>
                           <Button size="sm" variant="ghost" onClick={() => resetOwner(c)}>
-                            Rahbar paroli
+                            {t("Rahbar paroli")}
                           </Button>
                           <Button size="sm" variant={c.status === 'BLOCKED' ? 'ghost' : 'danger'} onClick={() => setBlock(c)}>
                             {c.status === 'BLOCKED' ? 'Blokdan chiqarish' : 'Bloklash'}
@@ -120,7 +122,7 @@ export function CentersPage() {
         open={block !== null}
         onClose={() => setBlock(null)}
         title={block?.status === 'BLOCKED' ? 'Markazni blokdan chiqarish' : 'Markazni bloklash'}
-        text={block?.status === 'BLOCKED' ? `${block.name} xodimlari va o'quvchilari yana kira oladi.` : `${block?.name ?? ''}: hamma foydalanuvchilar sessiyasi yopiladi va kira olmaydi. Ma'lumotlar saqlanadi.`}
+        text={block?.status === 'BLOCKED' ? t("{name} xodimlari va o'quvchilari yana kira oladi.", { name: block.name }) : t("{name}: hamma foydalanuvchilar sessiyasi yopiladi va kira olmaydi. Ma'lumotlar saqlanadi.", { name: block?.name ?? '' })}
         confirmLabel={block?.status === 'BLOCKED' ? 'Blokdan chiqarish' : 'Bloklash'}
         danger={block?.status !== 'BLOCKED'}
         reason={block?.status === 'BLOCKED' ? undefined : { label: 'Sabab', required: true }}
@@ -136,6 +138,7 @@ export function CentersPage() {
 }
 
 const CreateCenter = whenOpen(function CreateCenterInner({ open, plans, onClose, onCreated }: { open: boolean; plans: Plan[]; onClose: () => void; onCreated: (c: Credentials) => void }) {
+  const t = useT();
   const [v, setV] = useState({ name: '', slug: '', planId: '', trialDays: '14', ownerFullName: '', ownerPhone: '', ownerLogin: '' });
   const s = useSubmit();
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((x) => ({ ...x, [k]: e.target.value }));
@@ -146,9 +149,9 @@ const CreateCenter = whenOpen(function CreateCenterInner({ open, plans, onClose,
     if (r) onCreated({ fullName: r.owner.fullName, login: r.owner.login, temporaryPassword: r.owner.temporaryPassword });
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Yangi markaz" wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="center-form" busy={s.busy}>Yaratish</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Yangi markaz" wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="center-form" busy={s.busy}>{t("Yaratish")}</Button></>}>
       <form id="center-form" className="form" onSubmit={submit} noValidate>
-        <p className="muted small">Markaz bilan birga &quot;Asosiy filial&quot; va rahbar akkaunti yaratiladi. Rahbar paroli faqat bir marta ko&apos;rsatiladi.</p>
+        <p className="muted small">{t("Markaz bilan birga \"Asosiy filial\" va rahbar akkaunti yaratiladi. Rahbar paroli faqat bir marta ko'rsatiladi.")}</p>
         <div className="form-grid">
           <TextInput label="Markaz nomi" value={v.name} onChange={set('name')} error={s.fields.name} autoFocus />
           <TextInput label="Slug" optional value={v.slug} onChange={set('slug')} error={s.fields.slug} hint="Loginlar prefiksi; bo'sh qolsa nomdan" autoCapitalize="none" />
@@ -165,6 +168,7 @@ const CreateCenter = whenOpen(function CreateCenterInner({ open, plans, onClose,
 });
 
 const EditCenter = whenOpen(function EditCenterInner({ open, center, plans, onClose, onSaved }: { open: boolean; center: Center | null; plans: Plan[]; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const c = center!;
   const toLocal = (iso: string | null) => (iso ? tsDate(iso).split('.').reverse().join('-') : '');
   const [v, setV] = useState({ name: c.name, planId: c.planId ?? '', trialEnd: toLocal(c.trialEndsAt) });
@@ -184,11 +188,11 @@ const EditCenter = whenOpen(function EditCenterInner({ open, center, plans, onCl
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={`${c.name}: tahrirlash`} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="edit-center" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={t('{name}: tahrirlash', { name: c.name })} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="edit-center" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="edit-center" className="form" onSubmit={submit} noValidate>
         <TextInput label="Nomi" value={v.name} onChange={set('name')} error={s.fields.name} />
         <SelectInput label="Tarif" value={v.planId} onChange={set('planId')} options={plans.map((p) => ({ value: p.id, label: p.name }))} placeholder="Biriktirilmagan" />
-        <TextInput label="Sinov muddati tugashi" optional type="date" value={v.trialEnd} onChange={set('trialEnd')} hint={c.trialEndsAt ? `Hozir: ${date(c.trialEndsAt.slice(0, 10))}` : undefined} />
+        <TextInput label="Sinov muddati tugashi" optional type="date" value={v.trialEnd} onChange={set('trialEnd')} hint={c.trialEndsAt ? t('Hozir: {date}', { date: date(c.trialEndsAt.slice(0, 10)) }) : undefined} />
         <p className="small muted">Ochilgan: {dateTime(c.createdAt)}</p>
         {s.error ? <p className="form-error" role="alert">{s.error}</p> : null}
       </form>

@@ -396,9 +396,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795652109.662135,
-    "seen": 1795652126.7631755,
-    "ast_hash": "76daecc662b6eeb8ef1e597895ebeece",
+    "mtime": 1795653073.0696166,
+    "seen": 1795653083.2022836,
+    "ast_hash": "fcd2dca76486830f393d832458c9aa37",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -648,10 +648,10 @@
     "semantic_hash": "cbb7951e424b06ebed946a2c65a5a7aa"
   },
   "apps/api/src/lessons/lessons.service.ts": {
-    "mtime": 1795042544.0270956,
-    "seen": 1795063491.1884675,
-    "ast_hash": "71f4ebc8b94055ac515cb72fbf9db4c0",
-    "semantic_hash": "71f4ebc8b94055ac515cb72fbf9db4c0"
+    "mtime": 1795652930.5345652,
+    "seen": 1795653083.166266,
+    "ast_hash": "80d789f368f3044a4672b2e7254f4b8e",
+    "semantic_hash": ""
   },
   "apps/api/test/attendance.e2e-spec.ts": {
     "mtime": 1795027836.8819282,
@@ -690,10 +690,10 @@
     "semantic_hash": "92109ca2ce087b3f0eadc4e867844303"
   },
   "apps/api/src/billing/billing.service.ts": {
-    "mtime": 1795029639.3470669,
-    "seen": 1795041276.4920232,
-    "ast_hash": "0af6eaa085f24e13f6812a772e4b5a1d",
-    "semantic_hash": "0af6eaa085f24e13f6812a772e4b5a1d"
+    "mtime": 1795652761.5325904,
+    "seen": 1795653083.1523886,
+    "ast_hash": "e81bfa7e785958942cd1d75d02f922f7",
+    "semantic_hash": ""
   },
   "apps/api/src/billing/charges.schemas.ts": {
     "mtime": 1795028094.4449897,
@@ -876,10 +876,10 @@
     "semantic_hash": "6fa9db8b396c579312fa1befac49cba5"
   },
   "apps/api/src/finance/finance-report.service.ts": {
-    "mtime": 1795032362.347567,
-    "seen": 1795041276.4921024,
-    "ast_hash": "aa56da520d351310bfdd63b4b7378eb5",
-    "semantic_hash": "aa56da520d351310bfdd63b4b7378eb5"
+    "mtime": 1795652770.864507,
+    "seen": 1795653083.161834,
+    "ast_hash": "89541b13dc4cd4137f4ab0afea942838",
+    "semantic_hash": ""
   },
   "apps/api/src/finance/finance.controller.ts": {
     "mtime": 1795032362.4758441,
@@ -996,10 +996,10 @@
     "semantic_hash": "b1c5cc7662fcf297663b1abfbe146049"
   },
   "apps/api/test/imports.e2e-spec.ts": {
-    "mtime": 1795036877.6152725,
-    "seen": 1795041276.4922287,
-    "ast_hash": "6b2820b48be6557f4ed0f4bb8eea328c",
-    "semantic_hash": "6b2820b48be6557f4ed0f4bb8eea328c"
+    "mtime": 1795652301.0716467,
+    "seen": 1795653083.1762683,
+    "ast_hash": "09929f8ac238dcfb906e321a38cc71fc",
+    "semantic_hash": ""
   },
   "apps/api/src/academic/academic.controller.ts": {
     "mtime": 1795040571.0331323,
@@ -1887,6 +1887,30 @@
     "mtime": 1795652092.8492944,
     "seen": 1795652126.7636254,
     "ast_hash": "e23cf3bc3f7eac92cd73bd02202e5e25",
+    "semantic_hash": ""
+  },
+  "apps/api/scripts/load-bench.mjs": {
+    "mtime": 1795652228.5426366,
+    "seen": 1795653083.145871,
+    "ast_hash": "d279c985bad3b1f7a4dac0d48721eeba",
+    "semantic_hash": ""
+  },
+  "apps/api/scripts/load-seed.mjs": {
+    "mtime": 1795652307.668758,
+    "seen": 1795653083.1458733,
+    "ast_hash": "ddb7b79e9a11b6796c7a3259c02eddae",
+    "semantic_hash": ""
+  },
+  "apps/web/scripts/i18n-check.mjs": {
+    "mtime": 1795652580.052577,
+    "seen": 1795653083.1797128,
+    "ast_hash": "55050fc113566bb1ca917a2705627759",
+    "semantic_hash": ""
+  },
+  "apps/web/src/lib/i18n.ts": {
+    "mtime": 1795652558.1329813,
+    "seen": 1795653083.196511,
+    "ast_hash": "487d37a20371250969ade0ce8ee03be7",
     "semantic_hash": ""
   },
   "pnpm-lock.yaml": {

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -16,6 +17,7 @@ import type { Assignment, LinkItem } from './types';
 const LIMIT = 30;
 
 export function AssignmentsPage() {
+  const t = useT();
   const { can, is } = useSession();
   const router = useRouter();
   const [f, setF] = useUrlState({ groupId: '', status: '', includeArchived: 'false', offset: '0', new: '' });
@@ -25,7 +27,7 @@ export function AssignmentsPage() {
   const student = is('STUDENT');
   return (
     <>
-      <PageHead title="Vazifalar" actions={can('homework.create') ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>Yangi vazifa</Button> : null} />
+      <PageHead title="Vazifalar" actions={can('homework.create') ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>{t("Yangi vazifa")}</Button> : null} />
       <div className="toolbar">
         <SelectInput label="Guruh" value={f.groupId} onChange={(e) => setF({ groupId: e.target.value })} options={opts(groups.data?.items)} placeholder="Hammasi" />
         <SelectInput label="Muddat" value={f.status} onChange={(e) => setF({ status: e.target.value })} options={[{ value: 'open', label: 'Ochiq' }, { value: 'overdue', label: "Muddati o'tgan" }]} placeholder="Hammasi" />
@@ -38,10 +40,10 @@ export function AssignmentsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Vazifa</th>
-                    <th>Guruh</th>
-                    <th>Muddat</th>
-                    <th>{student ? 'Holat' : 'Topshirildi'}</th>
+                    <th>{t("Vazifa")}</th>
+                    <th>{t("Guruh")}</th>
+                    <th>{t("Muddat")}</th>
+                    <th>{student ? t('Holat') : t('Topshirildi')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -53,13 +55,13 @@ export function AssignmentsPage() {
                           <Link className="cell-main" href={`/assignments/${a.id}`} onClick={(e) => e.stopPropagation()}>
                             {a.title}
                           </Link>
-                          {a.archivedAt ? <div className="cell-sub">arxivda</div> : null}
+                          {a.archivedAt ? <div className="cell-sub">{t("arxivda")}</div> : null}
                         </td>
                         <td className="muted">{a.groupName}</td>
-                        <td className={overdue ? 'fig muted' : 'fig'}>{a.dueAt ? dateTime(a.dueAt) : 'muddatsiz'}</td>
+                        <td className={overdue ? 'fig muted' : 'fig'}>{a.dueAt ? dateTime(a.dueAt) : t('muddatsiz')}</td>
                         <td>
                           {student ? (
-                            a.mySubmission ? a.mySubmission.graded ? <Tag kind="ok">Baho: {a.mySubmission.score}/{a.maxScore}</Tag> : <Tag kind="ok">Topshirilgan</Tag> : overdue ? <Tag kind="bad">Topshirilmagan</Tag> : <Tag kind="warn">Kutilmoqda</Tag>
+                            a.mySubmission ? a.mySubmission.graded ? <Tag kind="ok">Baho: {a.mySubmission.score}/{a.maxScore}</Tag> : <Tag kind="ok">{t("Topshirilgan")}</Tag> : overdue ? <Tag kind="bad">{t("Topshirilmagan")}</Tag> : <Tag kind="warn">{t("Kutilmoqda")}</Tag>
                           ) : a.counts ? (
                             <span className="fig">
                               {a.counts.submitted}/{a.counts.students}
@@ -92,6 +94,7 @@ export function AssignmentsPage() {
 
 /** Yangi vazifa yoki tahrirlash (assignment berilsa). Muddat Toshkent vaqtida kiritiladi. */
 export const AssignmentDialog = whenOpen(function AssignmentDialogInner({ open, defaultGroupId, assignment, onClose, onSaved }: { open: boolean; defaultGroupId?: string; assignment?: Assignment; onClose: () => void; onSaved: (id: string) => void }) {
+  const t = useT();
   const groups = useGroupsLite(!assignment);
   const toLocal = (iso: string | null) => (iso ? new Date(new Date(iso).getTime() + 5 * 3600e3).toISOString().slice(0, 16) : '');
   const [v, setV] = useState({ groupId: assignment?.groupId ?? defaultGroupId ?? '', title: assignment?.title ?? '', description: assignment?.description ?? '', dueAt: toLocal(assignment?.dueAt ?? null), maxScore: String(assignment?.maxScore ?? 100) });
@@ -113,7 +116,7 @@ export const AssignmentDialog = whenOpen(function AssignmentDialogInner({ open, 
     if (r) onSaved(r.id);
   };
   return (
-    <Dialog open={open} onClose={onClose} title={assignment ? 'Vazifani tahrirlash' : 'Yangi vazifa'} wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="hw-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={assignment ? 'Vazifani tahrirlash' : 'Yangi vazifa'} wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="hw-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="hw-form" className="form" onSubmit={submit} noValidate>
         <div className="form-grid">
           {!assignment ? <SelectInput label="Guruh" fieldClass="span-2" value={v.groupId} onChange={set('groupId')} options={opts(groups.data?.items.filter((g) => !g.archivedAt && g.status !== 'FINISHED'))} placeholder="Tanlang" /> : null}
@@ -123,7 +126,7 @@ export const AssignmentDialog = whenOpen(function AssignmentDialogInner({ open, 
           <TextInput label="Maksimal ball" type="number" min={1} max={1000} value={v.maxScore} onChange={set('maxScore')} error={s.fields.maxScore} />
         </div>
         <fieldset className="fieldset">
-          <legend>Havolalar</legend>
+          <legend>{t("Havolalar")}</legend>
           <LinksEditor value={links} onChange={setLinks} />
         </fieldset>
         {s.error ? <p className="form-error" role="alert">{s.error}</p> : null}

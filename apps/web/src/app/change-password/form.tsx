@@ -1,10 +1,12 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button, TextInput } from '@/components/ui';
 import { ApiError, api, auth, errorText } from '@/lib/api';
 
 export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
+  const t = useT();
   const router = useRouter();
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
@@ -54,7 +56,7 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
       ) : null}
       <div className="row">
         <Button type="submit" variant="primary" busy={busy}>
-          Parolni saqlash
+          {t("Parolni saqlash")}
         </Button>
         {!onDone ? (
           <Button
@@ -64,7 +66,7 @@ export function ChangePasswordForm({ onDone }: { onDone?: () => void }) {
               router.replace('/login');
             }}
           >
-            Chiqish
+            {t("Chiqish")}
           </Button>
         ) : null}
       </div>

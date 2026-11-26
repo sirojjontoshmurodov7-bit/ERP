@@ -1,6 +1,7 @@
 'use client';
 // Bosh sahifa qahramoni: bo'limlar nuqta bo'lib turgan globus. Tugma yoki nuqta tanlansa globus shu tomonga burilib keladi.
-import { useState } from 'react';
+import { useT } from '@/lib/i18n';
+import { useMemo, useState } from 'react';
 import { Globe, type GlobeNode } from '@/components/globe';
 import { Icon } from '@/components/icons';
 
@@ -14,20 +15,22 @@ const MODULES: (GlobeNode & { icon: keyof typeof Icon })[] = [
 ];
 
 export function LandingStage() {
+  const t = useT();
   const [active, setActive] = useState(-1);
+  const nodes = useMemo(() => MODULES.map((m) => ({ ...m, label: t(m.label) })), [t]);
   return (
     <>
       <div className="lp-globe">
-        <Globe nodes={MODULES} active={active} onSelect={setActive} spin={0.0022} />
+        <Globe nodes={nodes} active={active} onSelect={setActive} spin={0.0022} />
       </div>
-      <ul className="lp-chips" aria-label="Imkoniyatlar">
+      <ul className="lp-chips" aria-label={t("Imkoniyatlar")}>
         {MODULES.map((m, i) => {
           const I = Icon[m.icon];
           return (
             <li key={m.label}>
               <button type="button" className="lp-chip" aria-pressed={active === i} onClick={() => setActive(active === i ? -1 : i)}>
                 <I />
-                {m.label}
+                {t(m.label)}
               </button>
             </li>
           );

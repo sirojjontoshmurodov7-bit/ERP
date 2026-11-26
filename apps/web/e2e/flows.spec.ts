@@ -145,3 +145,24 @@ test('mobil: menyu ochiladi va bo\'limga o\'tadi @mobile', async ({ page }) => {
   await page.getByRole('link', { name: 'Guruhlar' }).click();
   await expect(page).toHaveURL(/\/groups/);
 });
+
+test('til: rus tiliga o\'tish menyu, sarlavha, KPI va sanalarni o\'zgartiradi, qaytish ham ishlaydi', async ({ page }) => {
+  const d = data();
+  await signedIn(page, d.owner.login, d.owner.password);
+  await page.locator('.account-btn').click();
+  await page.getByRole('menuitemradio', { name: 'Русский' }).click();
+  await expect(page.getByRole('heading', { name: 'Панель управления центром' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Ученики' })).toBeVisible();
+  await expect(page.getByText('Активные ученики')).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  // xato xabari ham ruscha (API matni lug'atdan)
+  await page.goto('/students?new=1');
+  const dlg = page.getByRole('dialog', { name: 'Новый ученик' });
+  await dlg.getByRole('button', { name: 'Добавить' }).click();
+  await expect(dlg.getByText('Проверьте поля')).toBeVisible();
+  await dlg.getByRole('button', { name: 'Отмена' }).click();
+  // o'zbekchaga qaytish
+  await page.locator('.account-btn').click();
+  await page.getByRole('menuitemradio', { name: "O'zbekcha" }).click();
+  await expect(page.getByRole('link', { name: "O'quvchilar" })).toBeVisible();
+});

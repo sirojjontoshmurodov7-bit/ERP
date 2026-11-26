@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Button, Confirm, DataView, Dialog, Empty, MoneyInput, PageHead, Pager, SelectInput, Skeleton, Stat, Tag, TextInput, whenOpen } from '@/components/ui';
@@ -25,6 +26,7 @@ const LIMIT = 50;
 const monthStart = () => `${todayLocal().slice(0, 7)}-01`;
 
 export function ExpensesPage() {
+  const t = useT();
   const [f, setF] = useUrlState({ from: monthStart(), to: todayLocal(), category: '', branchId: '', status: 'ACTIVE', offset: '0', new: '' });
   const offset = Number(f.offset) || 0;
   const list = useApi<{ items: Expense[] }>('/expenses', { from: f.from, to: f.to, category: f.category, branchId: f.branchId, status: f.status, limit: LIMIT, offset });
@@ -35,7 +37,7 @@ export function ExpensesPage() {
 
   return (
     <>
-      <PageHead title="Xarajatlar" actions={<Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>Xarajat qo&apos;shish</Button>} />
+      <PageHead title="Xarajatlar" actions={<Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>{t("Xarajat qo'shish")}</Button>} />
       <div className="toolbar">
         <TextInput label="Sanadan" type="date" value={f.from} onChange={(e) => setF({ from: e.target.value })} />
         <TextInput label="Sanagacha" type="date" value={f.to} onChange={(e) => setF({ to: e.target.value })} />
@@ -55,13 +57,13 @@ export function ExpensesPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Sana</th>
-                    <th>Turkum</th>
-                    <th>Izoh</th>
-                    <th>Filial</th>
-                    <th>Kiritdi</th>
-                    <th className="num">Summa, so&apos;m</th>
-                    <th className="actions-cell" aria-label="Amallar" />
+                    <th>{t("Sana")}</th>
+                    <th>{t("Turkum")}</th>
+                    <th>{t("Izoh")}</th>
+                    <th>{t("Filial")}</th>
+                    <th>{t("Kiritdi")}</th>
+                    <th className="num">{t("Summa, so'm")}</th>
+                    <th className="actions-cell" aria-label={t("Amallar")} />
                   </tr>
                 </thead>
                 <tbody>
@@ -79,10 +81,10 @@ export function ExpensesPage() {
                       <td className="actions-cell">
                         {e.status === 'ACTIVE' ? (
                           <Button size="sm" variant="ghost" onClick={() => setVoiding(e)}>
-                            Bekor qilish
+                            {t("Bekor qilish")}
                           </Button>
                         ) : (
-                          <Tag kind="mute">Bekor</Tag>
+                          <Tag kind="mute">{t("Bekor")}</Tag>
                         )}
                       </td>
                     </tr>
@@ -108,7 +110,7 @@ export function ExpensesPage() {
         open={voiding !== null}
         onClose={() => setVoiding(null)}
         title="Xarajatni bekor qilish"
-        text={`${voiding?.category ?? ''}, ${money(voiding?.amount)} so'm. Yozuv o'chirilmaydi: bekor qilingan deb belgilanadi va hisobotlardan chiqadi.`}
+        text={t("{category}, {sum} so'm. Yozuv o'chirilmaydi: bekor qilingan deb belgilanadi va hisobotlardan chiqadi.", { category: voiding?.category ?? '', sum: money(voiding?.amount) })}
         confirmLabel="Bekor qilish"
         danger
         reason={{ label: 'Sabab', required: true }}
@@ -122,6 +124,7 @@ export function ExpensesPage() {
 }
 
 const ExpenseDialog = whenOpen(function ExpenseDialogInner({ open, categories, onClose, onSaved }: { open: boolean; categories: string[]; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const branches = useBranches();
   const [v, setV] = useState({ category: '', note: '', spentOn: todayLocal(), branchId: '' });
   const [amount, setAmount] = useState<number | ''>('');
@@ -130,12 +133,12 @@ const ExpenseDialog = whenOpen(function ExpenseDialogInner({ open, categories, o
   const branchId = v.branchId || (branches.data?.items.length === 1 ? branches.data.items[0]!.id : '');
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount) return s.setError('Summani kiriting');
+    if (!amount) return s.setError(t('Summani kiriting'));
     const r = await s.run(() => api.post('/expenses', { ...clean({ ...v, branchId }), amount }));
     if (r) onSaved();
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Xarajat qo'shish" footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="expense-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Xarajat qo'shish" footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="expense-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="expense-form" className="form" onSubmit={submit} noValidate>
         <TextInput label="Turkum" value={v.category} onChange={set('category')} error={s.fields.category} list="expense-cats" placeholder="Ijara, kommunal, reklama..." autoFocus />
         <datalist id="expense-cats">

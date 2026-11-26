@@ -1,4 +1,5 @@
 'use client';
+import { tr, trMap, useT } from '@/lib/i18n';
 import { useMemo, useState } from 'react';
 import { Button, DataView, Empty, PageHead, Segmented, SelectInput, Skeleton, Tag, useToast } from '@/components/ui';
 import { api, errorText } from '@/lib/api';
@@ -19,7 +20,7 @@ interface UserPerm extends Omit<RolePerm, 'allowed'> {
   override: boolean | null;
   effective: boolean;
 }
-const MODULES: Record<string, string> = { platform: 'Platforma', org: 'Tashkilot', academic: "O'quv jarayoni", finance: 'Moliya', payroll: 'Maosh', report: 'Hisobotlar', system: 'Tizim' };
+const MODULES: Record<string, string> = trMap({ platform: 'Platforma', org: 'Tashkilot', academic: "O'quv jarayoni", finance: 'Moliya', payroll: 'Maosh', report: 'Hisobotlar', system: 'Tizim' });
 const ROLES: Role[] = ['ADMIN', 'CASHIER', 'TEACHER'];
 
 function byModule<T extends { module: string }>(items: T[]) {
@@ -29,16 +30,17 @@ function byModule<T extends { module: string }>(items: T[]) {
 }
 
 export function PermissionsPage() {
+  const t = useT();
   const [f, setF] = useUrlState({ tab: 'roles', role: 'ADMIN', user: '' });
   return (
     <>
       <PageHead title="Ruxsatlar" sub="Rol bilan keladigan ruxsatlar o'zgarmaydi; sozlanadiganlarini yoqish yoki o'chirish mumkin." />
       <div className="tabs" role="tablist">
         <button type="button" role="tab" className="tab" aria-selected={f.tab === 'roles'} onClick={() => setF({ tab: 'roles' })}>
-          Rol shablonlari
+          {t("Rol shablonlari")}
         </button>
         <button type="button" role="tab" className="tab" aria-selected={f.tab === 'users' || Boolean(f.user)} onClick={() => setF({ tab: 'users' })}>
-          Xodim istisnolari
+          {t("Xodim istisnolari")}
         </button>
       </div>
       {f.tab === 'roles' && !f.user ? <RolesTab role={f.role as Role} setRole={(r) => setF({ role: r })} /> : <UsersTab userId={f.user} setUser={(u) => setF({ user: u, tab: 'users' })} />}
@@ -47,6 +49,7 @@ export function PermissionsPage() {
 }
 
 function RolesTab({ role, setRole }: { role: Role; setRole: (r: string) => void }) {
+  const t = useT();
   const toast = useToast();
   const state = useApi<{ roles: Record<string, RolePerm[]> }>('/permissions/roles');
   const [changes, setChanges] = useState<Record<string, boolean>>({});
@@ -55,7 +58,7 @@ function RolesTab({ role, setRole }: { role: Role; setRole: (r: string) => void 
     setBusy(true);
     try {
       await api.put(`/permissions/roles/${role}`, { permissions: changes });
-      toast(`${ROLE_LABEL[role]} shabloni saqlandi`);
+      toast(tr('{role} shabloni saqlandi', { role: ROLE_LABEL[role] }));
       setChanges({});
       state.reload();
     } catch (e) {
@@ -92,12 +95,12 @@ function RolesTab({ role, setRole }: { role: Role; setRole: (r: string) => void 
                         {p.configurable ? (
                           <label className="check">
                             <input type="checkbox" checked={value} onChange={(e) => setChanges((c) => { const n = { ...c }; if (e.target.checked === p.allowed) delete n[p.code]; else n[p.code] = e.target.checked; return n; })} />
-                            {value ? 'Yoqilgan' : "O'chirilgan"}
+                            {value ? t('Yoqilgan') : t("O'chirilgan")}
                           </label>
                         ) : p.allowed ? (
-                          <Tag kind="ok">Rol bilan</Tag>
+                          <Tag kind="ok">{t("Rol bilan")}</Tag>
                         ) : (
-                          <Tag kind="mute">Mumkin emas</Tag>
+                          <Tag kind="mute">{t("Mumkin emas")}</Tag>
                         )}
                       </li>
                     );
@@ -126,6 +129,7 @@ function UsersTab({ userId, setUser }: { userId: string; setUser: (u: string) =>
 }
 
 function UserPerms({ userId }: { userId: string }) {
+  const t = useT();
   const toast = useToast();
   const state = useApi<{ user: { fullName: string; role: Role }; permissions: UserPerm[] }>(`/permissions/users/${userId}`);
   const [changes, setChanges] = useState<Record<string, boolean | null>>({});
@@ -154,16 +158,16 @@ function UserPerms({ userId }: { userId: string }) {
                 {d.user.fullName}, {ROLE_LABEL[d.user.role].toLowerCase()}: {configurable.length} ta sozlanadigan ruxsat
               </p>
               <Button variant="primary" busy={busy} disabled={!Object.keys(changes).length} onClick={save}>
-                Saqlash
+                {t("Saqlash")}
               </Button>
             </div>
             <div className="table-wrap">
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Ruxsat</th>
-                    <th>Rol shablonida</th>
-                    <th>Bu xodim uchun</th>
+                    <th>{t("Ruxsat")}</th>
+                    <th>{t("Rol shablonida")}</th>
+                    <th>{t("Bu xodim uchun")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -175,11 +179,11 @@ function UserPerms({ userId }: { userId: string }) {
                           {p.description}
                           <div className="cell-sub fig">{p.code}</div>
                         </td>
-                        <td>{p.template ? <Tag kind="ok">Yoqilgan</Tag> : <Tag kind="mute">O&apos;chirilgan</Tag>}</td>
+                        <td>{p.template ? <Tag kind="ok">{t("Yoqilgan")}</Tag> : <Tag kind="mute">{t("O'chirilgan")}</Tag>}</td>
                         <td>
                           <select
                             className="select"
-                            aria-label={`${p.description}: istisno`}
+                            aria-label={t('{name}: istisno', { name: p.description })}
                             value={cur === null || cur === undefined ? '' : cur ? 'on' : 'off'}
                             onChange={(e) => {
                               const v = e.target.value === '' ? null : e.target.value === 'on';
@@ -191,9 +195,9 @@ function UserPerms({ userId }: { userId: string }) {
                               });
                             }}
                           >
-                            <option value="">Shablon bo&apos;yicha</option>
-                            <option value="on">Ruxsat beriladi</option>
-                            <option value="off">Ruxsat yo&apos;q</option>
+                            <option value="">{t("Shablon bo'yicha")}</option>
+                            <option value="on">{t("Ruxsat beriladi")}</option>
+                            <option value="off">{t("Ruxsat yo'q")}</option>
                           </select>
                         </td>
                       </tr>

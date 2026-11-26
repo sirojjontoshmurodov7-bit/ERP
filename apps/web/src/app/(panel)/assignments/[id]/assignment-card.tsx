@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { cleanLinks, LinkList, LinksEditor } from '@/components/links-editor';
@@ -12,6 +13,7 @@ import { AssignmentDialog } from '../assignments-page';
 import type { Assignment, LinkItem, Submission } from '../types';
 
 export function AssignmentCard() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { can, is } = useSession();
   const a = useApi<Assignment>(`/assignments/${id}`);
@@ -26,13 +28,13 @@ export function AssignmentCard() {
             <PageHead
               crumbs={[{ href: '/assignments', label: 'Vazifalar' }]}
               title={d.title}
-              sub={`${d.groupName}, ${d.teacherName}${d.archivedAt ? ', arxivda' : ''}`}
+              sub={`${d.groupName}, ${d.teacherName}${d.archivedAt ? `, ${t('arxivda')}` : ''}`}
               actions={
                 teacherOwns && !d.archivedAt ? (
                   <>
-                    <Button onClick={() => setEdit(true)}>Tahrirlash</Button>
+                    <Button onClick={() => setEdit(true)}>{t("Tahrirlash")}</Button>
                     <Button variant="ghost" onClick={() => setArchive(true)}>
-                      Arxivlash
+                      {t("Arxivlash")}
                     </Button>
                   </>
                 ) : null
@@ -40,14 +42,14 @@ export function AssignmentCard() {
             />
             <div className="split">
               <section className="panel panel-body stack-sm">
-                <h2>Topshiriq</h2>
-                {d.description ? <p className="prewrap">{d.description}</p> : <p className="muted">Tavsif yo&apos;q.</p>}
+                <h2>{t("Topshiriq")}</h2>
+                {d.description ? <p className="prewrap">{d.description}</p> : <p className="muted">{t("Tavsif yo'q.")}</p>}
                 <LinkList items={d.attachments} />
               </section>
               <aside className="stats stats--col">
                 <Stat label="Muddat" value={<span className="stat-text">{d.dueAt ? dateTime(d.dueAt) : 'muddatsiz'}</span>} />
                 <Stat label="Maksimal ball" value={d.maxScore} />
-                {d.counts ? <Stat label="Topshirgan" value={`${d.counts.submitted}/${d.counts.students}`} note={`${d.counts.graded} baholangan`} /> : null}
+                {d.counts ? <Stat label="Topshirgan" value={`${d.counts.submitted}/${d.counts.students}`} note={t('{n} baholangan', { n: d.counts.graded })} /> : null}
               </aside>
             </div>
             {is('STUDENT') ? <MySubmission a={d} onChange={a.reload} /> : <Submissions a={d} canGrade={can('homework.grade') && is('TEACHER')} onChange={a.reload} />}
@@ -71,12 +73,13 @@ export function AssignmentCard() {
 }
 
 function Submissions({ a, canGrade, onChange }: { a: Assignment; canGrade: boolean; onChange: () => void }) {
+  const t = useT();
   const [grading, setGrading] = useState<Submission | null>(null);
   const subs = a.submissions ?? [];
   return (
     <section className="panel">
       <div className="panel-head">
-        <h2>Topshiriqlar</h2>
+        <h2>{t("Topshiriqlar")}</h2>
       </div>
       <div className="panel-body--flush">
         {!subs.length ? (
@@ -87,13 +90,13 @@ function Submissions({ a, canGrade, onChange }: { a: Assignment; canGrade: boole
               <li key={s.id} className="stack-sm">
                 <div className="row" data-between>
                   <span>
-                    <span className="cell-main">{s.studentName}</span> <span className="cell-sub fig">{dateTime(s.submittedAt)}</span> {s.late ? <Tag kind="warn">kech</Tag> : null}
+                    <span className="cell-main">{s.studentName}</span> <span className="cell-sub fig">{dateTime(s.submittedAt)}</span> {s.late ? <Tag kind="warn">{t("kech")}</Tag> : null}
                   </span>
                   <span className="row">
-                    {s.gradedAt ? <span className="fig cell-main">{s.score}/{s.maxScore}</span> : <Tag kind="mute">baholanmagan</Tag>}
+                    {s.gradedAt ? <span className="fig cell-main">{s.score}/{s.maxScore}</span> : <Tag kind="mute">{t("baholanmagan")}</Tag>}
                     {canGrade && !s.gradedAt && !a.archivedAt ? (
                       <Button size="sm" variant="primary" onClick={() => setGrading(s)}>
-                        Baholash
+                        {t("Baholash")}
                       </Button>
                     ) : null}
                   </span>
@@ -112,6 +115,7 @@ function Submissions({ a, canGrade, onChange }: { a: Assignment; canGrade: boole
 }
 
 const GradeDialog = whenOpen(function GradeInner({ open, sub, a, onClose, onDone }: { open: boolean; sub: Submission | null; a: Assignment; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const s0 = sub!;
   const [score, setScore] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -119,7 +123,7 @@ const GradeDialog = whenOpen(function GradeInner({ open, sub, a, onClose, onDone
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const n = Number(score);
-    if (score === '' || !Number.isInteger(n) || n < 0 || n > a.maxScore) return s.setError(`Ball 0 dan ${a.maxScore} gacha butun son`);
+    if (score === '' || !Number.isInteger(n) || n < 0 || n > a.maxScore) return s.setError(t('Ball 0 dan {max} gacha butun son', { max: a.maxScore }));
     const r = await s.run(() => api.post(`/assignments/${a.id}/submissions/${s0.studentId}/grade`, { score: n, ...(feedback.trim() ? { feedback: feedback.trim() } : {}) }));
     if (r) {
       onDone();
@@ -127,10 +131,10 @@ const GradeDialog = whenOpen(function GradeInner({ open, sub, a, onClose, onDone
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={`${s0.studentName ?? ''}: baholash`} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="grade-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={t('{name}: baholash', { name: s0.studentName ?? '' })} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="grade-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="grade-form" className="form" onSubmit={submit} noValidate>
-        <p className="muted small">Baho bir marta qo&apos;yiladi va reyting balliga aylanadi.</p>
-        <TextInput label={`Ball (0 dan ${a.maxScore} gacha)`} type="number" min={0} max={a.maxScore} value={score} onChange={(e) => setScore(e.target.value)} error={s.fields.score} autoFocus />
+        <p className="muted small">{t("Baho bir marta qo'yiladi va reyting balliga aylanadi.")}</p>
+        <TextInput label={t('Ball (0 dan {max} gacha)', { max: a.maxScore })} type="number" min={0} max={a.maxScore} value={score} onChange={(e) => setScore(e.target.value)} error={s.fields.score} autoFocus />
         <TextArea label="Izoh" optional value={feedback} onChange={(e) => setFeedback(e.target.value)} maxLength={1000} />
         {s.error ? <p className="form-error" role="alert">{s.error}</p> : null}
       </form>
@@ -139,6 +143,7 @@ const GradeDialog = whenOpen(function GradeInner({ open, sub, a, onClose, onDone
 });
 
 function MySubmission({ a, onChange }: { a: Assignment; onChange: () => void }) {
+  const t = useT();
   const toast = useToast();
   const sub = a.submission ?? null;
   const [text, setText] = useState(sub?.text ?? '');
@@ -162,7 +167,7 @@ function MySubmission({ a, onChange }: { a: Assignment; onChange: () => void }) 
   return (
     <section className="panel panel-body stack">
       <div className="row" data-between>
-        <h2>Mening javobim</h2>
+        <h2>{t("Mening javobim")}</h2>
         {sub?.gradedAt ? <span className="stamp">{sub.score}/{sub.maxScore}</span> : sub ? <Tag kind="ok">Topshirilgan {dateTime(sub.submittedAt)}</Tag> : null}
       </div>
       {sub?.feedback ? <p>Ustoz izohi: {sub.feedback}</p> : null}
@@ -177,7 +182,7 @@ function MySubmission({ a, onChange }: { a: Assignment; onChange: () => void }) 
           <LinksEditor value={links} onChange={setLinks} />
           <div>
             <Button variant="primary" busy={busy} onClick={send}>
-              {sub ? 'Qayta topshirish' : 'Topshirish'}
+              {sub ? t('Qayta topshirish') : t('Topshirish')}
             </Button>
           </div>
         </>

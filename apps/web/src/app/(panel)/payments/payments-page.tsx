@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Icon } from '@/components/icons';
@@ -12,6 +13,7 @@ import { useApi } from '@/lib/use-api';
 const LIMIT = 50;
 
 export function PaymentsPage() {
+  const t = useT();
   const { can, is } = useSession();
   const router = useRouter();
   const [f, setF] = useUrlState({ from: is('STUDENT') ? '' : todayLocal(), to: is('STUDENT') ? '' : todayLocal(), method: '', branchId: '', status: '', offset: '0', new: '' });
@@ -25,7 +27,7 @@ export function PaymentsPage() {
     <>
       <PageHead
         title={is('STUDENT') ? "To'lovlarim" : "To'lovlar"}
-        actions={can('payment.create') ? <Button variant="primary" icon={<Icon.cash />} onClick={() => setF({ new: '1' })}>To&apos;lov qabul qilish</Button> : null}
+        actions={can('payment.create') ? <Button variant="primary" icon={<Icon.cash />} onClick={() => setF({ new: '1' })}>{t("To'lov qabul qilish")}</Button> : null}
       />
       {!is('STUDENT') ? (
         <div className="toolbar">
@@ -49,12 +51,12 @@ export function PaymentsPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Chek</th>
-                    <th>Vaqt</th>
-                    {!is('STUDENT') ? <th>O&apos;quvchi</th> : null}
-                    <th>Usul</th>
-                    <th>Qabul qildi</th>
-                    <th className="num">Summa, so&apos;m</th>
+                    <th>{t("Chek")}</th>
+                    <th>{t("Vaqt")}</th>
+                    {!is('STUDENT') ? <th>{t("O'quvchi")}</th> : null}
+                    <th>{t("Usul")}</th>
+                    <th>{t("Qabul qildi")}</th>
+                    <th className="num">{t("Summa, so'm")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -64,7 +66,7 @@ export function PaymentsPage() {
                         <Link className="cell-main" href={`/payments/${p.id}`} onClick={(e) => e.stopPropagation()}>
                           №{p.receiptNo}
                         </Link>{' '}
-                        {p.reversesPaymentId ? <Tag kind="bad">qaytarish</Tag> : p.status === 'REVERSED' ? <Tag kind="mute">qaytarilgan</Tag> : null}
+                        {p.reversesPaymentId ? <Tag kind="bad">{t("qaytarish")}</Tag> : p.status === 'REVERSED' ? <Tag kind="mute">{t("qaytarilgan")}</Tag> : null}
                       </td>
                       <td className="fig">{dateTime(p.paidAt)}</td>
                       {!is('STUDENT') ? (

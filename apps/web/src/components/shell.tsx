@@ -1,5 +1,6 @@
 'use client';
 // Panel qobig'i: sessiyani yuklaydi (`/auth/me`), parolni majburiy almashtirishga yo'naltiradi, yon menyu va yuqori panelni chizadi.
+import { LANGS, setLang, useLang, useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +29,7 @@ export function initials(name: string) {
 }
 
 export function Shell({ children }: { children: ReactNode }) {
+  const t = useT();
   const router = useRouter();
   const pathname = usePathname();
   const [me, setMe] = useState<Me | null>(null);
@@ -112,19 +114,19 @@ export function Shell({ children }: { children: ReactNode }) {
   if (!session) {
     return (
       <div className="auth" aria-busy="true">
-        <span className="spinner" aria-label="Yuklanmoqda" />
+        <span className="spinner" aria-label={t("Yuklanmoqda")} />
       </div>
     );
   }
 
   const groups = navFor(session);
   const role = session.me.role;
-  const centerName = session.me.center?.name ?? 'Platforma';
+  const centerName = session.me.center?.name ?? t('Platforma');
   return (
     <SessionProvider value={session}>
       <ToastProvider>
         <div className="shell" data-menu={menu ? 'open' : 'closed'} data-collapsed={collapsed}>
-          <aside className="sidebar" aria-label="Asosiy menyu">
+          <aside className="sidebar" aria-label={t("Asosiy menyu")}>
             <div className="sidebar-top">
               <div className="brand">
                 <Link className="brand-link" href="/dashboard" title={BRAND} onClick={() => setMenu(false)}>
@@ -133,10 +135,10 @@ export function Shell({ children }: { children: ReactNode }) {
                   </span>
                   <span className="brand-text sidebar-label">
                     <span className="brand-name">{BRAND}</span>
-                    <span className="brand-sub">{role === 'STUDENT' ? "O'quvchi portali" : centerName}</span>
+                    <span className="brand-sub">{role === 'STUDENT' ? t("O'quvchi portali") : centerName}</span>
                   </span>
                 </Link>
-                <button type="button" className="icon-btn icon-btn--bare collapse-btn" aria-label={collapsed ? 'Yon panelni ochish' : "Yon panelni yig'ish"} aria-pressed={collapsed} onClick={toggleCollapse}>
+                <button type="button" className="icon-btn icon-btn--bare collapse-btn" aria-label={collapsed ? t('Yon panelni ochish') : t("Yon panelni yig'ish")} aria-pressed={collapsed} onClick={toggleCollapse}>
                   {collapsed ? <Icon.panelOpen /> : <Icon.panel />}
                 </button>
               </div>
@@ -146,19 +148,19 @@ export function Shell({ children }: { children: ReactNode }) {
                   <span className="dot" />
                   {ROLE_LABEL[role]}
                 </span>
-                <span className="role-pill-scope">{ROLE_SCOPE[role] || session.me.login}</span>
+                <span className="role-pill-scope">{ROLE_SCOPE[role] ? t(ROLE_SCOPE[role]) : session.me.login}</span>
               </div>
 
-              <nav className="nav" aria-label="Bo'limlar">
+              <nav className="nav" aria-label={t("Bo'limlar")}>
                 {groups.map((g, i) => (
                   <div className="nav-group" key={g.title ?? i}>
-                    {g.title ? <span className="nav-group-title">{g.title}</span> : null}
+                    {g.title ? <span className="nav-group-title">{t(g.title)}</span> : null}
                     {g.items.map((item) => {
                       const I = Icon[item.icon];
                       return (
-                        <Link key={item.href} href={item.href} className="nav-link" title={collapsed ? item.label : undefined} onClick={() => setMenu(false)} aria-current={isActive(pathname, item.href) ? 'page' : undefined}>
+                        <Link key={item.href} href={item.href} className="nav-link" title={collapsed ? t(item.label) : undefined} onClick={() => setMenu(false)} aria-current={isActive(pathname, item.href) ? 'page' : undefined}>
                           <I />
-                          <span className="nav-label sidebar-label">{item.label}</span>
+                          <span className="nav-label sidebar-label">{t(item.label)}</span>
                         </Link>
                       );
                     })}
@@ -174,12 +176,12 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="main">
             <header className="topbar">
               <div className="topbar-left">
-                <button type="button" className="icon-btn menu-toggle" aria-label="Menyuni ochish" aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
+                <button type="button" className="icon-btn menu-toggle" aria-label={t("Menyuni ochish")} aria-expanded={menu} onClick={() => setMenu((m) => !m)}>
                   <Icon.menu />
                 </button>
                 <span className="ctx-chip" data-tone="violet">
                   {role === 'SUPER_ADMIN' ? <Icon.globe /> : <Icon.building />}
-                  <span>{role === 'SUPER_ADMIN' ? 'Barcha markazlar' : centerName}</span>
+                  <span>{role === 'SUPER_ADMIN' ? t('Barcha markazlar') : centerName}</span>
                 </span>
                 <span className="ctx-chip ctx-chip--hide-sm" data-tone="cyan">
                   <Icon.calendar />
@@ -205,6 +207,7 @@ export function Shell({ children }: { children: ReactNode }) {
 }
 
 function StudentSearch() {
+  const t = useT();
   const router = useRouter();
   const [q, setQ] = useState('');
   const submit = (e: FormEvent) => {
@@ -216,24 +219,26 @@ function StudentSearch() {
     <form className="topbar-search" role="search" onSubmit={submit}>
       <Icon.search />
       <label className="visually-hidden" htmlFor="top-search">
-        O&apos;quvchi qidirish
+        {t("O'quvchi qidirish")}
       </label>
-      <input id="top-search" type="search" placeholder="O'quvchi: ism, login yoki telefon" value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
+      <input id="top-search" type="search" placeholder={t("O'quvchi: ism, login yoki telefon")} value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
     </form>
   );
 }
 
 export function ThemeButton() {
+  const t = useT();
   const [theme, toggle] = useTheme();
   const light = theme === 'light';
   return (
-    <button type="button" className="icon-btn" aria-label={light ? "Qorong'i rejimga o'tish" : "Yorug' rejimga o'tish"} title={light ? "Qorong'i rejim" : "Yorug' rejim"} onClick={toggle}>
+    <button type="button" className="icon-btn" aria-label={light ? t("Qorong'i rejimga o'tish") : t("Yorug' rejimga o'tish")} title={light ? t("Qorong'i rejim") : t("Yorug' rejim")} onClick={toggle}>
       {light ? <Icon.moon /> : <Icon.sun />}
     </button>
   );
 }
 
 function Account({ session, onLogout }: { session: Session; onLogout: () => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -273,11 +278,12 @@ function Account({ session, onLogout }: { session: Session; onLogout: () => void
           </div>
           <Link className="menu-item" role="menuitem" href="/profile" onClick={() => setOpen(false)}>
             <Icon.user />
-            Profil
+            {t("Profil")}
           </Link>
+          <LangSwitch />
           <button type="button" className="menu-item menu-item--danger" role="menuitem" onClick={onLogout}>
             <Icon.logout />
-            Chiqish
+            {t("Chiqish")}
           </button>
         </div>
       ) : null}
@@ -285,17 +291,44 @@ function Account({ session, onLogout }: { session: Session; onLogout: () => void
   );
 }
 
+/** Til: tanlov cookie'da; sahifa qayta yuklanadi (hamma matn, sana va xato xabarlari bir xil tilda bo'lsin). */
+function LangSwitch() {
+  const t = useT();
+  const lang = useLang();
+  return (
+    <div className="menu-lang" role="group" aria-label={t('Til')}>
+      {LANGS.map((l) => (
+        <button
+          key={l.value}
+          type="button"
+          role="menuitemradio"
+          aria-checked={lang === l.value}
+          className="menu-lang-btn"
+          onClick={() => {
+            if (lang === l.value) return;
+            setLang(l.value);
+            window.location.reload();
+          }}
+        >
+          {l.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function FootCard({ session }: { session: Session }) {
+  const t = useT();
   const { me } = session;
   if (me.role === 'STUDENT') return <StudentBalance id={me.id} />;
   if (me.role === 'SUPER_ADMIN') {
     return (
       <div className="foot-card" data-tone="violet">
         <div className="foot-card-row">
-          Platforma
-          <strong>Global</strong>
+          {t("Platforma")}
+          <strong>{t("Global")}</strong>
         </div>
-        <p>Markazlar, tariflar va rahbar akkauntlari shu yerdan boshqariladi.</p>
+        <p>{t("Markazlar, tariflar va rahbar akkauntlari shu yerdan boshqariladi.")}</p>
       </div>
     );
   }
@@ -305,15 +338,16 @@ function FootCard({ session }: { session: Session }) {
   return (
     <div className="foot-card" data-tone={trial ? 'amber' : 'emerald'}>
       <div className="foot-card-row">
-        Markaz holati
-        <strong>{trial ? 'Sinov' : c.status === 'ACTIVE' ? 'Faol' : c.status}</strong>
+        {t("Markaz holati")}
+        <strong>{trial ? t('Sinov') : c.status === 'ACTIVE' ? t('Faol') : c.status}</strong>
       </div>
-      <p>{trial && c.trialEndsAt ? `Sinov muddati ${date(tsDay(c.trialEndsAt))} gacha.` : `${c.name} ma'lumotlari faqat shu markaz doirasida.`}</p>
+      <p>{trial && c.trialEndsAt ? t('Sinov muddati {date} gacha.', { date: date(tsDay(c.trialEndsAt)) }) : t("{name} ma'lumotlari faqat shu markaz doirasida.", { name: c.name })}</p>
     </div>
   );
 }
 
 function StudentBalance({ id }: { id: string }) {
+  const t = useT();
   const bal = useApi<{ debt: number; advance: number; openCharges: { dueDate: string }[] }>(`/students/${id}/balance`);
   const b = bal.data;
   if (!b) return null;
@@ -321,10 +355,10 @@ function StudentBalance({ id }: { id: string }) {
   return (
     <div className="foot-card" data-tone={debt ? 'coral' : 'emerald'}>
       <div className="foot-card-row">
-        Balansim
+        {t("Balansim")}
         <strong>{debt ? `-${money(b.debt)}` : `+${money(b.advance)}`} so&apos;m</strong>
       </div>
-      <p>{debt && b.openCharges[0] ? `Eng eski muddat: ${date(b.openCharges[0].dueDate)}` : "Qarz yo'q."}</p>
+      <p>{debt && b.openCharges[0] ? t('Eng eski muddat: {date}', { date: date(b.openCharges[0].dueDate) }) : t("Qarz yo'q.")}</p>
     </div>
   );
 }

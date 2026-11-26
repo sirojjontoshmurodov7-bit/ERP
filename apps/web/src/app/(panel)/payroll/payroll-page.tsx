@@ -1,4 +1,5 @@
 'use client';
+import { tr, trMap, useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { METHODS } from '@/components/payment-dialog';
@@ -68,7 +69,7 @@ interface Rule {
 }
 
 const PERIOD_STATUS = { DRAFT: { label: 'Qoralama', kind: 'warn' as const }, APPROVED: { label: 'Tasdiqlangan', kind: 'ok' as const }, PAID: { label: "To'langan", kind: 'ok' as const } };
-const RULE_TYPE: Record<Rule['type'], string> = { FIXED: "Qat'iy oylik", PERCENT: "To'lovdan foiz", PER_GROUP: 'Har guruh uchun', PER_LESSON: 'Har dars uchun' };
+const RULE_TYPE: Record<Rule['type'], string> = trMap({ FIXED: "Qat'iy oylik", PERCENT: "To'lovdan foiz", PER_GROUP: 'Har guruh uchun', PER_LESSON: 'Har dars uchun' });
 
 export function PayrollPage() {
   const { can } = useSession();
@@ -98,6 +99,7 @@ function PayrollAdmin() {
 }
 
 function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) => void }) {
+  const t = useT();
   const { can } = useSession();
   const toast = useToast();
   const periods = useApi<{ items: { month: string; status: keyof typeof PERIOD_STATUS; total: number; remaining: number }[] }>('/payroll/periods', { limit: 24 });
@@ -142,18 +144,18 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
         <span className="topbar-spacer" />
         {can('payroll.calculate') && (notCalculated || draft) ? (
           <Button busy={busy === 'calc'} onClick={calculate}>
-            {notCalculated ? 'Hisoblash' : 'Qayta hisoblash'}
+            {notCalculated ? t('Hisoblash') : t('Qayta hisoblash')}
           </Button>
         ) : null}
         {can('payroll.approve') && draft ? (
           <Button variant="primary" onClick={() => setApprove(true)}>
-            Tasdiqlash
+            {t("Tasdiqlash")}
           </Button>
         ) : null}
       </div>
       {notCalculated ? (
         <div className="panel">
-          <Empty title={`${monthLabel(month)}: hali hisoblanmagan`} text="Hisoblash qoidalar bo'yicha qoralama tuzadi; tasdiqlanguncha qayta hisoblash mumkin." action={can('payroll.calculate') ? <Button variant="primary" size="sm" busy={busy === 'calc'} onClick={calculate}>Hisoblash</Button> : undefined} />
+          <Empty title={t('{month}: hali hisoblanmagan', { month: monthLabel(month) })} text="Hisoblash qoidalar bo'yicha qoralama tuzadi; tasdiqlanguncha qayta hisoblash mumkin." action={can('payroll.calculate') ? <Button variant="primary" size="sm" busy={busy === 'calc'} onClick={calculate}>{t("Hisoblash")}</Button> : undefined} />
         </div>
       ) : (
         <DataView state={period} skeleton={<Skeleton rows={5} cols={5} />}>
@@ -176,15 +178,15 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
                         <span className="row">
                           {draft && can('payroll.calculate') ? (
                             <Button size="sm" variant="ghost" onClick={() => setAdjust(e)}>
-                              Bonus yoki jarima
+                              {t("Bonus yoki jarima")}
                             </Button>
                           ) : null}
                           {!draft && can('payroll.pay') && e.remaining > 0 ? (
                             <Button size="sm" variant="primary" onClick={() => setPayout(e)}>
-                              To&apos;lash
+                              {t("To'lash")}
                             </Button>
                           ) : null}
-                          {!draft && e.total > 0 && e.remaining === 0 ? <span className="stamp">To&apos;landi</span> : null}
+                          {!draft && e.total > 0 && e.remaining === 0 ? <span className="stamp">{t("To'landi")}</span> : null}
                         </span>
                       </div>
                       <div className="panel-body--flush">
@@ -204,7 +206,7 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
                               {e.adjustments.map((a) => (
                                 <tr key={a.id}>
                                   <td>
-                                    {a.amount > 0 ? 'Bonus' : 'Jarima'}: {a.reason}
+                                    {a.amount > 0 ? t('Bonus') : t('Jarima')}: {a.reason}
                                   </td>
                                   <td className={a.amount < 0 ? 'num debt' : 'num'}>{money(a.amount)}</td>
                                   <td className="actions-cell">
@@ -227,7 +229,7 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
                             </tbody>
                             <tfoot>
                               <tr>
-                                <td>Jami {e.paid ? `(to'langan ${money(e.paid)})` : ''}</td>
+                                <td>{e.paid ? t("Jami (to'langan {sum})", { sum: money(e.paid) }) : t('Jami')}</td>
                                 <td className="num">{money(e.total)}</td>
                                 <td className="actions-cell" />
                               </tr>
@@ -250,7 +252,7 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
       <Confirm
         open={approve}
         onClose={() => setApprove(false)}
-        title={`${monthLabel(month)} maoshini tasdiqlash`}
+        title={t('{month} maoshini tasdiqlash', { month: monthLabel(month) })}
         text="Tasdiqlangan davr qulflanadi: qayta hisoblash, bonus va jarima qo'shish mumkin bo'lmaydi. Keyin to'lov qilinadi."
         confirmLabel="Tasdiqlash"
         onConfirm={async () => {
@@ -264,7 +266,7 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
         open={delAdj !== null}
         onClose={() => setDelAdj(null)}
         title="Bonus yoki jarimani o'chirish"
-        text={`${delAdj?.reason ?? ''}: ${money(delAdj?.amount)} so'm.`}
+        text={t("{reason}: {sum} so'm.", { reason: delAdj?.reason ?? '', sum: money(delAdj?.amount) })}
         confirmLabel="O'chirish"
         danger
         onConfirm={async () => {
@@ -277,6 +279,7 @@ function PeriodTab({ month, setMonth }: { month: string; setMonth: (m: string) =
 }
 
 const AdjustDialog = whenOpen(function AdjustInner({ open, employee, month, onClose, onDone }: { open: boolean; employee: Employee | null; month: string; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const e = employee!;
   const [kind, setKind] = useState<'bonus' | 'fine'>('bonus');
   const [amount, setAmount] = useState<number | ''>('');
@@ -284,7 +287,7 @@ const AdjustDialog = whenOpen(function AdjustInner({ open, employee, month, onCl
   const s = useSubmit();
   const submit = async (ev: React.FormEvent) => {
     ev.preventDefault();
-    if (!amount) return s.setError('Summani kiriting');
+    if (!amount) return s.setError(t('Summani kiriting'));
     const r = await s.run(() => api.post(`/payroll/periods/${month}/adjustments`, { employeeId: e.employeeId, amount: kind === 'bonus' ? amount : -amount, reason: reason.trim() }));
     if (r) {
       onDone();
@@ -292,7 +295,7 @@ const AdjustDialog = whenOpen(function AdjustInner({ open, employee, month, onCl
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={`${e.employeeName}: bonus yoki jarima`} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="adj-form" busy={s.busy}>Qo&apos;shish</Button></>}>
+    <Dialog open={open} onClose={onClose} title={t('{name}: bonus yoki jarima', { name: e.employeeName })} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="adj-form" busy={s.busy}>{t("Qo'shish")}</Button></>}>
       <form id="adj-form" className="form" onSubmit={submit} noValidate>
         <Segmented label="Turi" value={kind} onChange={setKind} options={[{ value: 'bonus', label: 'Bonus' }, { value: 'fine', label: 'Jarima' }]} />
         <MoneyInput label="Summa" value={amount} onChange={setAmount} error={s.fields.amount} />
@@ -304,6 +307,7 @@ const AdjustDialog = whenOpen(function AdjustInner({ open, employee, month, onCl
 });
 
 const PayoutDialog = whenOpen(function PayoutInner({ open, employee, month, onClose, onDone }: { open: boolean; employee: Employee | null; month: string; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const e = employee!;
   const [amount, setAmount] = useState<number | ''>(e.remaining);
   const [method, setMethod] = useState<'CASH' | 'CARD' | 'TRANSFER'>('CASH');
@@ -311,7 +315,7 @@ const PayoutDialog = whenOpen(function PayoutInner({ open, employee, month, onCl
   const s = useSubmit();
   const submit = async (ev: React.FormEvent) => {
     ev.preventDefault();
-    if (!amount) return s.setError('Summani kiriting');
+    if (!amount) return s.setError(t('Summani kiriting'));
     const r = await s.run(() => api.post('/payroll/payouts', { month, employeeId: e.employeeId, amount, method, ...(note.trim() ? { note: note.trim() } : {}) }));
     if (r) {
       onDone();
@@ -319,14 +323,14 @@ const PayoutDialog = whenOpen(function PayoutInner({ open, employee, month, onCl
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={`${e.employeeName}: maosh to'lash`} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="payout-form" busy={s.busy}>To&apos;lash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={t("{name}: maosh to'lash", { name: e.employeeName })} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="payout-form" busy={s.busy}>{t("To'lash")}</Button></>}>
       <form id="payout-form" className="form" onSubmit={submit} noValidate>
         <p className="muted">
-          {monthLabel(month)}: qoldiq <span className="fig">{money(e.remaining)}</span> so&apos;m
+          {t("{month}: qoldiq {sum} so'm", { month: monthLabel(month), sum: money(e.remaining) })}
         </p>
         <MoneyInput label="Summa" value={amount} onChange={setAmount} error={s.fields.amount} hint="Qoldiqdan oshmasin; bo'lib to'lash mumkin" />
         <div className="field">
-          <span className="field-label">Usul</span>
+          <span className="field-label">{t("Usul")}</span>
           <Segmented label="Usul" value={method} onChange={setMethod} options={METHODS.map((m) => ({ value: m.value, label: m.label }))} />
         </div>
         <TextInput label="Izoh" optional value={note} onChange={(ev) => setNote(ev.target.value)} maxLength={200} />
@@ -337,11 +341,12 @@ const PayoutDialog = whenOpen(function PayoutInner({ open, employee, month, onCl
 });
 
 function ruleText(r: Rule) {
-  if (r.type === 'PERCENT') return `${r.percent}% (${r.percentBase === 'PAID' ? "to'langan summadan" : 'hisoblangan summadan'})`;
-  return `${money(r.amount)} so'm`;
+  if (r.type === 'PERCENT') return `${r.percent}% (${r.percentBase === 'PAID' ? tr("to'langan summadan") : tr('hisoblangan summadan')})`;
+  return `${money(r.amount)} ${tr("so'm")}`;
 }
 
 function RulesTab({ canManage }: { canManage: boolean }) {
+  const t = useT();
   const [active, setActive] = useState('true');
   const list = useApi<{ items: Rule[] }>('/payroll/rules', { active: active || undefined, limit: 200 });
   const [create, setCreate] = useState(false);
@@ -353,7 +358,7 @@ function RulesTab({ canManage }: { canManage: boolean }) {
         <span className="topbar-spacer" />
         {canManage ? (
           <Button variant="primary" icon={<Icon.plus />} onClick={() => setCreate(true)}>
-            Yangi qoida
+            {t("Yangi qoida")}
           </Button>
         ) : null}
       </div>
@@ -363,12 +368,12 @@ function RulesTab({ canManage }: { canManage: boolean }) {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Xodim</th>
-                  <th>Turi</th>
-                  <th>Miqdor</th>
-                  <th>Guruh</th>
-                  <th>Amal qiladi</th>
-                  {canManage ? <th className="actions-cell" aria-label="Amallar" /> : null}
+                  <th>{t("Xodim")}</th>
+                  <th>{t("Turi")}</th>
+                  <th>{t("Miqdor")}</th>
+                  <th>{t("Guruh")}</th>
+                  <th>{t("Amal qiladi")}</th>
+                  {canManage ? <th className="actions-cell" aria-label={t("Amallar")} /> : null}
                 </tr>
               </thead>
               <tbody>
@@ -382,7 +387,7 @@ function RulesTab({ canManage }: { canManage: boolean }) {
                     <td className="fig">{ruleText(r)}</td>
                     <td className="muted">
                       {r.groupName ?? 'hammasi'}
-                      {r.teacherKind ? <div className="cell-sub">{r.teacherKind === 'MAIN' ? 'asosiy ustoz sifatida' : 'yordamchi sifatida'}</div> : null}
+                      {r.teacherKind ? <div className="cell-sub">{r.teacherKind === 'MAIN' ? t('asosiy ustoz sifatida') : t('yordamchi sifatida')}</div> : null}
                     </td>
                     <td className="fig">
                       {date(r.validFrom)} dan {r.validTo ? `${date(r.validTo)} gacha` : 'muddatsiz'}
@@ -391,7 +396,7 @@ function RulesTab({ canManage }: { canManage: boolean }) {
                       <td className="actions-cell">
                         {!r.validTo || r.validTo >= todayLocal() ? (
                           <Button size="sm" variant="ghost" onClick={() => setEnd(r)}>
-                            Tugatish
+                            {t("Tugatish")}
                           </Button>
                         ) : null}
                       </td>
@@ -420,6 +425,7 @@ function RulesTab({ canManage }: { canManage: boolean }) {
 }
 
 const RuleDialog = whenOpen(function RuleInner({ open, onClose, onDone }: { open: boolean; onClose: () => void; onDone: () => void }) {
+  const t = useT();
   const staff = useApi<{ items: { id: string; fullName: string; role: string; status: string }[] }>('/staff', { status: 'ACTIVE', limit: 200 });
   const groups = useGroupsLite();
   const [v, setV] = useState({ employeeId: '', type: 'FIXED' as Rule['type'], groupId: '', percent: '', percentBase: 'PAID', teacherKind: '', validFrom: `${thisMonth()}-01` });
@@ -442,7 +448,7 @@ const RuleDialog = whenOpen(function RuleInner({ open, onClose, onDone }: { open
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title="Yangi maosh qoidasi" wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="rule-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Yangi maosh qoidasi" wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="rule-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="rule-form" className="form" onSubmit={submit} noValidate>
         <div className="form-grid">
           <SelectInput label="Xodim" value={v.employeeId} onChange={set('employeeId')} options={(staff.data?.items ?? []).map((x) => ({ value: x.id, label: `${x.fullName} (${ROLE_LABEL[x.role as keyof typeof ROLE_LABEL] ?? x.role})` }))} placeholder="Tanlang" error={s.fields.employeeId} />
@@ -470,21 +476,22 @@ const RuleDialog = whenOpen(function RuleInner({ open, onClose, onDone }: { open
 });
 
 function PayoutsTab({ month }: { month: string }) {
+  const t = useT();
   const { can } = useSession();
   const list = useApi<{ items: Payout[] }>('/payroll/payouts', { month, limit: 200 });
   const [reverse, setReverse] = useState<Payout | null>(null);
   return (
     <div className="table-wrap">
-      <DataView state={list} skeleton={<Skeleton rows={4} cols={4} />} empty={(d) => (d.items.length ? null : <Empty title={`${monthLabel(month)}: maosh to'lovi yo'q`} />)}>
+      <DataView state={list} skeleton={<Skeleton rows={4} cols={4} />} empty={(d) => (d.items.length ? null : <Empty title={t("{month}: maosh to'lovi yo'q", { month: monthLabel(month) })} />)}>
         {(d) => (
           <table className="table">
             <thead>
               <tr>
-                <th>Vaqt</th>
-                <th>Xodim</th>
-                <th>Usul</th>
-                <th className="num">Summa, so&apos;m</th>
-                {can('payroll.approve') ? <th className="actions-cell" aria-label="Amallar" /> : null}
+                <th>{t("Vaqt")}</th>
+                <th>{t("Xodim")}</th>
+                <th>{t("Usul")}</th>
+                <th className="num">{t("Summa, so'm")}</th>
+                {can('payroll.approve') ? <th className="actions-cell" aria-label={t("Amallar")} /> : null}
               </tr>
             </thead>
             <tbody>
@@ -501,10 +508,10 @@ function PayoutsTab({ month }: { month: string }) {
                     <td className="actions-cell">
                       {p.amount > 0 && p.status === 'CONFIRMED' ? (
                         <Button size="sm" variant="ghost" onClick={() => setReverse(p)}>
-                          Qaytarish
+                          {t("Qaytarish")}
                         </Button>
                       ) : p.status === 'REVERSED' ? (
-                        <Tag kind="mute">qaytarilgan</Tag>
+                        <Tag kind="mute">{t("qaytarilgan")}</Tag>
                       ) : null}
                     </td>
                   ) : null}
@@ -518,7 +525,7 @@ function PayoutsTab({ month }: { month: string }) {
         open={reverse !== null}
         onClose={() => setReverse(null)}
         title="Maosh to'lovini qaytarish"
-        text={`${reverse?.employeeName ?? ''}: ${money(reverse?.amount)} so'm. Teskari yozuv yaratiladi.`}
+        text={t("{name}: {sum} so'm. Teskari yozuv yaratiladi.", { name: reverse?.employeeName ?? '', sum: money(reverse?.amount) })}
         confirmLabel="Qaytarish"
         danger
         reason={{ label: 'Sabab', required: true }}
@@ -532,6 +539,7 @@ function PayoutsTab({ month }: { month: string }) {
 }
 
 function MyPayroll() {
+  const t = useT();
   const list = useApi<{ items: (Period['period'] & Employee)[] }>('/payroll/me', { limit: 12 });
   return (
     <>
@@ -543,7 +551,7 @@ function MyPayroll() {
               <section key={p.id} className="panel">
                 <div className="panel-head">
                   <h2>{monthLabel(p.month)}</h2>
-                  {p.remaining === 0 && p.total > 0 ? <span className="stamp">To&apos;landi</span> : <Tag kind="warn">Qoldiq {money(p.remaining)}</Tag>}
+                  {p.remaining === 0 && p.total > 0 ? <span className="stamp">{t("To'landi")}</span> : <Tag kind="warn">Qoldiq {money(p.remaining)}</Tag>}
                 </div>
                 <div className="panel-body--flush">
                   <div className="table-wrap">
@@ -561,7 +569,7 @@ function MyPayroll() {
                         {p.adjustments.map((a) => (
                           <tr key={a.id}>
                             <td>
-                              {a.amount > 0 ? 'Bonus' : 'Jarima'}: {a.reason}
+                              {a.amount > 0 ? t('Bonus') : t('Jarima')}: {a.reason}
                             </td>
                             <td className={a.amount < 0 ? 'num debt' : 'num'}>{money(a.amount)}</td>
                           </tr>

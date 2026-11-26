@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
@@ -11,6 +12,7 @@ import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
 export function BranchesPage() {
+  const t = useT();
   const { can } = useSession();
   const [archived, setArchived] = useState('false');
   const list = useApi<{ items: Branch[] }>('/branches', { includeArchived: archived });
@@ -21,7 +23,7 @@ export function BranchesPage() {
   const manage = can('branch.manage');
   return (
     <>
-      <PageHead title="Filiallar" actions={manage ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setEdit('new')}>Yangi filial</Button> : null} />
+      <PageHead title="Filiallar" actions={manage ? <Button variant="primary" icon={<Icon.plus />} onClick={() => setEdit('new')}>{t("Yangi filial")}</Button> : null} />
       {manage ? (
         <div className="toolbar">
           <SelectInput label="Arxiv" value={archived} onChange={(e) => setArchived(e.target.value)} options={[{ value: 'false', label: "Ko'rsatilmaydi" }, { value: 'true', label: "Ko'rsatiladi" }]} />
@@ -33,28 +35,28 @@ export function BranchesPage() {
             <table className="table">
               <thead>
                 <tr>
-                  <th>Filial</th>
-                  <th>Manzil</th>
-                  <th>Telefon</th>
-                  <th>Ochilgan</th>
-                  <th>Holat</th>
-                  {manage ? <th className="actions-cell" aria-label="Amallar" /> : null}
+                  <th>{t("Filial")}</th>
+                  <th>{t("Manzil")}</th>
+                  <th>{t("Telefon")}</th>
+                  <th>{t("Ochilgan")}</th>
+                  <th>{t("Holat")}</th>
+                  {manage ? <th className="actions-cell" aria-label={t("Amallar")} /> : null}
                 </tr>
               </thead>
               <tbody>
                 {d.items.map((b) => (
                   <tr key={b.id}>
                     <td className="cell-main">{b.name}</td>
-                    <td>{b.address ?? <span className="muted">{"yo'q"}</span>}</td>
-                    <td className="fig">{b.phone ?? <span className="muted">{"yo'q"}</span>}</td>
+                    <td>{b.address ?? <span className="muted">{t("yo'q")}</span>}</td>
+                    <td className="fig">{b.phone ?? <span className="muted">{t("yo'q")}</span>}</td>
                     <td className="fig muted">{tsDate(b.createdAt)}</td>
-                    <td>{b.archivedAt ? <Tag kind="mute">Arxivda</Tag> : <Tag kind="ok">Faol</Tag>}</td>
+                    <td>{b.archivedAt ? <Tag kind="mute">{t("Arxivda")}</Tag> : <Tag kind="ok">{t("Faol")}</Tag>}</td>
                     {manage ? (
                       <td className="actions-cell">
                         <span className="row">
                           {!b.archivedAt ? (
                             <Button size="sm" variant="ghost" onClick={() => setEdit(b)}>
-                              Tahrirlash
+                              {t("Tahrirlash")}
                             </Button>
                           ) : null}
                           <Button size="sm" variant="ghost" onClick={() => setToggle(b)}>
@@ -87,6 +89,7 @@ export function BranchesPage() {
 }
 
 const BranchDialog = whenOpen(function BranchDialogInner({ open, branch, onClose, onSaved }: { open: boolean; branch: Branch | null; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const [v, setV] = useState({ name: branch?.name ?? '', address: branch?.address ?? '', phone: branch?.phone ?? '' });
   const s = useSubmit();
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((x) => ({ ...x, [k]: e.target.value }));
@@ -99,7 +102,7 @@ const BranchDialog = whenOpen(function BranchDialogInner({ open, branch, onClose
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={branch ? 'Filialni tahrirlash' : 'Yangi filial'} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="branch-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={branch ? 'Filialni tahrirlash' : 'Yangi filial'} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="branch-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="branch-form" className="form" onSubmit={submit} noValidate>
         <TextInput label="Nomi" value={v.name} onChange={set('name')} error={s.fields.name} autoFocus />
         <TextInput label="Manzil" optional value={v.address} onChange={set('address')} error={s.fields.address} />

@@ -1,6 +1,7 @@
 'use client';
 // Rahbar bosh sahifasi: shu oy ko'rsatkichlari, filiallar globusi va filial kartasi, moliyaviy taqsimot, tushum grafigi, qarzdorlar, filiallar jadvali.
 // Hamma raqam API'dan: /reports/overview, /reports/branches, /reports/finance/daily, /debtors.
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Card, Columns, Dist, GlobeCard, Kpi, KpiSkeleton } from '@/components/dash';
@@ -52,6 +53,7 @@ function monthsBack(n: number) {
 const pctOf = (v: number, max: number) => (max > 0 ? Math.round((v / max) * 100) : 0);
 
 export function OwnerView() {
+  const t = useT();
   const { me } = useSession();
   const range = { from: monthStart(), to: todayLocal() };
   const ov = useApi<Overview>('/reports/overview', range);
@@ -60,25 +62,25 @@ export function OwnerView() {
     <>
       <PageHead
         title="Markaz boshqaruv paneli"
-        sub={`${me.center?.name ?? 'Markaz'} filiallari bo'yicha tushum, davomat va o'quvchilar, ${monthLabel(todayLocal().slice(0, 7)).toLowerCase()}.`}
+        sub={t("{center} filiallari bo'yicha tushum, davomat va o'quvchilar, {month}.", { center: me.center?.name ?? t('Markaz'), month: monthLabel(todayLocal().slice(0, 7)).toLowerCase() })}
         actions={
           <>
             <ButtonLink href="/reports" icon={<Icon.chart />}>
-              Hisobotlar
+              {t("Hisobotlar")}
             </ButtonLink>
             <ButtonLink href="/branches?new=1" variant="primary" icon={<Icon.plus />}>
-              Yangi filial
+              {t("Yangi filial")}
             </ButtonLink>
           </>
         }
       />
       <DataView state={ov} skeleton={<KpiSkeleton />}>
         {(o) => (
-          <section className="kpis" aria-label="Markaz ko'rsatkichlari">
-            <Kpi title="Faol o'quvchilar" icon="students" tone="violet" value={money(o.students.active)} note={o.students.new ? `+${o.students.new} yangi` : undefined} noteTone="emerald" />
-            <Kpi title="Shu oy tushum" icon="cash" tone="emerald" md value={<>{compact(o.finance.income)}<small>so&apos;m</small></>} note={`sof ${compact(o.finance.net)}`} noteTone={o.finance.net < 0 ? 'coral' : 'emerald'} />
-            <Kpi title="Qarzdorlik" icon="receipt" tone="coral" md value={<>{compact(o.debt.amount)}<small>so&apos;m</small></>} note={`${o.debt.debtors} ta qarzdor`} />
-            <Kpi title="O'rtacha davomat" icon="check" tone="cyan" value={o.attendance.rate === null ? "yo'q" : `${o.attendance.rate}%`} note={`${o.attendance.lessons} ta dars`} />
+          <section className="kpis" aria-label={t("Markaz ko'rsatkichlari")}>
+            <Kpi title="Faol o'quvchilar" icon="students" tone="violet" value={money(o.students.active)} note={o.students.new ? t('+{n} yangi', { n: o.students.new }) : undefined} noteTone="emerald" />
+            <Kpi title="Shu oy tushum" icon="cash" tone="emerald" md value={<>{compact(o.finance.income)}<small>{t("so'm")}</small></>} note={t('sof {sum}', { sum: compact(o.finance.net) })} noteTone={o.finance.net < 0 ? 'coral' : 'emerald'} />
+            <Kpi title="Qarzdorlik" icon="receipt" tone="coral" md value={<>{compact(o.debt.amount)}<small>{t("so'm")}</small></>} note={t('{n} ta qarzdor', { n: o.debt.debtors })} />
+            <Kpi title="O'rtacha davomat" icon="check" tone="cyan" value={o.attendance.rate === null ? t("yo'q") : `${o.attendance.rate}%`} note={t('{n} ta dars', { n: o.attendance.lessons })} />
           </section>
         )}
       </DataView>
@@ -96,6 +98,7 @@ export function OwnerView() {
 }
 
 function Branches({ rows, overview }: { rows: BranchRow[]; overview?: Overview }) {
+  const t = useT();
   const labels = useMemo(() => rows.map((r) => r.branchName), [rows]);
   const [active, setActive] = useState(0);
   const sel = rows[active] ?? rows[0];
@@ -106,23 +109,23 @@ function Branches({ rows, overview }: { rows: BranchRow[]; overview?: Overview }
       <GlobeCard className="c-8" title="Filiallar globusi" sub="Filialni tanlang: shu oydagi ko'rsatkichlari o'ng tomonda" labels={labels} active={active} onSelect={setActive} />
       <div className="col c-4">
         {sel ? (
-          <Card eyebrow="Filial ko'rsatkichlari" title={sel.branchName} aside={sel.debtors ? <Tag kind="warn">{sel.debtors} qarzdor</Tag> : <Tag kind="ok">Barqaror</Tag>}>
+          <Card eyebrow="Filial ko'rsatkichlari" title={sel.branchName} aside={sel.debtors ? <Tag kind="warn">{t('{n} qarzdor', { n: sel.debtors })}</Tag> : <Tag kind="ok">{t("Barqaror")}</Tag>}>
             <div className="minis">
               <div className="mini">
-                <span className="mini-label">O&apos;quvchilar</span>
+                <span className="mini-label">{t("O'quvchilar")}</span>
                 <span className="mini-value">{money(sel.students)}</span>
               </div>
               <div className="mini">
-                <span className="mini-label">Faol guruhlar</span>
+                <span className="mini-label">{t("Faol guruhlar")}</span>
                 <span className="mini-value">{money(sel.groups)}</span>
               </div>
               <div className="mini">
-                <span className="mini-label">Tushum</span>
+                <span className="mini-label">{t("Tushum")}</span>
                 <span className="mini-value" data-tone="emerald">{compact(sel.income)}</span>
               </div>
               <div className="mini">
-                <span className="mini-label">Davomat</span>
-                <span className="mini-value" data-tone="cyan">{sel.attendance.rate === null ? "yo'q" : `${sel.attendance.rate}%`}</span>
+                <span className="mini-label">{t("Davomat")}</span>
+                <span className="mini-value" data-tone="cyan">{sel.attendance.rate === null ? t("yo'q") : `${sel.attendance.rate}%`}</span>
               </div>
             </div>
           </Card>
@@ -136,7 +139,7 @@ function Branches({ rows, overview }: { rows: BranchRow[]; overview?: Overview }
             <Dist
               rows={[
                 { label: "To'langan tushum", value: compact(f.income), pct: pctOf(f.income, max), tone: 'emerald' },
-                { label: 'Maosh to\'lovlari', value: compact(f.payouts), pct: pctOf(f.payouts, max), tone: 'violet' },
+                { label: "Maosh to'lovlari", value: compact(f.payouts), pct: pctOf(f.payouts, max), tone: 'violet' },
                 { label: 'Operatsion xarajat', value: compact(f.expenses), pct: pctOf(f.expenses, max), tone: 'amber' },
               ]}
             />
@@ -151,6 +154,7 @@ function Branches({ rows, overview }: { rows: BranchRow[]; overview?: Overview }
 
 type Period = 'day' | 'week' | 'month';
 function IncomeChart() {
+  const t = useT();
   const [period, setPeriod] = useState<Period>('month');
   const daily = useApi<Daily>('/reports/finance/daily', { from: monthsBack(5), to: todayLocal() });
   return (
@@ -181,13 +185,13 @@ function IncomeChart() {
               <Columns tone="emerald" caption="Tushum" points={pts.map((p) => ({ label: p.label, value: p.income, shown: compact(p.income) }))} />
               <div className="chart-legend">
                 <span>
-                  Tushum: <b className="fig ok-text">{money(income)}</b>
+                  {t("Tushum:")}{' '}<b className="fig ok-text">{money(income)}</b>
                 </span>
                 <span>
-                  Xarajat: <b className="fig tone-text" data-tone="amber">{money(expenses)}</b>
+                  {t("Xarajat:")}{' '}<b className="fig tone-text" data-tone="amber">{money(expenses)}</b>
                 </span>
                 <span>
-                  Sof: <b className={income - expenses < 0 ? 'fig debt' : 'fig'}>{money(income - expenses)}</b>
+                  {t("Sof:")}{' '}<b className={income - expenses < 0 ? 'fig debt' : 'fig'}>{money(income - expenses)}</b>
                 </span>
               </div>
             </div>
@@ -223,10 +227,11 @@ function bucket(items: Daily['items'], period: Period) {
 }
 
 function TopDebtors() {
+  const t = useT();
   const debtors = useApi<{ items: DebtorRow[]; total: number; totalDebt?: number }>('/debtors', { limit: 4 });
   return (
     <Card className="c-4" title="Eng katta qarzdorlar" aside={debtors.data ? <span className="count-badge">{debtors.data.total}</span> : null}>
-      <DataView state={debtors} skeleton={<Skeleton rows={3} cols={2} />} empty={(d) => (d.items.length ? null : <p className="muted">Muddati o&apos;tgan to&apos;lanmagan hisob yo&apos;q.</p>)}>
+      <DataView state={debtors} skeleton={<Skeleton rows={3} cols={2} />} empty={(d) => (d.items.length ? null : <p className="muted">{t("Muddati o'tgan to'lanmagan hisob yo'q.")}</p>)}>
         {(d) => (
           <div className="stack">
             <ul className="items">
@@ -238,7 +243,7 @@ function TopDebtors() {
                     </Link>
                     <span className="item-sub">
                       {r.groups.map((g) => g.groupName).join(', ')}
-                      {r.daysOverdue !== undefined ? ` · ${r.daysOverdue} kun` : ''}
+                      {r.daysOverdue !== undefined ? ` · ${t('{n} kun', { n: r.daysOverdue })}` : ''}
                     </span>
                   </span>
                   <span className="fig debt">{r.debt !== undefined ? compact(r.debt) : 'bor'}</span>
@@ -246,7 +251,7 @@ function TopDebtors() {
               ))}
             </ul>
             <Link className="link small" href="/debtors">
-              Hamma qarzdorlar
+              {t("Hamma qarzdorlar")}
             </Link>
           </div>
         )}
@@ -256,12 +261,13 @@ function TopDebtors() {
 }
 
 function BranchTable({ state }: { state: ReturnType<typeof useApi<{ items: BranchRow[] }>> }) {
+  const t = useT();
   return (
     <section className="col" aria-labelledby="br-h">
       <div className="row" data-between>
-        <h2 id="br-h">Filiallar samaradorligi</h2>
+        <h2 id="br-h">{t("Filiallar samaradorligi")}</h2>
         <Link className="link" href="/reports">
-          Batafsil hisobot
+          {t("Batafsil hisobot")}
         </Link>
       </div>
       <DataView state={state} skeleton={<div className="table-wrap"><Skeleton rows={3} cols={6} /></div>} empty={(d) => (d.items.length ? null : <section className="panel"><Empty title="Filial yo'q" /></section>)}>
@@ -270,13 +276,13 @@ function BranchTable({ state }: { state: ReturnType<typeof useApi<{ items: Branc
             <table className="table">
               <thead>
                 <tr>
-                  <th>Filial nomi</th>
-                  <th className="num">O&apos;quvchilar</th>
-                  <th className="num">Guruhlar</th>
-                  <th className="num">Davomat</th>
-                  <th className="num" aria-sort="descending">Oylik tushum</th>
-                  <th className="num">Qarzdorlik</th>
-                  <th className="num">Holat</th>
+                  <th>{t("Filial nomi")}</th>
+                  <th className="num">{t("O'quvchilar")}</th>
+                  <th className="num">{t("Guruhlar")}</th>
+                  <th className="num">{t("Davomat")}</th>
+                  <th className="num" aria-sort="descending">{t("Oylik tushum")}</th>
+                  <th className="num">{t("Qarzdorlik")}</th>
+                  <th className="num">{t("Holat")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,10 +291,10 @@ function BranchTable({ state }: { state: ReturnType<typeof useApi<{ items: Branc
                     <td className="cell-main">{r.branchName}</td>
                     <td className="num">{money(r.students)}</td>
                     <td className="num">{money(r.groups)}</td>
-                    <td className="num tone-text" data-tone="cyan">{r.attendance.rate === null ? "yo'q" : `${r.attendance.rate}%`}</td>
+                    <td className="num tone-text" data-tone="cyan">{r.attendance.rate === null ? t("yo'q") : `${r.attendance.rate}%`}</td>
                     <td className="num ok-text">{money(r.income)}</td>
                     <td className={r.debt ? 'num debt' : 'num muted'}>{money(r.debt)}</td>
-                    <td className="num">{r.archived ? <Tag kind="mute">Arxivda</Tag> : r.debtors ? <Tag kind="warn">Nazorat</Tag> : <Tag kind="ok">Faol</Tag>}</td>
+                    <td className="num">{r.archived ? <Tag kind="mute">{t("Arxivda")}</Tag> : r.debtors ? <Tag kind="warn">{t("Nazorat")}</Tag> : <Tag kind="ok">{t("Faol")}</Tag>}</td>
                   </tr>
                 ))}
               </tbody>

@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { DataView, Empty, PageHead, Pager, SelectInput, Skeleton, Stat, Tag, TextInput } from '@/components/ui';
 import { addDays, date, todayLocal } from '@/lib/format';
@@ -24,6 +25,7 @@ interface Row {
 const LIMIT = 100;
 
 export function AttendancePage() {
+  const t = useT();
   const { is, can } = useSession();
   const [f, setF] = useUrlState({ from: addDays(todayLocal(), -13), to: todayLocal(), groupId: '', status: '', offset: '0' });
   const offset = Number(f.offset) || 0;
@@ -43,7 +45,7 @@ export function AttendancePage() {
       <DataView state={summary} skeleton={<Skeleton rows={2} cols={4} />}>
         {(s) => (
           <div className="stats">
-            <Stat label="Davomat" value={s.totals.rate === null ? "yo'q" : `${s.totals.rate}%`} note={`${s.totals.total} ta belgi`} />
+            <Stat label="Davomat" value={s.totals.rate === null ? t("yo'q") : `${s.totals.rate}%`} note={t('{n} ta belgi', { n: s.totals.total })} />
             <Stat label="Keldi" value={s.totals.present} />
             <Stat label="Kechikdi" value={s.totals.late} />
             <Stat label="Kelmadi" value={s.totals.absent} tone={s.totals.absent ? 'debt' : undefined} />
@@ -56,11 +58,11 @@ export function AttendancePage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Guruh</th>
-                <th className="num">Davomat</th>
-                <th className="num">Keldi</th>
-                <th className="num">Kechikdi</th>
-                <th className="num">Kelmadi</th>
+                <th>{t("Guruh")}</th>
+                <th className="num">{t("Davomat")}</th>
+                <th className="num">{t("Keldi")}</th>
+                <th className="num">{t("Kechikdi")}</th>
+                <th className="num">{t("Kelmadi")}</th>
               </tr>
             </thead>
             <tbody>
@@ -71,7 +73,7 @@ export function AttendancePage() {
                       {g.groupName}
                     </Link>
                   </td>
-                  <td className="num">{g.rate === null ? "yo'q" : `${g.rate}%`}</td>
+                  <td className="num">{g.rate === null ? t("yo'q") : `${g.rate}%`}</td>
                   <td className="num">{g.present}</td>
                   <td className="num">{g.late}</td>
                   <td className="num">{g.absent}</td>
@@ -88,11 +90,11 @@ export function AttendancePage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Sana</th>
-                    {!is('STUDENT') ? <th>O&apos;quvchi</th> : null}
-                    <th>Guruh</th>
-                    <th>Holat</th>
-                    <th>Izoh</th>
+                    <th>{t("Sana")}</th>
+                    {!is('STUDENT') ? <th>{t("O'quvchi")}</th> : null}
+                    <th>{t("Guruh")}</th>
+                    <th>{t("Holat")}</th>
+                    <th>{t("Izoh")}</th>
                   </tr>
                 </thead>
                 <tbody>

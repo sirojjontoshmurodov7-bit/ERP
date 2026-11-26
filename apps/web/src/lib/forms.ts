@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ApiError, errorText } from './api';
+import { tr } from './i18n';
 
 /** Bo'sh satrlarni yuborilmaydigan (undefined) qiladi; `nullable` kalitlar tahrirda null bo'ladi (maydonni tozalash). */
 export function clean<T extends Record<string, unknown>>(v: T, nullable: (keyof T)[] = []): Partial<T> {
@@ -29,7 +30,7 @@ export function useSubmit() {
     } catch (e) {
       if (e instanceof ApiError && e.body.issues?.length) {
         setFields(e.fieldErrors);
-        setError("Maydonlarni tekshiring");
+        setError(tr('Maydonlarni tekshiring'));
       } else setError(errorText(e));
       return undefined;
     } finally {

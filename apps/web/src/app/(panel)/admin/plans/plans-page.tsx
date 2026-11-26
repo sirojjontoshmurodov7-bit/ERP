@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import { useState } from 'react';
 import { Icon } from '@/components/icons';
 import { Button, DataView, Dialog, Empty, MoneyInput, PageHead, Skeleton, TextInput, whenOpen } from '@/components/ui';
@@ -19,23 +20,24 @@ interface Plan {
 const limit = (n: number | null) => (n === null ? 'cheksiz' : money(n));
 
 export function PlansPage() {
+  const t = useT();
   const list = useApi<{ items: Plan[] }>('/admin/plans');
   const [edit, setEdit] = useState<Plan | 'new' | null>(null);
   return (
     <>
-      <PageHead title="Tariflar" sub="Tarif chegaralari faqat yangi o'quvchi va filial qo'shishni to'sadi; mavjudlariga tegmaydi." actions={<Button variant="primary" icon={<Icon.plus />} onClick={() => setEdit('new')}>Yangi tarif</Button>} />
+      <PageHead title="Tariflar" sub="Tarif chegaralari faqat yangi o'quvchi va filial qo'shishni to'sadi; mavjudlariga tegmaydi." actions={<Button variant="primary" icon={<Icon.plus />} onClick={() => setEdit('new')}>{t("Yangi tarif")}</Button>} />
       <div className="table-wrap">
-        <DataView state={list} skeleton={<Skeleton rows={3} cols={5} />} empty={(d) => (d.items.length ? null : <Empty title="Tarif yo'q" action={<Button size="sm" variant="primary" onClick={() => setEdit('new')}>Yangi tarif</Button>} />)}>
+        <DataView state={list} skeleton={<Skeleton rows={3} cols={5} />} empty={(d) => (d.items.length ? null : <Empty title="Tarif yo'q" action={<Button size="sm" variant="primary" onClick={() => setEdit('new')}>{t("Yangi tarif")}</Button>} />)}>
           {(d) => (
             <table className="table">
               <thead>
                 <tr>
-                  <th>Tarif</th>
-                  <th className="num">Oylik narx, so&apos;m</th>
-                  <th className="num">O&apos;quvchilar</th>
-                  <th className="num">Filiallar</th>
-                  <th className="num">Markazlar</th>
-                  <th className="actions-cell" aria-label="Amallar" />
+                  <th>{t("Tarif")}</th>
+                  <th className="num">{t("Oylik narx, so'm")}</th>
+                  <th className="num">{t("O'quvchilar")}</th>
+                  <th className="num">{t("Filiallar")}</th>
+                  <th className="num">{t("Markazlar")}</th>
+                  <th className="actions-cell" aria-label={t("Amallar")} />
                 </tr>
               </thead>
               <tbody>
@@ -51,7 +53,7 @@ export function PlansPage() {
                     <td className="num">{p.centers ?? 0}</td>
                     <td className="actions-cell">
                       <Button size="sm" variant="ghost" onClick={() => setEdit(p)}>
-                        Tahrirlash
+                        {t("Tahrirlash")}
                       </Button>
                     </td>
                   </tr>
@@ -67,6 +69,7 @@ export function PlansPage() {
 }
 
 const PlanDialog = whenOpen(function PlanInner({ open, plan, onClose, onSaved }: { open: boolean; plan: Plan | null; onClose: () => void; onSaved: () => void }) {
+  const t = useT();
   const [name, setName] = useState(plan?.name ?? '');
   const [price, setPrice] = useState<number | ''>(plan?.priceMonthly ?? 0);
   const [maxStudents, setMaxStudents] = useState<number | ''>(plan?.maxStudents ?? '');
@@ -90,7 +93,7 @@ const PlanDialog = whenOpen(function PlanInner({ open, plan, onClose, onSaved }:
     }
   };
   return (
-    <Dialog open={open} onClose={onClose} title={plan ? 'Tarifni tahrirlash' : 'Yangi tarif'} footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="plan-form" busy={s.busy}>Saqlash</Button></>}>
+    <Dialog open={open} onClose={onClose} title={plan ? 'Tarifni tahrirlash' : 'Yangi tarif'} footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="plan-form" busy={s.busy}>{t("Saqlash")}</Button></>}>
       <form id="plan-form" className="form" onSubmit={submit} noValidate>
         <TextInput label="Nomi" value={name} onChange={(e) => setName(e.target.value)} error={s.fields.name} autoFocus />
         <MoneyInput label="Oylik narx" value={price} onChange={setPrice} error={s.fields.priceMonthly} />

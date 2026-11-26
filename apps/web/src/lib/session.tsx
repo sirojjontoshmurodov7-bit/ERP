@@ -1,6 +1,7 @@
 'use client';
 // Joriy foydalanuvchi (`/auth/me`): rol, samarali ruxsatlar, markaz. Menyu va tugmalarni yashirish uchun; haqiqiy tekshiruv serverda.
 import { createContext, type ReactNode, useContext } from 'react';
+import { trMap } from './i18n';
 
 export type Role = 'SUPER_ADMIN' | 'OWNER' | 'ADMIN' | 'CASHIER' | 'TEACHER' | 'STUDENT';
 
@@ -34,11 +35,11 @@ export function useSession(): Session {
   return s;
 }
 
-export const ROLE_LABEL: Record<Role, string> = {
+export const ROLE_LABEL: Record<Role, string> = trMap({
   SUPER_ADMIN: 'Super admin',
   OWNER: 'Rahbar',
   ADMIN: 'Administrator',
   CASHIER: 'Kassir',
   TEACHER: 'Ustoz',
   STUDENT: "O'quvchi",
-};
+});

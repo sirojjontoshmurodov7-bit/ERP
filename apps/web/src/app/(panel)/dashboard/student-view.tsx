@@ -1,5 +1,6 @@
 'use client';
 // O'quvchi portali: salomlashish banneri (bugungi darslar va vazifalar), shaxsiy ko'rsatkichlar, bugungi jadval, vazifalar, guruh reytingi va oxirgi baholar.
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { Card, Kpi, KpiSkeleton } from '@/components/dash';
 import { Icon } from '@/components/icons';
@@ -23,6 +24,7 @@ export const todaysWeekday = () => ((new Date(`${todayLocal()}T00:00:00Z`).getUT
 const nowHm = () => new Date(Date.now() + 5 * 3_600_000).toISOString().slice(11, 16);
 
 export function StudentView() {
+  const t = useT();
   const { me } = useSession();
   const groups = useApi<{ items: Group[] }>('/groups');
   const open = useApi<{ items: Assignment[] }>('/assignments', { status: 'open', limit: 20 });
@@ -45,40 +47,48 @@ export function StudentView() {
     .sort((a, b) => (b.mySubmission!.submittedAt ?? '').localeCompare(a.mySubmission!.submittedAt ?? ''));
   const avg = graded.length ? Math.round(graded.reduce((s, a) => s + (a.mySubmission!.score! / Math.max(1, a.maxScore)) * 100, 0) / graded.length) : null;
 
-  const headline = groups.data && open.data ? `Bugun ${today.length ? `${today.length} ta darsingiz` : 'darsingiz yo\'q'}${dueToday ? ` va ${dueToday} ta vazifa muddati bor` : ''}` : 'Bugungi kuningiz';
+  const headline = !(groups.data && open.data)
+    ? t('Bugungi kuningiz')
+    : today.length
+      ? dueToday
+        ? t('Bugun {n} ta darsingiz va {m} ta vazifa muddati bor', { n: today.length, m: dueToday })
+        : t('Bugun {n} ta darsingiz', { n: today.length })
+      : dueToday
+        ? t("Bugun darsingiz yo'q va {m} ta vazifa muddati bor", { m: dueToday })
+        : t("Bugun darsingiz yo'q");
 
   return (
     <>
       <section className="panel hero" aria-labelledby="hello-h">
         <div className="hero-text">
-          <span className="eyebrow">Xush kelibsiz, {first}</span>
+          <span className="eyebrow">{t('Xush kelibsiz, {name}', { name: first })}</span>
           <h1 id="hello-h">{headline}</h1>
           <p className="page-head-sub">
-            {next ? `Keyingi dars soat ${next.s.startTime} da: ${next.g.name}${next.s.room ? `, ${next.s.room}` : ''}, ${next.g.branchName}.` : today.length ? 'Bugungi darslar tugadi.' : `${dateLong(todayLocal())}: jadvalingizda dars yo'q.`}
+            {next ? t('Keyingi dars soat {time} da: {place}.', { time: next.s.startTime, place: [next.g.name, next.s.room, next.g.branchName].filter(Boolean).join(', ') }) : today.length ? t('Bugungi darslar tugadi.') : t("{date}: jadvalingizda dars yo'q.", { date: dateLong(todayLocal()) })}
           </p>
         </div>
         <div className="actions">
           <ButtonLink href="/groups" icon={<Icon.calendar />}>
-            Jadval
+            {t("Jadval")}
           </ButtonLink>
           <ButtonLink href="/assignments" variant="primary" icon={<Icon.upload />}>
-            Vazifa topshirish
+            {t("Vazifa topshirish")}
           </ButtonLink>
         </div>
       </section>
 
       {att.data || all.data ? (
-        <section className="kpis" aria-label="Shaxsiy ko'rsatkichlar">
-          <Kpi title="O'rtacha baho" icon="star" tone="emerald" value={avg === null ? "yo'q" : <>{avg}<small>/ 100</small></>} note={graded.length ? `${graded.length} ta baho` : undefined} />
+        <section className="kpis" aria-label={t("Shaxsiy ko'rsatkichlar")}>
+          <Kpi title="O'rtacha baho" icon="star" tone="emerald" value={avg === null ? t("yo'q") : <>{avg}<small>/ 100</small></>} note={graded.length ? t('{n} ta baho', { n: graded.length }) : undefined} />
           <Kpi
             title="Davomat"
             icon="check"
             tone="cyan"
-            value={att.data?.totals.rate === null || !att.data ? "yo'q" : `${att.data.totals.rate}%`}
-            note={att.data ? `${att.data.totals.present + att.data.totals.late}/${att.data.totals.present + att.data.totals.late + att.data.totals.absent} dars` : undefined}
+            value={att.data?.totals.rate === null || !att.data ? t("yo'q") : `${att.data.totals.rate}%`}
+            note={att.data ? t('{a}/{b} dars', { a: att.data.totals.present + att.data.totals.late, b: att.data.totals.present + att.data.totals.late + att.data.totals.absent }) : undefined}
           />
-          <Kpi title="Faol vazifalar" icon="task" tone="amber" value={`${todo} ta`} note={dueToday ? `${dueToday} ta bugun` : undefined} />
-          <Kpi title="Guruh reytingi" icon="trophy" tone="violet" value={rating.data?.my ? `#${rating.data.my.rank}` : "yo'q"} note={rating.data?.my ? `${rating.data.my.points} ball, shu oy` : undefined} />
+          <Kpi title="Faol vazifalar" icon="task" tone="amber" value={t('{n} ta', { n: todo })} note={dueToday ? t('{n} ta bugun', { n: dueToday }) : undefined} />
+          <Kpi title="Guruh reytingi" icon="trophy" tone="violet" value={rating.data?.my ? `#${rating.data.my.rank}` : t("yo'q")} note={rating.data?.my ? t('{n} ball, shu oy', { n: rating.data.my.points }) : undefined} />
         </section>
       ) : (
         <KpiSkeleton />
@@ -97,7 +107,7 @@ export function StudentView() {
                       <li key={g.id + s.startTime} className={hot ? 'item item--hot' : 'item'}>
                         <span className="item-text">
                           <span className="item-title">{g.name}</span>
-                          <span className="item-sub">{[teacher ? `Ustoz: ${teacher}` : null, s.room, g.branchName].filter(Boolean).join(' · ')}</span>
+                          <span className="item-sub">{[teacher ? t('Ustoz: {name}', { name: teacher }) : null, s.room, g.branchName].filter(Boolean).join(' · ')}</span>
                         </span>
                         {hot ? <Tag kind="info">{s.startTime}–{s.endTime}</Tag> : <span className="fig muted small">{s.startTime}–{s.endTime}</span>}
                       </li>
@@ -111,7 +121,7 @@ export function StudentView() {
           </DataView>
         </Card>
 
-        <Card className="c-7" title="Uyga vazifalar" aside={<Link className="link" href="/assignments">Barchasi</Link>}>
+        <Card className="c-7" title="Uyga vazifalar" aside={<Link className="link" href="/assignments">{t("Barchasi")}</Link>}>
           <DataView state={all} skeleton={<Skeleton rows={3} cols={2} />} empty={(d) => (d.items.length ? null : <Empty title="Vazifa yo'q" text="Ustoz vazifa berganda shu yerda ko'rinadi." />)}>
             {(d) => (
               <ul className="items">
@@ -124,10 +134,10 @@ export function StudentView() {
                           {a.title}
                         </Link>
                         <span className="item-sub">
-                          {a.groupName} · {s?.graded && s.score !== null ? `Baho: ${s.score} / ${a.maxScore}` : a.dueAt ? `Muddat: ${dateTime(a.dueAt)}` : 'Muddatsiz'}
+                          {a.groupName} · {s?.graded && s.score !== null ? t('Baho: {score} / {max}', { score: s.score, max: a.maxScore }) : a.dueAt ? t('Muddat: {date}', { date: dateTime(a.dueAt) }) : t('Muddatsiz')}
                         </span>
                       </span>
-                      {!s ? <Tag kind="warn">Topshirish kerak</Tag> : s.graded ? <Tag kind="ok">Baholangan</Tag> : <Tag kind="violet">Yuborilgan</Tag>}
+                      {!s ? <Tag kind="warn">{t("Topshirish kerak")}</Tag> : s.graded ? <Tag kind="ok">{t("Baholangan")}</Tag> : <Tag kind="violet">{t("Yuborilgan")}</Tag>}
                     </li>
                   );
                 })}
@@ -136,7 +146,7 @@ export function StudentView() {
           </DataView>
         </Card>
 
-        <Card className="c-5" title="Guruh reytingi (Top 3)" sub={groups.data?.items[0] ? `${groups.data.items[0].name}, shu oy` : undefined}>
+        <Card className="c-5" title="Guruh reytingi (Top 3)" sub={groups.data?.items[0] ? t('{name}, shu oy', { name: groups.data.items[0].name }) : undefined}>
           {!firstGroup && groups.data ? (
             <Empty title="Guruhga yozilmagansiz" />
           ) : (
@@ -147,7 +157,7 @@ export function StudentView() {
         </Card>
 
         <section className="col c-7" aria-labelledby="grades-h">
-          <h2 id="grades-h">Oxirgi baholar</h2>
+          <h2 id="grades-h">{t("Oxirgi baholar")}</h2>
           <DataView state={all} skeleton={<div className="table-wrap"><Skeleton rows={3} cols={3} /></div>}>
             {() =>
               graded.length ? (
@@ -155,9 +165,9 @@ export function StudentView() {
                   <table className="table table--compact">
                     <thead>
                       <tr>
-                        <th>Vazifa</th>
-                        <th>Topshirilgan</th>
-                        <th className="num">Natija</th>
+                        <th>{t("Vazifa")}</th>
+                        <th>{t("Topshirilgan")}</th>
+                        <th className="num">{t("Natija")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -195,6 +205,7 @@ export function StudentView() {
 }
 
 function Podium({ items, me }: { items: Ranking['items']; me: string }) {
+  const t = useT();
   const [a, b, c] = items;
   const order = [b && { p: b, place: 2 }, a && { p: a, place: 1 }, c && { p: c, place: 3 }].filter(Boolean) as { p: Ranking['items'][number]; place: number }[];
   return (
@@ -203,11 +214,11 @@ function Podium({ items, me }: { items: Ranking['items']; me: string }) {
         <div key={p.studentId} className="podium-place" data-place={place} data-me={p.studentId === me ? '' : undefined} data-tone={place === 1 ? 'amber' : p.studentId === me ? 'cyan' : undefined}>
           <span className="podium-rank">
             #{p.rank}
-            {p.studentId === me ? ' (Siz)' : ''}
+            {p.studentId === me ? ` ${t('(Siz)')}` : ''}
           </span>
           <span className="podium-name">{p.studentName.split(' ')[0]}</span>
           <span className="podium-pts" data-tone={place === 1 ? 'emerald' : undefined}>
-            {p.total} ball
+            {t('{n} ball', { n: p.total })}
           </span>
         </div>
       ))}

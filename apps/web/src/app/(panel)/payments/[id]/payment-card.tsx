@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -9,6 +10,7 @@ import { useSession } from '@/lib/session';
 import { useApi } from '@/lib/use-api';
 
 export function PaymentCard() {
+  const t = useT();
   const { id } = useParams<{ id: string }>();
   const { can, is } = useSession();
   const p = useApi<PaymentView & { reversedBy?: { id: string; receiptNo: number } | null }>(`/payments/${id}`);
@@ -19,13 +21,13 @@ export function PaymentCard() {
         <>
           <PageHead
             crumbs={[{ href: '/payments', label: "To'lovlar" }]}
-            title={`Kvitansiya №${d.receiptNo}`}
+            title={t('Kvitansiya №{n}', { n: d.receiptNo })}
             actions={
               <>
-                <Button onClick={() => window.print()}>Chop etish</Button>
+                <Button onClick={() => window.print()}>{t("Chop etish")}</Button>
                 {can('payment.reverse') && d.status === 'CONFIRMED' && d.amount > 0 ? (
                   <Button variant="danger" onClick={() => setReverse(true)}>
-                    Qaytarish
+                    {t("Qaytarish")}
                   </Button>
                 ) : null}
               </>
@@ -34,27 +36,27 @@ export function PaymentCard() {
           <div className="receipt-wrap">
             <Receipt p={d} />
           </div>
-          {d.status === 'REVERSED' ? <p className="muted">Bu to&apos;lov qaytarilgan: summa teskari yozuv bilan bekor qilingan, tarix o&apos;zgarmaydi.</p> : null}
+          {d.status === 'REVERSED' ? <p className="muted">{t("Bu to'lov qaytarilgan: summa teskari yozuv bilan bekor qilingan, tarix o'zgarmaydi.")}</p> : null}
           {d.reversesPaymentId ? (
             <p className="muted">
-              Bu{' '}
+              {t("Bu")}{' '}
               <Link className="link" href={`/payments/${d.reversesPaymentId}`}>
-                asl to&apos;lovni
+                {t("asl to'lovni")}
               </Link>{' '}
-              qaytarish yozuvi.
+              {t("qaytarish yozuvi.")}
             </p>
           ) : null}
           {!is('STUDENT') ? (
             <p>
               <Link className="link" href={`/students/${d.studentId}?tab=payments`}>
-                O&apos;quvchi kartochkasi
+                {t("O'quvchi kartochkasi")}
               </Link>
             </p>
           ) : null}
           <Confirm
             open={reverse}
             onClose={() => setReverse(false)}
-            title={`№${d.receiptNo} to'lovni qaytarish`}
+            title={t("№{n} to'lovni qaytarish", { n: d.receiptNo })}
             text="Qaytarish teskari (manfiy) yozuv sifatida saqlanadi va qarz qayta hisoblanadi. Bu amalni bekor qilib bo'lmaydi."
             confirmLabel="Qaytarish"
             danger

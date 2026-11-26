@@ -1,4 +1,5 @@
 'use client';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ import { GROUP_STATUS, type Group, mainTeacher } from './types';
 const LIMIT = 50;
 
 export function GroupsList() {
+  const t = useT();
   const { can, is } = useSession();
   const router = useRouter();
   const staffView = is('OWNER', 'ADMIN', 'CASHIER');
@@ -41,7 +43,7 @@ export function GroupsList() {
         actions={
           can('group.create') ? (
             <Button variant="primary" icon={<Icon.plus />} onClick={() => setF({ new: '1' })}>
-              Yangi guruh
+              {t("Yangi guruh")}
             </Button>
           ) : null
         }
@@ -84,7 +86,7 @@ export function GroupsList() {
               <Empty
                 title={f.q || f.courseId || f.status || f.teacherId ? "Mos guruh yo'q" : "Hali guruh yo'q"}
                 text={can('group.create') ? 'Guruh kurs va filialga bog\'lanadi; jadval va ustozni keyin ham qo\'shish mumkin.' : undefined}
-                action={can('group.create') ? <Button size="sm" variant="primary" onClick={() => setF({ new: '1' })}>Yangi guruh</Button> : undefined}
+                action={can('group.create') ? <Button size="sm" variant="primary" onClick={() => setF({ new: '1' })}>{t("Yangi guruh")}</Button> : undefined}
               />
             )
           }
@@ -94,12 +96,12 @@ export function GroupsList() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Guruh</th>
-                    <th>Ustoz</th>
-                    <th>Jadval</th>
-                    <th className="num">O&apos;quvchi</th>
-                    {showPrice ? <th className="num">Oylik, so&apos;m</th> : null}
-                    <th>Holat</th>
+                    <th>{t("Guruh")}</th>
+                    <th>{t("Ustoz")}</th>
+                    <th>{t("Jadval")}</th>
+                    <th className="num">{t("O'quvchi")}</th>
+                    {showPrice ? <th className="num">{t("Oylik, so'm")}</th> : null}
+                    <th>{t("Holat")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -113,11 +115,11 @@ export function GroupsList() {
                           {g.courseName}, {g.branchName}
                         </div>
                       </td>
-                      <td>{mainTeacher(g) ?? <span className="muted">biriktirilmagan</span>}</td>
+                      <td>{mainTeacher(g) ?? <span className="muted">{t("biriktirilmagan")}</span>}</td>
                       <td className="fig small">{scheduleText(g.schedule)}</td>
                       <td className="num">{g.studentCount}</td>
-                      {showPrice ? <td className="num">{g.priceMonthly !== undefined ? money(g.priceMonthly) : "yo'q"}</td> : null}
-                      <td>{g.archivedAt ? <Tag kind="mute">Arxivda</Tag> : <Tag kind={GROUP_STATUS[g.status].kind}>{GROUP_STATUS[g.status].label}</Tag>}</td>
+                      {showPrice ? <td className="num">{g.priceMonthly !== undefined ? money(g.priceMonthly) : t("yo'q")}</td> : null}
+                      <td>{g.archivedAt ? <Tag kind="mute">{t("Arxivda")}</Tag> : <Tag kind={GROUP_STATUS[g.status].kind}>{GROUP_STATUS[g.status].label}</Tag>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -140,6 +142,7 @@ export function GroupsList() {
 }
 
 const CreateGroup = whenOpen(function CreateGroupInner({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (id: string) => void }) {
+  const t = useT();
   const { can, is } = useSession();
   const billing = can('group.billing_settings');
   const branches = useBranches();
@@ -155,7 +158,7 @@ const CreateGroup = whenOpen(function CreateGroupInner({ open, onClose, onCreate
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (schedule.some((x) => x.endTime <= x.startTime)) return s.setError("Jadvalda tugash vaqti boshlanishdan keyin bo'lishi kerak");
+    if (schedule.some((x) => x.endTime <= x.startTime)) return s.setError(t("Jadvalda tugash vaqti boshlanishdan keyin bo'lishi kerak"));
     const body: Record<string, unknown> = clean({ name: v.name, branchId, courseId: v.courseId, status: v.status, startDate: v.startDate });
     if (billing) {
       if (price !== '') body.priceMonthly = price;
@@ -171,7 +174,7 @@ const CreateGroup = whenOpen(function CreateGroupInner({ open, onClose, onCreate
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="Yangi guruh" wide footer={<><Button onClick={onClose}>Bekor qilish</Button><Button variant="primary" type="submit" form="new-group" busy={s.busy}>Yaratish</Button></>}>
+    <Dialog open={open} onClose={onClose} title="Yangi guruh" wide footer={<><Button onClick={onClose}>{t("Bekor qilish")}</Button><Button variant="primary" type="submit" form="new-group" busy={s.busy}>{t("Yaratish")}</Button></>}>
       <form id="new-group" className="form" onSubmit={submit} noValidate>
         <div className="form-grid">
           <TextInput label="Guruh nomi" fieldClass="span-2" value={v.name} onChange={set('name')} error={s.fields.name} autoFocus placeholder="Masalan: IELTS 6.5 kechki" />
@@ -191,9 +194,9 @@ const CreateGroup = whenOpen(function CreateGroupInner({ open, onClose, onCreate
         </div>
         {billing ? (
           <fieldset className="fieldset">
-            <legend>To&apos;lov sozlamalari</legend>
+            <legend>{t("To'lov sozlamalari")}</legend>
             <div className="form-grid">
-              <MoneyInput label="Oylik narx" value={price} onChange={setPrice} error={s.fields.priceMonthly} hint={course ? `Bo'sh qolsa kurs narxi: ${money(course.defaultPrice)} so'm` : "so'm"} />
+              <MoneyInput label="Oylik narx" value={price} onChange={setPrice} error={s.fields.priceMonthly} hint={course ? t("Bo'sh qolsa kurs narxi: {sum} so'm", { sum: money(course.defaultPrice) }) : "so'm"} />
               <SelectInput
                 label="Hisob sikli"
                 optional
@@ -211,7 +214,7 @@ const CreateGroup = whenOpen(function CreateGroupInner({ open, onClose, onCreate
           </fieldset>
         ) : null}
         <fieldset className="fieldset">
-          <legend>Haftalik jadval</legend>
+          <legend>{t("Haftalik jadval")}</legend>
           <ScheduleEditor value={schedule} onChange={setSchedule} />
         </fieldset>
         {s.error ? <p className="form-error" role="alert">{s.error}</p> : null}

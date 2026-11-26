@@ -1,5 +1,6 @@
 'use client';
 // Bosh sahifa: har rol o'z ko'rinishini oladi (Stitch tizimi). Super admin, rahbar va o'quvchi alohida fayllarda.
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { Card, Kpi, KpiSkeleton } from '@/components/dash';
 import { Icon } from '@/components/icons';
@@ -24,13 +25,15 @@ export function Dashboard() {
 }
 
 function Greeting({ actions, sub }: { actions?: React.ReactNode; sub?: string }) {
+  const t = useT();
   const { me } = useSession();
   const first = me.fullName.split(' ')[0] ?? me.fullName;
   const weekday = WEEKDAYS[(new Date(`${todayLocal()}T00:00:00Z`).getUTCDay() + 6) % 7]?.toLowerCase();
-  return <PageHead title={`Salom, ${first}`} sub={sub ?? `${ROLE_LABEL[me.role]}, ${me.center?.name ?? ''}. Bugun ${date(todayLocal())}, ${weekday}.`} actions={actions} />;
+  return <PageHead title={t('Salom, {name}', { name: first })} sub={sub ?? t('{role}, {center}. Bugun {date}, {weekday}.', { role: ROLE_LABEL[me.role], center: me.center?.name ?? '', date: date(todayLocal()), weekday })} actions={actions} />;
 }
 
 function DeskView() {
+  const t = useT();
   const { can } = useSession();
   const today = todayLocal();
   const fin = useApi<{ income: { total: number; byMethod: { method: string; amount: number }[] }; expenses: { total: number } }>(can('finance.report') ? '/reports/finance/summary' : null, { from: today, to: today });
@@ -41,17 +44,17 @@ function DeskView() {
       <Greeting
         actions={
           <>
-            {can('attendance.mark') ? <ButtonLink href="/attendance" icon={<Icon.calendar />}>Davomat</ButtonLink> : null}
-            {can('student.create') ? <ButtonLink href="/students?new=1" icon={<Icon.plus />}>Yangi o&apos;quvchi</ButtonLink> : null}
-            {can('payment.create') ? <ButtonLink href="/payments?new=1" variant="primary" icon={<Icon.cash />}>To&apos;lov qabul qilish</ButtonLink> : null}
+            {can('attendance.mark') ? <ButtonLink href="/attendance" icon={<Icon.calendar />}>{t("Davomat")}</ButtonLink> : null}
+            {can('student.create') ? <ButtonLink href="/students?new=1" icon={<Icon.plus />}>{t("Yangi o'quvchi")}</ButtonLink> : null}
+            {can('payment.create') ? <ButtonLink href="/payments?new=1" variant="primary" icon={<Icon.cash />}>{t("To'lov qabul qilish")}</ButtonLink> : null}
           </>
         }
       />
       {can('finance.report') ? (
         <DataView state={fin} skeleton={<KpiSkeleton />}>
           {(f) => (
-            <section className="kpis" aria-label="Bugungi kassa">
-              <Kpi title="Bugungi tushum" icon="cash" tone="emerald" md value={<>{compact(f.income.total)}<small>so&apos;m</small></>} note={money(f.income.total)} />
+            <section className="kpis" aria-label={t("Bugungi kassa")}>
+              <Kpi title="Bugungi tushum" icon="cash" tone="emerald" md value={<>{compact(f.income.total)}<small>{t("so'm")}</small></>} note={money(f.income.total)} />
               <Kpi title="Naqd" icon="wallet" tone="violet" md value={compact(method('CASH'))} />
               <Kpi title="Karta va o'tkazma" icon="receipt" tone="cyan" md value={compact(method('CARD') + method('TRANSFER'))} />
               <Kpi title="Bugungi xarajat" icon="alert" tone="amber" md value={compact(f.expenses.total)} />
@@ -60,17 +63,17 @@ function DeskView() {
         </DataView>
       ) : null}
       {can('debtors.view') ? (
-        <Card title="Eng katta qarzdorlar" aside={<Link className="link" href="/debtors">Hammasi</Link>} flush>
+        <Card title="Eng katta qarzdorlar" aside={<Link className="link" href="/debtors">{t("Hammasi")}</Link>} flush>
           <DataView state={debtors} skeleton={<Skeleton rows={4} />} empty={(d) => (d.items.length ? null : <Empty title="Qarzdor yo'q" text="Muddati o'tgan to'lanmagan hisob yo'q." />)}>
             {(d) => (
               <div className="table-wrap">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>O&apos;quvchi</th>
-                      <th>Guruh</th>
-                      <th className="num">Kechikish</th>
-                      <th className="num">Qarz, so&apos;m</th>
+                      <th>{t("O'quvchi")}</th>
+                      <th>{t("Guruh")}</th>
+                      <th className="num">{t("Kechikish")}</th>
+                      <th className="num">{t("Qarz, so'm")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -83,7 +86,7 @@ function DeskView() {
                           {r.phone ? <div className="cell-sub fig">{r.phone}</div> : null}
                         </td>
                         <td className="muted">{r.groups.map((g) => g.groupName).join(', ')}</td>
-                        <td className="num">{r.daysOverdue !== undefined ? `${r.daysOverdue} kun` : "yo'q"}</td>
+                        <td className="num">{r.daysOverdue !== undefined ? t('{n} kun', { n: r.daysOverdue }) : t("yo'q")}</td>
                         <td className="num debt">{r.debt !== undefined ? money(r.debt) : 'bor'}</td>
                       </tr>
                     ))}
@@ -91,7 +94,7 @@ function DeskView() {
                   {d.totalDebt !== undefined ? (
                     <tfoot>
                       <tr>
-                        <td colSpan={3}>Jami {d.total} ta qarzdor</td>
+                        <td colSpan={3}>{t('Jami {n} ta qarzdor', { n: d.total })}</td>
                         <td className="num debt">{money(d.totalDebt)}</td>
                       </tr>
                     </tfoot>
@@ -107,6 +110,7 @@ function DeskView() {
 }
 
 function TeacherView() {
+  const t = useT();
   const groups = useApi<{ items: Group[] }>('/groups', { limit: 200 });
   const tasks = useApi<{ items: Assignment[] }>('/assignments', { limit: 20 });
   const wd = todaysWeekday();
@@ -120,20 +124,20 @@ function TeacherView() {
         actions={
           <>
             <ButtonLink href="/assignments" icon={<Icon.task />}>
-              Vazifalar
+              {t("Vazifalar")}
             </ButtonLink>
             <ButtonLink href="/attendance" variant="primary" icon={<Icon.check />}>
-              Davomat belgilash
+              {t("Davomat belgilash")}
             </ButtonLink>
           </>
         }
       />
       {groups.data && tasks.data ? (
-        <section className="kpis" aria-label="Ko'rsatkichlar">
+        <section className="kpis" aria-label={t("Ko'rsatkichlar")}>
           <Kpi title="Guruhlarim" icon="groups" tone="violet" value={money(list.length)} />
           <Kpi title="O'quvchilar" icon="students" tone="cyan" value={money(list.reduce((s, g) => s + g.studentCount, 0))} />
-          <Kpi title="Bugungi darslar" icon="calendar" tone="emerald" value={money(today.length)} note={today[0] ? `birinchisi ${today[0].s.startTime}` : undefined} />
-          <Kpi title="Tekshirish kutilmoqda" icon="task" tone="amber" value={money(toGrade)} note={pending.length ? `${pending.length} ta vazifada` : undefined} />
+          <Kpi title="Bugungi darslar" icon="calendar" tone="emerald" value={money(today.length)} note={today[0] ? t('birinchisi {time}', { time: today[0].s.startTime }) : undefined} />
+          <Kpi title="Tekshirish kutilmoqda" icon="task" tone="amber" value={money(toGrade)} note={pending.length ? t('{n} ta vazifada', { n: pending.length }) : undefined} />
         </section>
       ) : (
         <KpiSkeleton />
@@ -151,22 +155,22 @@ function TeacherView() {
                           {g.name}
                         </Link>
                         <span className="item-sub">
-                          <span className="fig">{s.startTime}–{s.endTime}</span> · {s.room ?? g.branchName} · {g.studentCount} o&apos;quvchi
+                          <span className="fig">{s.startTime}–{s.endTime}</span> · {s.room ?? g.branchName} · {t("{n} o'quvchi", { n: g.studentCount })}
                         </span>
                       </span>
                       <ButtonLink href={`/groups/${g.id}?tab=lessons&mark=${todayLocal()}`} size="sm" icon={<Icon.check />}>
-                        Davomat
+                        {t("Davomat")}
                       </ButtonLink>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <Empty title="Bugun dars yo'q" text="Jadvalingiz bo'yicha bugun darslar belgilanmagan." action={<ButtonLink href="/groups" size="sm">Guruhlarim</ButtonLink>} />
+                <Empty title="Bugun dars yo'q" text="Jadvalingiz bo'yicha bugun darslar belgilanmagan." action={<ButtonLink href="/groups" size="sm">{t("Guruhlarim")}</ButtonLink>} />
               )
             }
           </DataView>
         </Card>
-        <Card className="c-7" title="Tekshirish kutilmoqda" aside={<Link className="link" href="/assignments">Barchasi</Link>}>
+        <Card className="c-7" title="Tekshirish kutilmoqda" aside={<Link className="link" href="/assignments">{t("Barchasi")}</Link>}>
           <DataView state={tasks} skeleton={<Skeleton rows={3} cols={2} />}>
             {() =>
               pending.length ? (

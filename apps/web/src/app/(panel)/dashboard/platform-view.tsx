@@ -1,6 +1,7 @@
 'use client';
 // Super admin bosh sahifasi: markazlar soni va holati, tarif taqsimoti, so'nggi ochilgan va sinov muddati tugayotgan markazlar.
 // Super admin markaz ichki ma'lumotini (o'quvchi, to'lov) ko'rmaydi (RLS), shuning uchun faqat platforma ko'rsatkichlari.
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Card, Dist, GlobeCard, Kpi, KpiSkeleton } from '@/components/dash';
@@ -29,24 +30,25 @@ const statusOf = (s: string) => CENTER_STATUS[s] ?? { label: s, kind: 'mute' as 
 const TONES = ['violet', 'cyan', 'emerald', 'amber', 'coral'] as const;
 
 export function PlatformView() {
+  const t = useT();
   const centers = useApi<{ items: Center[] }>('/admin/centers', { limit: 200 });
   return (
     <>
       <PageHead
         title="Platforma boshqaruv markazi"
-        sub={centers.data ? `${centers.data.items.length} ta o'quv markazi: holat, tarif va sinov muddatlari.` : "O'quv markazlari, tariflar va rahbar akkauntlari."}
+        sub={centers.data ? t("{n} ta o'quv markazi: holat, tarif va sinov muddatlari.", { n: centers.data.items.length }) : t("O'quv markazlari, tariflar va rahbar akkauntlari.")}
         actions={
           <>
             <ButtonLink href="/admin/plans" icon={<Icon.layers />}>
-              Tariflar
+              {t("Tariflar")}
             </ButtonLink>
             <ButtonLink href="/admin/centers?new=1" variant="primary" icon={<Icon.plus />}>
-              Yangi markaz
+              {t("Yangi markaz")}
             </ButtonLink>
           </>
         }
       />
-      <DataView state={centers} skeleton={<KpiSkeleton />} empty={(d) => (d.items.length ? null : <section className="panel"><Empty title="Hali markaz yo'q" text="Birinchi markazni oching: asosiy filial va rahbar akkaunti avtomatik yaratiladi." action={<ButtonLink href="/admin/centers?new=1" variant="primary" size="sm">Yangi markaz</ButtonLink>} /></section>)}>
+      <DataView state={centers} skeleton={<KpiSkeleton />} empty={(d) => (d.items.length ? null : <section className="panel"><Empty title="Hali markaz yo'q" text="Birinchi markazni oching: asosiy filial va rahbar akkaunti avtomatik yaratiladi." action={<ButtonLink href="/admin/centers?new=1" variant="primary" size="sm">{t("Yangi markaz")}</ButtonLink>} /></section>)}>
         {(d) => <Platform items={d.items} />}
       </DataView>
     </>
@@ -54,6 +56,7 @@ export function PlatformView() {
 }
 
 function Platform({ items }: { items: Center[] }) {
+  const t = useT();
   const today = todayLocal();
   const month = today.slice(0, 7);
   const byNew = useMemo(() => [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt)), [items]);
@@ -77,10 +80,10 @@ function Platform({ items }: { items: Center[] }) {
 
   return (
     <>
-      <section className="kpis" aria-label="Asosiy ko'rsatkichlar">
-        <Kpi title="Jami markazlar" icon="building" tone="violet" value={money(items.length)} note={fresh ? `+${fresh} shu oy` : undefined} noteTone="emerald" />
+      <section className="kpis" aria-label={t("Asosiy ko'rsatkichlar")}>
+        <Kpi title="Jami markazlar" icon="building" tone="violet" value={money(items.length)} note={fresh ? t('+{n} shu oy', { n: fresh }) : undefined} noteTone="emerald" />
         <Kpi title="Faol markazlar" icon="check" tone="emerald" value={money(count('ACTIVE'))} note={`${pct(count('ACTIVE'))}%`} />
-        <Kpi title="Sinov muddatida" icon="clock" tone="amber" value={money(count('TRIAL'))} note={soon ? `${soon} tasi 7 kunda tugaydi` : undefined} />
+        <Kpi title="Sinov muddatida" icon="clock" tone="amber" value={money(count('TRIAL'))} note={soon ? t('{n} tasi 7 kunda tugaydi', { n: soon }) : undefined} />
         <Kpi title="Bloklangan" icon="lock" tone="coral" value={money(count('BLOCKED'))} note={`${pct(count('BLOCKED'))}%`} />
       </section>
 
@@ -92,50 +95,50 @@ function Platform({ items }: { items: Center[] }) {
               <div className="stack">
                 <div className="minis">
                   <div className="mini">
-                    <span className="mini-label">Tarif</span>
-                    <span className="mini-value" data-tone="violet">{sel.planName ?? 'Tarifsiz'}</span>
+                    <span className="mini-label">{t("Tarif")}</span>
+                    <span className="mini-value" data-tone="violet">{sel.planName ?? t('Tarifsiz')}</span>
                   </div>
                   <div className="mini">
-                    <span className="mini-label">Login prefiksi</span>
+                    <span className="mini-label">{t("Login prefiksi")}</span>
                     <span className="mini-value fig">{sel.slug}</span>
                   </div>
                   <div className="mini">
-                    <span className="mini-label">Ochilgan</span>
+                    <span className="mini-label">{t("Ochilgan")}</span>
                     <span className="mini-value fig">{date(tsDay(sel.createdAt))}</span>
                   </div>
                   <div className="mini">
-                    <span className="mini-label">{sel.status === 'BLOCKED' ? 'Bloklangan' : 'Sinov tugashi'}</span>
+                    <span className="mini-label">{sel.status === 'BLOCKED' ? t('Bloklangan') : t('Sinov tugashi')}</span>
                     <span className="mini-value fig" data-tone={sel.status === 'BLOCKED' ? 'coral' : 'cyan'}>
-                      {sel.status === 'BLOCKED' ? (sel.blockedAt ? date(tsDay(sel.blockedAt)) : "yo'q") : sel.trialEndsAt ? date(tsDay(sel.trialEndsAt)) : "yo'q"}
+                      {sel.status === 'BLOCKED' ? (sel.blockedAt ? date(tsDay(sel.blockedAt)) : t("yo'q")) : sel.trialEndsAt ? date(tsDay(sel.trialEndsAt)) : t("yo'q")}
                     </span>
                   </div>
                 </div>
                 <Link className="link small" href="/admin/centers">
-                  Markazlar ro&apos;yxatida ochish
+                  {t("Markazlar ro'yxatida ochish")}
                 </Link>
               </div>
             </Card>
           ) : null}
-          <Card className="grow" title="Tarif taqsimoti" aside={<span className="muted small">{items.length} ta</span>}>
+          <Card className="grow" title="Tarif taqsimoti" aside={<span className="muted small">{t('{n} ta', { n: items.length })}</span>}>
             <Dist rows={planRows.map(([name, n], i) => ({ label: name, value: `${pct(n)}%`, pct: pct(n), tone: TONES[i % TONES.length]! }))} />
           </Card>
         </div>
 
         <section className="col c-8" aria-labelledby="new-centers-h">
           <div className="row" data-between>
-            <h2 id="new-centers-h">So&apos;nggi ochilgan markazlar</h2>
+            <h2 id="new-centers-h">{t("So'nggi ochilgan markazlar")}</h2>
             <Link className="link" href="/admin/centers">
-              Barchasini ko&apos;rish
+              {t("Barchasini ko'rish")}
             </Link>
           </div>
           <div className="table-wrap">
             <table className="table">
               <thead>
                 <tr>
-                  <th>Markaz nomi</th>
-                  <th>Tarif</th>
-                  <th aria-sort="descending">Ochilgan</th>
-                  <th className="num">Holat</th>
+                  <th>{t("Markaz nomi")}</th>
+                  <th>{t("Tarif")}</th>
+                  <th aria-sort="descending">{t("Ochilgan")}</th>
+                  <th className="num">{t("Holat")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,7 +148,7 @@ function Platform({ items }: { items: Center[] }) {
                       <span className="cell-main">{c.name}</span>
                       <div className="cell-sub fig">{c.slug}</div>
                     </td>
-                    <td>{c.planName ?? <span className="muted">Tarifsiz</span>}</td>
+                    <td>{c.planName ?? <span className="muted">{t("Tarifsiz")}</span>}</td>
                     <td className="fig">{date(tsDay(c.createdAt))}</td>
                     <td className="num">
                       <Tag kind={statusOf(c.status).kind}>{statusOf(c.status).label}</Tag>
@@ -160,20 +163,20 @@ function Platform({ items }: { items: Center[] }) {
         <Card className="c-4" title="Sinov muddati yaqin" sub="Muddat tugagach markaz tarifga o'tkaziladi yoki bloklanadi">
           {trials.length ? (
             <ul className="feed">
-              {trials.slice(0, 6).map((t) => (
-                <li key={t.id} data-tone={t.left <= 3 ? 'coral' : t.left <= 7 ? 'amber' : 'emerald'}>
+              {trials.slice(0, 6).map((x) => (
+                <li key={x.id} data-tone={x.left <= 3 ? 'coral' : x.left <= 7 ? 'amber' : 'emerald'}>
                   <span className="dot" />
                   <span className="item-text">
-                    <span className="cell-main">{t.name}</span>
+                    <span className="cell-main">{x.name}</span>
                     <span className="cell-sub">
-                      {t.left < 0 ? `${-t.left} kun oldin tugagan` : t.left === 0 ? 'Bugun tugaydi' : `${t.left} kun qoldi`} · {date(tsDay(t.trialEndsAt!))}
+                      {x.left < 0 ? t('{n} kun oldin tugagan', { n: -x.left }) : x.left === 0 ? t('Bugun tugaydi') : t('{n} kun qoldi', { n: x.left })} · {date(tsDay(x.trialEndsAt!))}
                     </span>
                   </span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="muted">Sinov muddatidagi markaz yo&apos;q.</p>
+            <p className="muted">{t("Sinov muddatidagi markaz yo'q.")}</p>
           )}
         </Card>
       </div>

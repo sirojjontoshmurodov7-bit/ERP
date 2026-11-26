@@ -1,3 +1,4 @@
+import { T } from '@/components/t';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -15,22 +16,22 @@ export default function LoginPage() {
           <span className="brand-mark" aria-hidden>
             <Icon.cube />
           </span>
-          TST_ERP
+          <T>{"TST_ERP"}</T>
         </Link>
         <Globe className="login-globe" />
-        <p className="login-claim">Guruh, davomat, to&apos;lov va maosh: hammasi bitta tizimda.</p>
+        <p className="login-claim"><T>{"Guruh, davomat, to'lov va maosh: hammasi bitta tizimda."}</T></p>
       </aside>
       <section className="login-main">
         <div className="login-card" data-tilt>
           <div>
-            <h1>Tizimga kirish</h1>
-            <p className="auth-sub">Login va parolni markaz rahbari yoki administrator beradi.</p>
+            <h1><T>{"Tizimga kirish"}</T></h1>
+            <p className="auth-sub"><T>{"Login va parolni markaz rahbari yoki administrator beradi."}</T></p>
           </div>
           <Suspense fallback={null}>
             <LoginForm />
           </Suspense>
           <Link className="link small" href="/">
-            Bosh sahifaga qaytish
+            <T>{"Bosh sahifaga qaytish"}</T>
           </Link>
         </div>
       </section>

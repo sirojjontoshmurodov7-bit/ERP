@@ -1,3 +1,4 @@
+import { T } from '@/components/t';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
@@ -34,7 +35,7 @@ async function SessionAction({ variant }: { variant: 'primary' | 'plain' }) {
   const has = (await cookies()).has('erp_rt');
   return (
     <Link className={variant === 'primary' ? 'lp-btn lp-btn--primary' : 'lp-link'} href={has ? '/dashboard' : '/login'}>
-      {has ? "Panelga o'tish" : 'Kirish'}
+      <T>{has ? "Panelga o'tish" : 'Kirish'}</T>
     </Link>
   );
 }
@@ -44,7 +45,7 @@ function Action({ variant }: { variant: 'primary' | 'plain' }) {
     <Suspense
       fallback={
         <Link className={variant === 'primary' ? 'lp-btn lp-btn--primary' : 'lp-link'} href="/login">
-          Kirish
+          <T>{"Kirish"}</T>
         </Link>
       }
     >
@@ -57,7 +58,7 @@ export default function Landing() {
   return (
     <div className="lp">
       <a className="lp-skip" href="#asosiy">
-        Asosiy qismga o&apos;tish
+        <T>{"Asosiy qismga o'tish"}</T>
       </a>
       <header className="lp-nav">
         <div className="lp-container lp-nav-row">
@@ -65,12 +66,12 @@ export default function Landing() {
             <span className="brand-mark" aria-hidden>
               <Icon.cube />
             </span>
-            TST_ERP
+            <T>{"TST_ERP"}</T>
           </Link>
           <nav className="lp-nav-links" aria-label="Bo'limlar">
-            <a href="#imkoniyatlar">Imkoniyatlar</a>
-            <a href="#rollar">Rollar</a>
-            <a href="#xavfsizlik">Xavfsizlik</a>
+            <a href="#imkoniyatlar"><T>{"Imkoniyatlar"}</T></a>
+            <a href="#rollar"><T>{"Rollar"}</T></a>
+            <a href="#xavfsizlik"><T>{"Xavfsizlik"}</T></a>
           </nav>
           <Action variant="primary" />
         </div>
@@ -80,12 +81,12 @@ export default function Landing() {
         <section className="lp-hero">
           <div className="lp-container lp-hero-grid">
             <div className="lp-hero-text">
-              <h1>O&apos;quv markazingiz hisobi bir joyda</h1>
-              <p className="lp-lead">Guruh, davomat, to&apos;lov va maosh: hammasi bitta tizimda.</p>
+              <h1><T>{"O'quv markazingiz hisobi bir joyda"}</T></h1>
+              <p className="lp-lead"><T>{"Guruh, davomat, to'lov va maosh: hammasi bitta tizimda."}</T></p>
               <div className="lp-actions">
                 <Action variant="primary" />
                 <a className="lp-link" href="#imkoniyatlar">
-                  Imkoniyatlar
+                  <T>{"Imkoniyatlar"}</T>
                 </a>
               </div>
             </div>
@@ -97,7 +98,7 @@ export default function Landing() {
 
         <section className="lp-section" id="imkoniyatlar">
           <div className="lp-container lp-split">
-            <h2>Kundalik ish uchun kerak narsalar</h2>
+            <h2><T>{"Kundalik ish uchun kerak narsalar"}</T></h2>
             <ul className="lp-bento">
               {FEATURES.map((f) => {
                 const I = Icon[f.icon];
@@ -106,8 +107,12 @@ export default function Landing() {
                     <span className={`lp-ico lp-ico--${f.tone}`}>
                       <I />
                     </span>
-                    <h3>{f.title}</h3>
-                    <p>{f.text}</p>
+                    <h3>
+                      <T>{f.title}</T>
+                    </h3>
+                    <p>
+                      <T>{f.text}</T>
+                    </p>
                   </li>
                 );
               })}
@@ -117,18 +122,18 @@ export default function Landing() {
 
         <section className="lp-section" id="rollar">
           <div className="lp-container lp-split">
-            <h2>Har kim o&apos;ziga kerakligini ko&apos;radi</h2>
+            <h2><T>{"Har kim o'ziga kerakligini ko'radi"}</T></h2>
             <RoleDeck roles={ROLES} />
           </div>
         </section>
 
         <section className="lp-section lp-dark" id="xavfsizlik">
           <div className="lp-container lp-secure">
-            <h2>Har markazning ma&apos;lumoti o&apos;z qulfi ostida</h2>
+            <h2><T>{"Har markazning ma'lumoti o'z qulfi ostida"}</T></h2>
             <ul className="lp-vault" data-tilt>
-              <li className="lp-plate">Bir markaz boshqasining yozuvini ko&apos;ra olmaydi, buni bazaning o&apos;zi ta&apos;minlaydi.</li>
-              <li className="lp-plate">To&apos;lov, maosh va audit jurnali o&apos;chirilmaydi, tuzatish alohida yozuv bo&apos;ladi.</li>
-              <li className="lp-plate">Birinchi kirishda parol almashtiriladi.</li>
+              <li className="lp-plate"><T>{"Bir markaz boshqasining yozuvini ko'ra olmaydi, buni bazaning o'zi ta'minlaydi."}</T></li>
+              <li className="lp-plate"><T>{"To'lov, maosh va audit jurnali o'chirilmaydi, tuzatish alohida yozuv bo'ladi."}</T></li>
+              <li className="lp-plate"><T>{"Birinchi kirishda parol almashtiriladi."}</T></li>
             </ul>
           </div>
         </section>
@@ -136,8 +141,8 @@ export default function Landing() {
         <section className="lp-section lp-cta">
           <div className="lp-container lp-cta-row">
             <div>
-              <h2>Tizimga kiring</h2>
-              <p className="lp-lead">Login va parolni markaz rahbari yoki administrator beradi.</p>
+              <h2><T>{"Tizimga kiring"}</T></h2>
+              <p className="lp-lead"><T>{"Login va parolni markaz rahbari yoki administrator beradi."}</T></p>
             </div>
             <Action variant="primary" />
           </div>
@@ -150,7 +155,7 @@ export default function Landing() {
             <span className="brand-mark" aria-hidden>
               <Icon.cube />
             </span>
-            TST_ERP
+            <T>{"TST_ERP"}</T>
           </span>
           <Action variant="plain" />
         </div>
