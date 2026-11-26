@@ -1,0 +1,31 @@
+# Bepul hosting uchun bitta obraz: API + web + kichik proksi (deploy/render/start.mjs). Kontekst: repozitoriy ildizi.
+#   docker build -f Dockerfile.render -t tst-erp .
+# Muhit: DATABASE_MIGRATION_URL, APP_DB_PASSWORD, JWT_ACCESS_SECRET, JWT_REFRESH_SECRET (+ ixtiyoriy: Telegram, super admin). DEPLOY.md
+FROM node:24.18.0-alpine AS build
+RUN npm install -g pnpm@12.18.0
+WORKDIR /repo
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY apps/api/package.json apps/api/
+COPY apps/web/package.json apps/web/
+COPY packages/shared/package.json packages/shared/
+RUN pnpm install --frozen-lockfile --filter "@erp/api..." --filter "@erp/web..."
+COPY packages/shared packages/shared
+COPY apps/api apps/api
+COPY apps/web apps/web
+ENV NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1
+RUN pnpm --filter @erp/shared build && pnpm --filter @erp/api build && pnpm --filter @erp/web build
+RUN pnpm --filter @erp/api deploy --prod /out/api
+
+FROM node:24.18.0-alpine
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=10000
+WORKDIR /app
+RUN addgroup -S app && adduser -S app -G app
+COPY --from=build --chown=app:app /out/api ./api
+COPY --from=build --chown=app:app /repo/apps/web/.next/standalone ./web
+COPY --from=build --chown=app:app /repo/apps/web/.next/static ./web/apps/web/.next/static
+COPY --from=build --chown=app:app /repo/apps/web/public ./web/apps/web/public
+COPY --chown=app:app deploy/render/start.mjs ./start.mjs
+USER app
+EXPOSE 10000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 CMD wget -qO- "http://127.0.0.1:${PORT}/ping" >/dev/null || exit 1
+CMD ["node", "start.mjs"]

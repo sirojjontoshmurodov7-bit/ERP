@@ -161,3 +161,12 @@ jobs:
           tags: erp-web:ci
           cache-from: type=gha,scope=web
           cache-to: type=gha,mode=max,scope=web
+      - name: Bitta servis obrazi (Render, bepul bulut)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.render
+          push: false
+          tags: tst-erp:ci
+          cache-from: type=gha,scope=render
+          cache-to: type=gha,mode=max,scope=render

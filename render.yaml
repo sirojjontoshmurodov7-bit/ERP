@@ -1,0 +1,43 @@
+# Render Blueprint: bitta bepul web servis (API + web). Baza: Neon (DEPLOY.md, "Bepul bulut").
+# Render panelida: New > Blueprint > shu repozitoriy. sync:false qiymatlarni o'zingiz kiritasiz, generateValue sirlarni Render yaratadi.
+services:
+  - type: web
+    name: tst-erp
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /ping
+    autoDeploy: true
+    envVars:
+      # Neon: baza egasi ulanishi (pooler EMAS, to'g'ridan-to'g'ri host), sslmode=require bilan
+      - key: DATABASE_MIGRATION_URL
+        sync: false
+      - key: APP_DB_PASSWORD
+        generateValue: true
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_ACCESS_TTL
+        value: 15m
+      - key: JWT_REFRESH_TTL
+        value: 30d
+      # Birinchi super admin (bir marta yaratiladi; birinchi kirishda parol almashtiriladi)
+      - key: SUPER_ADMIN_LOGIN
+        value: superadmin
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      # Telegram (ixtiyoriy): token BotFather'dan; webhook start.mjs da avtomatik o'rnatiladi
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        value: TST_ERP_bot
+      - key: TELEGRAM_WEBHOOK_SECRET
+        generateValue: true
+      # Kundalik eslatmalar: servis cron-job.org pingi bilan uyg'oq turadi, ichki jadval 09:00 da ishlaydi
+      - key: NOTIFY_DAILY_AT
+        value: "09:00"
+      - key: CRON_SECRET
+        generateValue: true

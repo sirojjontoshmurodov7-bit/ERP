@@ -51,6 +51,22 @@ Migratsiyalar har safar avtomatik qo'llanadi (allaqachon qo'llanganlari o'tkazib
 - **API:** `apps/api/Dockerfile` obrazi. Ishga tushirishdan oldin `node dist/db/migrate.js && node dist/db/seed.js`. Muhit: `DATABASE_URL` (erp_app), JWT sirlari, `TRUST_PROXY=1` (faqat API'ga tashqaridan to'g'ridan-to'g'ri kirib bo'lmasa).
 - **Web:** `apps/web/Dockerfile` obrazi. Muhit: `API_URL` (API'ning ichki manzili), `WEB_SECURE_COOKIES=true`.
 
+## 3-variant: bepul bulut (Neon + Render, $0)
+
+Bitta Render bepul servisi (API + web bitta konteynerda: `Dockerfile.render`, `deploy/render/start.mjs`) va Neon bepul Postgres. Cheklovlar (2026-noyabr): Render bepul servisi oyiga 750 soat (bitta servis 24/7 ga yetadi), 15 daqiqa so'rovsiz qolsa uxlaydi (uyg'onish ~1 daqiqa), 512 MB RAM, istalgan payt qayta ishga tushishi mumkin; Neon bepul: 1 GB, oyiga 100 CU-soat, 5 daqiqa ishlatilmasa uxlaydi (ma'lumot o'chmaydi). Haqiqiy mijozlar ko'paysa: Render pullik ($7) yoki VPS (1-variant).
+
+1. **Neon** (neon.com, GitHub bilan kirish): yangi loyiha, Postgres 17, region **Frankfurt (eu-central-1)**. Connection details: **Pooled connection o'chiq** (to'g'ridan-to'g'ri host), rol egasi (`neondb_owner`) bilan ulanish satri, oxirida `?sslmode=require`. Bu `DATABASE_MIGRATION_URL`.
+2. **Render** (render.com, GitHub bilan kirish): New > Blueprint > `ERP` repozitoriysi (`render.yaml` topiladi). So'raladigan qiymatlar:
+   - `DATABASE_MIGRATION_URL`: 1-qadamdagi satr;
+   - `SUPER_ADMIN_PASSWORD`: kamida 8 belgi (birinchi kirishda almashtiriladi; login `superadmin`);
+   - `TELEGRAM_BOT_TOKEN`: BotFather'dan (bo'sh qoldirsa bot o'chiq).
+   Qolgan sirlar (`JWT_*`, `APP_DB_PASSWORD`, `TELEGRAM_WEBHOOK_SECRET`, `CRON_SECRET`) Render tomonidan yaratiladi.
+3. Birinchi deploy (~5-8 daqiqa) loglarida: `migrations applied`, `Super admin created`, `API tayyor`, `Telegram webhook: https://...onrender.com/telegram/webhook`. Konteyner har ishga tushishda o'zi: `erp_app` rolini (NOSUPERUSER NOBYPASSRLS, aks holda to'xtaydi) ta'minlaydi, migratsiya va seed yuritadi, Telegram webhook'ni o'rnatadi.
+4. **cron-job.org** (bepul): har 10 daqiqada `GET https://<servis>.onrender.com/ping`. Bu servisni uyg'oq ushlaydi (bazaga tegmaydi, Neon kvotasini yemaydi); kundalik eslatmalar ichki jadval bilan 09:00 da (`NOTIFY_DAILY_AT`) ketadi.
+5. Tekshirish: `https://<servis>.onrender.com/login`, super admin bilan kirish, parolni almashtirish, markaz ochish; Telegram: `/start KOD`.
+
+Eslatma: bepul servisda fayl tizimi vaqtinchalik (bizga kerak emas: hamma narsa bazada). Zaxira nusxa: Neon 6 soatlik tiklash tarixi; qo'shimcha `pg_dump` uchun lokal kompyuterdan `DATABASE_MIGRATION_URL` bilan.
+
 ## Muhit o'zgaruvchilari
 
 | O'zgaruvchi | Qayerda | Izoh |
@@ -62,6 +78,8 @@ Migratsiyalar har safar avtomatik qo'llanadi (allaqachon qo'llanganlari o'tkazib
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` | api | ixtiyoriy |
 | `TELEGRAM_POLLING` | api | `true`: webhook o’rniga polling (bitta nusxa) |
 | `NOTIFY_DAILY_AT` | api | ichki kundalik eslatma vaqti, masalan `09:00` |
+| `APP_DB_PASSWORD` | Render | `erp_app` roli paroli; `DATABASE_URL` shundan `start.mjs` da yasaladi |
+| `SUPER_ADMIN_LOGIN`, `SUPER_ADMIN_PASSWORD` | Render | birinchi super admin (bor bo'lsa o'zgarmaydi) |
 | `CRON_SECRET` | api | tashqi cron uchun |
 | `API_URL` | web | masalan `http://api:3001` |
 | `WEB_SECURE_COOKIES` | web | HTTPS orqasida `true` |
