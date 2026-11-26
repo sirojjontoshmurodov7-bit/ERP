@@ -218,7 +218,9 @@ describe('Excel/CSV import (PGlite, RLS yoqilgan)', () => {
       expect(JSON.stringify(res.body.errors)).not.toMatch(/abc|31\.02|Takror|Yaxshi|\+998/);
       const stored = (await A.owner.get(`/imports/${res.body.job.id}`).expect(200)).body;
       expect(stored.report.errors).toHaveLength(7);
-      expect(JSON.stringify(stored)).not.toMatch(/abc|Takror|Yaxshi|\+998/);
+      // UUID'lar (masalan "…7abc60…") tasodifan "abc" ni o'z ichiga olishi mumkin: ularni olib tashlab tekshiramiz
+      const storedText = JSON.stringify(stored).replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, '<id>');
+      expect(storedText).not.toMatch(/abc|Takror|Yaxshi|\+998/);
     });
 
     it("skipInvalid: to'g'ri qatorlar yaratiladi, xatolilari o'tkaziladi va hisobotga tushadi", async () => {
