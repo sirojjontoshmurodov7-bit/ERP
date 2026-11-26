@@ -1,17 +1,17 @@
 # Graph Report - ERP  (2026-11-26)
 
 ## Corpus Check
-- 315 files · ~185,401 words
+- 319 files · ~187,560 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 17 file(s) not represented in the graph (top: (none) 10, .css 4, .example 2)
 
 ## Summary
-- 3063 nodes · 10503 edges · 119 communities (103 shown, 16 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 482 edges (avg confidence: 0.84)
+- 3123 nodes · 10576 edges · 128 communities (109 shown, 19 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 484 edges (avg confidence: 0.84)
 - Token cost: 256,812 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `710bd6a9`
+- Built from commit: `2ab50cec`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -21,16 +21,16 @@
 - LessonsService
 - app-config.ts
 - Web: kutubxona va tariflar sahifasi
-- Guruhlar API
+- load-seed.mjs
 - TextInput
-- StudentsService
-- enrollments.controller.ts
+- .hasIn
+- .branches
 - Controller yordamchilari
 - @nestjs/common
-- ExpensesService
+- .update
 - permission-matrix.ts
 - Button
-- billing.e2e-spec.ts
+- todayLocal
 - payroll.schemas.ts
 - ci.yml
 - devDependencies
@@ -39,12 +39,12 @@
 - RequirePermission
 - .run
 - DataView
-- .run
-- ChargesService
+- pg-local.ts
+- messages.ts
 - ERD va ruxsatlar matritsasi
 - notifications.e2e-spec.ts
 - .update
-- Tariflar API
+- global-setup.ts
 - CoursesService
 - DbService
 - Spreadsheet o'quvchi
@@ -66,14 +66,14 @@
 - To'lovlar API
 - steps
 - notifications.schemas.ts
-- Maosh motori
+- payroll-engine.ts
 - CurrentUser
 - O'quvchilar API
 - API tsconfig
 - Demo seed skripti
 - API skriptlari
 - env
-- permissions-admin.controller.ts
+- Mahsulot bosqichlari (MVP, 2, 3, 4)
 - Web tsconfig
 - Dev docker-compose
 - API bog'liqliklari
@@ -92,14 +92,14 @@
 - enrollments.schemas.ts
 - Prod docker-compose
 - .events
+- PermissionsAdminService
 - AuthUser
-- .withContext
 - test
 - Kichik klaster 79
 - student-import.ts
 - api/package.json
-- settings-plans.e2e-spec.ts
-- AccessClaims
+- payroll.e2e-spec.ts
+- i18n-check.mjs
 - .end
 - TelegramPoller
 - Kichik klaster 86
@@ -131,6 +131,15 @@
 - app/page.tsx
 - @types/node@^24.0.0
 - @types/supertest@^7.0.0
+- i18n.ts
+- TelegramBotService
+- load-bench.mjs
+- telegram.poller.spec.ts
+- DispatchService
+- .login
+- NotifyScheduler
+- Public
+- .list
 
 ## God Nodes (most connected - your core abstractions)
 1. `AuthUser` - 362 edges
@@ -151,9 +160,9 @@
   CLAUDE.md → packages/shared/package.json
 - `Backend: NestJS modulli monolit` --references--> `typescript`  [EXTRACTED]
   CLAUDE.md → packages/shared/package.json
-- `AuthUser` --references--> `Role`  [EXTRACTED]
-  apps/api/src/auth/auth.types.ts → packages/shared/src/index.ts
 - `AccessClaims` --references--> `Role`  [EXTRACTED]
+  apps/api/src/auth/auth.types.ts → packages/shared/src/index.ts
+- `AuthUser` --references--> `Role`  [EXTRACTED]
   apps/api/src/auth/auth.types.ts → packages/shared/src/index.ts
 
 ## Import Cycles
@@ -167,71 +176,71 @@
 - **Billing -> payments -> debt money flow** — progress_billing_engine_plancharges, progress_fifo_allocator, progress_debt_computation, progress_append_only_ledger [INFERRED 0.85]
 - **Tenant isolation mechanisms** — progress_rls_tenant_context, progress_composite_fk_pattern, progress_security_definer_functions, progress_branch_scope_helper [INFERRED 0.85]
 
-## Communities (119 total, 16 thin omitted)
+## Communities (128 total, 19 thin omitted)
 
 ### Community 0 - "Web: kirish va panel sahifalari"
 Cohesion: 0.03
 Nodes (101): ChangePasswordForm(), ChangePasswordPage(), metadata, instant, metadata, Page(), instant, metadata (+93 more)
 
 ### Community 1 - "Vazifalar xizmati va DB sxemasi"
-Cohesion: 0.07
-Nodes (92): AssignmentRow, homeworkPoints(), SubmissionRow, ATTENDANCE_POINTS, RankRow, TZ, AuditEntry, listAuditSchema (+84 more)
+Cohesion: 0.06
+Nodes (99): AssignmentRow, SubmissionRow, ATTENDANCE_POINTS, RankRow, TZ, AuditEntry, writeAudit(), generateTempPassword() (+91 more)
 
 ### Community 2 - "LessonsService"
-Cohesion: 0.19
-Nodes (8): AttendanceQuery, bad(), conflict(), forbidden(), groupNotFound(), lessonNotFound(), LessonsService, rate()
+Cohesion: 0.21
+Nodes (9): branchScope(), AttendanceQuery, bad(), conflict(), forbidden(), groupNotFound(), lessonNotFound(), LessonsService (+1 more)
 
 ### Community 3 - "app-config.ts"
 Cohesion: 0.03
-Nodes (138): AppModule, hashPassword(), PARAMS, APP_CONFIG, envSchema, loadConfig(), parseDuration(), parseTrustProxy() (+130 more)
+Nodes (141): AppModule, hashPassword(), PARAMS, APP_CONFIG, AppConfig, envSchema, loadConfig(), parseDuration() (+133 more)
 
 ### Community 4 - "Web: kutubxona va tariflar sahifasi"
 Cohesion: 0.07
 Nodes (47): LoginForm(), LoginPage(), metadata, Plan, AttStatus, BILLING_MODE, Group, GROUP_STATUS (+39 more)
 
-### Community 5 - "Guruhlar API"
-Cohesion: 0.26
-Nodes (8): branchScope(), ScheduleItem, bad(), conflict(), escapeLike(), forbidden(), groupNotFound(), GroupsService
+### Community 5 - "load-seed.mjs"
+Cohesion: 0.08
+Nodes (28): addDays(), API, BRANCHES, byGroup, call(), CONC, GROUPS_PER_BRANCH, lessonDays (+20 more)
 
 ### Community 6 - "TextInput"
 Cohesion: 0.15
 Nodes (46): AssignmentsPage(), AttendancePage(), Row, Summary, Debtor, DebtorsPage(), Expense, ExpenseDialog (+38 more)
 
-### Community 7 - "StudentsService"
-Cohesion: 0.26
-Nodes (5): branchNotFound(), escapeLike(), forbidden(), notFound(), StudentsService
+### Community 7 - ".hasIn"
+Cohesion: 0.19
+Nodes (10): audited(), forbidden(), payoutNotFound(), PayoutsService, ListPeriodsQuery, forbidden(), locked(), PayrollService (+2 more)
 
-### Community 8 - "enrollments.controller.ts"
-Cohesion: 0.16
-Nodes (11): id(), CreateEnrollmentInput, createEnrollmentSchema, LeaveEnrollmentInput, leaveEnrollmentSchema, ListEnrollmentsQuery, listEnrollmentsSchema, price (+3 more)
+### Community 8 - ".branches"
+Cohesion: 0.13
+Nodes (12): daysBetween(), ReportsController, BRANCH_SORTS, BranchesQuery, branchesQuerySchema, OverviewQuery, overviewQuerySchema, range (+4 more)
 
 ### Community 9 - "Controller yordamchilari"
-Cohesion: 0.07
-Nodes (36): uuid(), changePasswordSchema, loginSchema, refreshSchema, ALLOW_MUST_CHANGE, IS_PUBLIC, PERMISSIONS_KEY, ROLES_KEY (+28 more)
+Cohesion: 0.10
+Nodes (43): uuid(), listAuditSchema, changePasswordSchema, loginSchema, refreshSchema, ClientInfo, AuthedRequest, SessionRow (+35 more)
 
 ### Community 10 - "@nestjs/common"
 Cohesion: 0.06
-Nodes (25): AcademicModule, AppController, AppService, AuditModule, AuthModule, BillingModule, BranchesModule, CentersModule (+17 more)
+Nodes (26): AcademicModule, AppController, AppService, AuditModule, AuthModule, BillingModule, BranchesModule, CentersModule (+18 more)
 
-### Community 11 - "ExpensesService"
-Cohesion: 0.33
-Nodes (4): audited(), ExpensesService, forbidden(), notFound()
+### Community 11 - ".update"
+Cohesion: 0.13
+Nodes (6): CenterSettingsController, clientOf(), UpdateCenterSettingsInput, updateCenterSettingsSchema, CenterSettingsService, effectiveSettings()
 
 ### Community 12 - "permission-matrix.ts"
 Cohesion: 0.14
-Nodes (13): DEFAULT_CENTER_SETTINGS, DEFAULT_TRIAL_DAYS, defaultRolePermissionRows(), ROLE_PERMISSION_MATRIX, RoleMatrix, RolePermissionRow, TenantRole, PERMISSION_CODES (+5 more)
+Nodes (12): DEFAULT_CENTER_SETTINGS, DEFAULT_TRIAL_DAYS, defaultRolePermissionRows(), ROLE_PERMISSION_MATRIX, RoleMatrix, RolePermissionRow, PERMISSION_CODES, PERMISSION_MODULES (+4 more)
 
 ### Community 13 - "Button"
 Cohesion: 0.12
 Nodes (58): Center, CentersPage(), CreateCenter, EditCenter, Plan, STATUS, PlanDialog, GradeDialog (+50 more)
 
-### Community 14 - "billing.e2e-spec.ts"
+### Community 14 - "todayLocal"
 Cohesion: 0.07
-Nodes (43): countLessons(), addDays(), dayOf(), fromMs(), isoWeekday(), toMs(), daysAgo(), activate() (+35 more)
+Nodes (52): BillingMode, ChargeDraft, ChargeKind, countLessons(), discountFor(), EngineContext, EngineDiscount, EngineEnrollment (+44 more)
 
 ### Community 15 - "payroll.schemas.ts"
-Cohesion: 0.06
-Nodes (31): audited(), forbidden(), payoutNotFound(), PayoutsService, clientOf(), PayrollController, CreateAdjustmentInput, createAdjustmentSchema (+23 more)
+Cohesion: 0.09
+Nodes (21): clientOf(), PayrollController, CreateAdjustmentInput, createAdjustmentSchema, CreatePayoutInput, createPayoutSchema, CreateRuleInput, createRuleSchema (+13 more)
 
 ### Community 16 - "ci.yml"
 Cohesion: 0.17
@@ -246,68 +255,68 @@ Cohesion: 0.05
 Nodes (38): Daily pg_dump backup and restore testing, DEPLOY.md deploy guide, Environment variables (DATABASE_URL, JWT secrets, TRUST_PROXY, CRON_SECRET, API_URL...), Local development (pg:local, db:migrate, dev:api, dev:web), Option 2: Neon + container hosting, First super admin bootstrap (create-super-admin.js), Telegram bot setup (BotFather, setWebhook with secret_token), Topology: Caddy -> web:3000 -> api:3001 -> db:5432 (+30 more)
 
 ### Community 19 - "[...path]/route.ts"
-Cohesion: 0.06
-Nodes (47): dataDir, ensureRolesAndDb(), PG_LOCAL, startLocalPg(), superUrl(), [cmd = 'info', arg], COMMANDS, envFile (+39 more)
+Cohesion: 0.16
+Nodes (24): POST(), POST(), BLOCKED, DELETE, GET, handle(), PASS_RESPONSE_HEADERS, PATCH (+16 more)
 
 ### Community 20 - "RequirePermission"
-Cohesion: 0.09
+Cohesion: 0.10
 Nodes (6): RequirePermission(), CentersController, clientOf(), ProbeController, ProbeController, ProbeController
 
 ### Community 21 - ".run"
-Cohesion: 0.11
+Cohesion: 0.09
 Nodes (8): clientOf(), ImportsController, flag, ListImportsQuery, listImportsSchema, RunImportInput, runImportSchema, UploadedFile
 
 ### Community 22 - "DataView"
 Cohesion: 0.12
 Nodes (62): CoursesPage(), Dashboard(), DeskView(), Greeting(), TeacherView(), Branches(), BranchRow, BranchTable() (+54 more)
 
-### Community 23 - ".run"
-Cohesion: 0.28
-Nodes (5): bad(), forbidden(), ImportsService, jobView(), safeName()
+### Community 23 - "pg-local.ts"
+Cohesion: 0.14
+Nodes (8): dataDir, ensureRolesAndDb(), PG_LOCAL, startLocalPg(), superUrl(), [cmd = 'info', arg], COMMANDS, envFile
 
-### Community 24 - "ChargesService"
-Cohesion: 0.34
-Nodes (4): audited(), chargeNotFound(), ChargesService, forbidden()
+### Community 24 - "messages.ts"
+Cohesion: 0.23
+Nodes (12): Candidate, debtMessage(), formatSom(), hashLinkCode(), homeworkMessage(), lessonMessage(), LINK_CODE_LENGTH, LINK_CODE_TTL_MS (+4 more)
 
 ### Community 25 - "ERD va ruxsatlar matritsasi"
-Cohesion: 0.17
-Nodes (8): ERD va ruxsatlar matritsasi, centers table, centers_guard_platform_columns trigger, Permission matrix (roles x permission codes), Accepted decisions and resolved questions, Six fixed roles (SUPER_ADMIN, OWNER, ADMIN, CASHIER, TEACHER, STUDENT), Telegram bot and notifications (step 21), REJA.md
+Cohesion: 0.18
+Nodes (8): ERD va ruxsatlar matritsasi, centers table, centers_guard_platform_columns trigger, grace_days (center default copied into group), Permission matrix (roles x permission codes), Accepted decisions and resolved questions, Six fixed roles (SUPER_ADMIN, OWNER, ADMIN, CASHIER, TEACHER, STUDENT), REJA.md
 
 ### Community 26 - "notifications.e2e-spec.ts"
-Cohesion: 0.04
-Nodes (43): AppConfig, DispatchService, emptySummary(), badCodeMessage(), debtMessage(), formatSom(), hashLinkCode(), helpMessage() (+35 more)
+Cohesion: 0.15
+Nodes (13): SendResult, activate(), Api, Center, config, FakeSender, makeApi(), mkStudent() (+5 more)
 
 ### Community 27 - ".update"
-Cohesion: 0.12
-Nodes (8): clientOf(), PlansController, CreatePlanInput, createPlanSchema, features, limit, UpdatePlanInput, updatePlanSchema
+Cohesion: 0.10
+Nodes (13): clientOf(), PlansController, CreatePlanInput, createPlanSchema, features, limit, UpdatePlanInput, updatePlanSchema (+5 more)
 
-### Community 28 - "Tariflar API"
-Cohesion: 0.27
-Nodes (5): audited(), nameTaken(), notFound(), PlansService, view()
+### Community 28 - "global-setup.ts"
+Cohesion: 0.24
+Nodes (12): firstSignIn(), signedIn(), signIn(), API, call(), DATA_FILE, E2EData, globalSetup() (+4 more)
 
 ### Community 29 - "CoursesService"
 Cohesion: 0.11
 Nodes (13): clientOf(), CoursesController, CreateCourseInput, createCourseSchema, listCoursesSchema, price, UpdateCourseInput, updateCourseSchema (+5 more)
 
 ### Community 30 - "DbService"
-Cohesion: 0.06
-Nodes (19): AuditController, PermissionsService, BillingService, DebtorRow, DebtorsService, GroupRow, DbService, TenantContext (+11 more)
+Cohesion: 0.05
+Nodes (25): LOGIN_ACCOUNT_MAX_FAILURES, LOGIN_MAX_FAILURES, LOGIN_WINDOW_SECONDS, PermissionsService, BillingService, DebtorRow, DebtorsService, forbidden() (+17 more)
 
 ### Community 31 - "Spreadsheet o'quvchi"
 Cohesion: 0.12
 Nodes (26): attrs(), BUILTIN_DATE_FMTS, colIndex(), corrupt(), dateStyles(), decode(), ENTITIES, excelSerialToIso() (+18 more)
 
 ### Community 32 - "To'lov taqsimlagich (FIFO)"
-Cohesion: 0.14
-Nodes (10): AllocatorService, forbidden(), audited(), forbidden(), paymentNotFound(), PaymentsService, studentNotFound(), inScope() (+2 more)
+Cohesion: 0.10
+Nodes (11): AllocatorService, chunks(), audited(), chargeNotFound(), ChargesService, forbidden(), audited(), forbidden() (+3 more)
 
 ### Community 33 - "with"
 Cohesion: 0.15
 Nodes (13): with, cache, cache-from, cache-to, context, file, name, node-version (+5 more)
 
 ### Community 34 - "Xodimlar API"
-Cohesion: 0.07
-Nodes (27): generateLogin(), isLoginConflict(), teacherProfiles, clientOf(), id(), StaffController, UserPasswordController, UsersModule (+19 more)
+Cohesion: 0.08
+Nodes (17): clientOf(), StaffController, UserPasswordController, branchIds, createStaffSchema, ListStaffQuery, listStaffSchema, login (+9 more)
 
 ### Community 35 - "CLAUDE.md qoidalari"
 Cohesion: 0.09
@@ -318,24 +327,24 @@ Cohesion: 0.21
 Nodes (12): instant, metadata, Page(), byModule(), MODULES, PermissionsPage(), RolePerm, ROLES (+4 more)
 
 ### Community 37 - "Filiallar API"
-Cohesion: 0.13
-Nodes (9): BranchesController, clientOf(), id(), CreateBranchInput, createBranchSchema, listBranchesSchema, phone, UpdateBranchInput (+1 more)
+Cohesion: 0.10
+Nodes (13): BranchesController, clientOf(), CreateBranchInput, createBranchSchema, listBranchesSchema, phone, UpdateBranchInput, updateBranchSchema (+5 more)
 
 ### Community 38 - ".end"
-Cohesion: 0.14
-Nodes (8): clientOf(), DiscountsController, CreateDiscountInput, createDiscountSchema, endDiscountSchema, ListDebtorsQuery, listDebtorsSchema, reason
+Cohesion: 0.15
+Nodes (7): clientOf(), DiscountsController, CreateDiscountInput, createDiscountSchema, endDiscountSchema, listDebtorsSchema, reason
 
 ### Community 39 - "Hisoblar API"
 Cohesion: 0.13
 Nodes (10): BillingController, clientOf(), cancelChargeSchema, CreateManualChargeInput, createManualChargeSchema, generateBillingSchema, ListChargesQuery, listChargesSchema (+2 more)
 
 ### Community 41 - "REJA: bozor va mahsulot"
-Cohesion: 0.09
-Nodes (24): Audit jurnali: kim, nima, qachon, oldingi/keyingi, Auth: argon2, JWT + refresh, 2FA, Raqobatchilar: SchoolupCRM, UstozCRM, ALFA CRM, Umai CRM, Shaxsiy ma'lumotlar qonuni (lokalizatsiya), Tashkilot > filial > guruh > o'quvchi, Birinchi 7 kunda 5 amaliy qadam, Bepul infra cheklovlari (Neon/Supabase, Render, Fly.io), 5-10 rahbar bilan suhbat (birinchi vazifa) (+16 more)
+Cohesion: 0.12
+Nodes (17): Audit jurnali: kim, nima, qachon, oldingi/keyingi, Auth: argon2, JWT + refresh, 2FA, Raqobatchilar: SchoolupCRM, UstozCRM, ALFA CRM, Umai CRM, Shaxsiy ma'lumotlar qonuni (lokalizatsiya), Tashkilot > filial > guruh > o'quvchi, Birinchi 7 kunda 5 amaliy qadam, Bepul infra cheklovlari (Neon/Supabase, Render, Fly.io), Bozor tahlili (raqobatchilar) (+9 more)
 
 ### Community 42 - "ERD: moliya modeli"
 Cohesion: 0.11
-Nodes (21): audit_logs table, charges table, ERD: charges, payments, allocations, expenses, ERD: payroll, notifications, import, expenses table (ACTIVE->VOIDED), Cash-basis finance report (step 17), grace_days (center default copied into group), Student Excel import (import_jobs, step 19) (+13 more)
+Nodes (20): Attendance lesson lock (attendance_lock_days, edit_past), charges table, enrollments table, ERD: charges, payments, allocations, expenses, ERD: groups, enrollments, attendance, homework, rating, ERD: payroll, notifications, import, expenses table (ACTIVE->VOIDED), Cash-basis finance report (step 17) (+12 more)
 
 ### Community 43 - "shell.tsx"
 Cohesion: 0.11
@@ -350,11 +359,11 @@ Cohesion: 0.07
 Nodes (35): eslintConfig, dependencies, next@16.4.6, react@19.3.0, react-dom@19.3.0, devDependencies, eslint@^9, eslint-config-next@16.4.6 (+27 more)
 
 ### Community 46 - "TokenService"
-Cohesion: 0.09
-Nodes (12): AuthController, clientOf(), accountInactive(), AuthService, centerBlocked(), invalidCredentials(), invalidRefresh(), AllowMustChangePassword() (+4 more)
+Cohesion: 0.07
+Nodes (14): AuthController, clientOf(), AuthService, invalidRefresh(), LoginResult, AccessClaims, TokenPair, AllowMustChangePassword() (+6 more)
 
 ### Community 47 - "To'lovlar API"
-Cohesion: 0.13
+Cohesion: 0.14
 Nodes (9): clientOf(), id(), PaymentsController, CreatePaymentInput, createPaymentSchema, ListPaymentsQuery, listPaymentsSchema, note (+1 more)
 
 ### Community 48 - "steps"
@@ -362,20 +371,20 @@ Cohesion: 0.29
 Nodes (10): steps, steps, PGPASSWORD, TEST_DATABASE_URL, env, if, name, run (+2 more)
 
 ### Community 49 - "notifications.schemas.ts"
-Cohesion: 0.09
-Nodes (12): Public(), clientOf(), NotificationsController, safeEqual(), uuid(), ListNotificationsQuery, listNotificationsSchema, NOTIFICATION_TYPES (+4 more)
+Cohesion: 0.12
+Nodes (11): Roles(), clientOf(), NotificationsController, safeEqual(), ListNotificationsQuery, listNotificationsSchema, NOTIFICATION_TYPES, RUN_TYPES (+3 more)
 
-### Community 50 - "Maosh motori"
-Cohesion: 0.08
-Nodes (32): BillingMode, ChargeDraft, ChargeKind, discountFor(), EngineContext, EngineDiscount, EngineEnrollment, EngineGroup (+24 more)
+### Community 50 - "payroll-engine.ts"
+Cohesion: 0.15
+Nodes (16): attachedGroups(), Attachment, EngineRule, fmt(), GroupBase, LessonCount, monthStartOf(), PayrollInput (+8 more)
 
 ### Community 51 - "CurrentUser"
-Cohesion: 0.10
-Nodes (22): AcademicController, clientOf(), AdjustRatingInput, adjustRatingSchema, CreateAssignmentInput, createAssignmentSchema, GradeInput, gradeSchema (+14 more)
+Cohesion: 0.07
+Nodes (27): AcademicController, clientOf(), AdjustRatingInput, adjustRatingSchema, CreateAssignmentInput, createAssignmentSchema, GradeInput, gradeSchema (+19 more)
 
 ### Community 52 - "O'quvchilar API"
-Cohesion: 0.10
-Nodes (11): clientOf(), StudentsController, birthDate, CreateStudentInput, createStudentSchema, ListStudentsQuery, listStudentsSchema, login (+3 more)
+Cohesion: 0.08
+Nodes (16): clientOf(), StudentsController, birthDate, CreateStudentInput, createStudentSchema, ListStudentsQuery, listStudentsSchema, login (+8 more)
 
 ### Community 53 - "API tsconfig"
 Cohesion: 0.10
@@ -393,9 +402,9 @@ Nodes (20): scripts, build, db:create-super-admin, db:generate, db:migrate, db:s
 Cohesion: 0.20
 Nodes (10): env, API_PORT, DATABASE_MIGRATION_URL, DATABASE_URL, E2E_API_URL, E2E_BASE_URL, E2E_ROOT_LOGIN, E2E_ROOT_PASSWORD (+2 more)
 
-### Community 57 - "permissions-admin.controller.ts"
-Cohesion: 0.22
-Nodes (5): clientOf(), PermissionsAdminController, roleParamSchema, setRolePermissionsSchema, setUserPermissionsSchema
+### Community 57 - "Mahsulot bosqichlari (MVP, 2, 3, 4)"
+Cohesion: 0.15
+Nodes (14): Excel import, 5-10 rahbar bilan suhbat (birinchi vazifa), Marketing: pilot markazlar, Excel import, Telegram kanal, MVP (1-bosqich), Pilot markazlar (3 ta, bepul 2-3 oy), 180 kun: vazifa, reyting, bot, pullik markazlar, 30 kun: suhbat, ERD, skelet, 90 kun: MVP va pilot (+6 more)
 
 ### Community 58 - "Web tsconfig"
 Cohesion: 0.11
@@ -422,12 +431,12 @@ Cohesion: 0.13
 Nodes (16): Billing engine planCharges() pure function, Debt computed from open charges past due_date + grace_days, Effective permission = user_permissions override > center_role_permissions > deny, FIFO payment allocator with advance balance, Guard chain JwtAuthGuard -> RolesGuard -> PermissionsGuard, Payroll engine (FIXED, PER_GROUP, PER_LESSON, PERCENT), Permission matrix in packages/shared/src/permission-matrix.ts, Step 13: billing charges and enrollment_freezes (+8 more)
 
 ### Community 64 - "finance.schemas.ts"
-Cohesion: 0.06
-Nodes (26): daysBetween(), clientOf(), FinanceController, FinanceReportService, num(), category, CreateExpenseInput, createExpenseSchema (+18 more)
+Cohesion: 0.08
+Nodes (19): audited(), ExpensesService, forbidden(), notFound(), clientOf(), FinanceController, FinanceReportService, forbidden() (+11 more)
 
 ### Community 65 - "lessons.schemas.ts"
-Cohesion: 0.11
-Nodes (16): Roles(), clientOf(), id(), LessonsController, ATTENDANCE_STATUSES, attendanceQuerySchema, AttendanceStatus, CreateLessonInput (+8 more)
+Cohesion: 0.12
+Nodes (16): CurrentUser, clientOf(), id(), LessonsController, ATTENDANCE_STATUSES, attendanceQuerySchema, AttendanceStatus, CreateLessonInput (+8 more)
 
 ### Community 66 - "postgres"
 Cohesion: 0.22
@@ -435,11 +444,11 @@ Nodes (9): services, POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER, env, image, 
 
 ### Community 67 - "ERD: implementatsiya eslatmalari"
 Cohesion: 0.15
-Nodes (13): GET /auth/me effective permissions for UI, Center blocking/unblocking, Center creation POST /admin/centers (single transaction), center_role_permissions (role template), ERD: tenant, branch, users, permissions, Guard order JWT -> @Roles -> @RequirePermission (@Public opt-out), JWT + rotating refresh token auth, Permission check layer (code + scope + effective permission) (+5 more)
+Nodes (14): audit_logs table, GET /auth/me effective permissions for UI, Center blocking/unblocking, Center creation POST /admin/centers (single transaction), center_role_permissions (role template), ERD: tenant, branch, users, permissions, Guard order JWT -> @Roles -> @RequirePermission (@Public opt-out), JWT + rotating refresh token auth (+6 more)
 
 ### Community 68 - "groups.controller.ts"
-Cohesion: 0.10
-Nodes (18): clientOf(), GroupsController, AssignTeacherInput, assignTeacherSchema, BILLING_KEYS, billingMode, CreateGroupInput, createGroupSchema (+10 more)
+Cohesion: 0.08
+Nodes (25): clientOf(), GroupsController, AssignTeacherInput, assignTeacherSchema, BILLING_KEYS, billingMode, CreateGroupInput, createGroupSchema (+17 more)
 
 ### Community 69 - "Shared paket"
 Cohesion: 0.18
@@ -458,24 +467,24 @@ Cohesion: 0.50
 Nodes (4): needs, runs-on, timeout-minutes, e2e-browser
 
 ### Community 73 - "enrollments.schemas.ts"
-Cohesion: 0.12
-Nodes (10): chunks(), clientOf(), EnrollmentsController, bad(), conflict(), enrollmentNotFound(), EnrollmentsService, forbidden() (+2 more)
+Cohesion: 0.09
+Nodes (18): clientOf(), EnrollmentsController, CreateEnrollmentInput, createEnrollmentSchema, LeaveEnrollmentInput, leaveEnrollmentSchema, ListEnrollmentsQuery, listEnrollmentsSchema (+10 more)
 
 ### Community 74 - "Prod docker-compose"
 Cohesion: 0.22
 Nodes (9): condition, api, API_URL, WEB_SECURE_COOKIES, web, depends_on, environment, image (+1 more)
 
 ### Community 75 - ".events"
-Cohesion: 0.36
+Cohesion: 0.42
 Nodes (4): RankingQuery, forbidden(), nf(), RatingsService
 
-### Community 76 - "AuthUser"
-Cohesion: 0.14
-Nodes (8): AssignmentsService, conflict(), forbidden(), isLate(), notFound(), AuthUser, assertConfigurable(), PermissionsAdminService
+### Community 76 - "PermissionsAdminService"
+Cohesion: 0.15
+Nodes (5): clientOf(), PermissionsAdminController, assertConfigurable(), PermissionsAdminService, TenantRole
 
-### Community 77 - ".withContext"
-Cohesion: 0.10
-Nodes (15): writeAudit(), ClientInfo, generateTempPassword(), audited(), BranchesService, nameTaken(), notFound(), view() (+7 more)
+### Community 77 - "AuthUser"
+Cohesion: 0.11
+Nodes (12): AuthUser, CentersService, inCenter(), notFound(), bad(), forbidden(), ImportsService, jobView() (+4 more)
 
 ### Community 78 - "test"
 Cohesion: 0.50
@@ -486,20 +495,20 @@ Cohesion: 0.14
 Nodes (14): environment, CRON_SECRET, DATABASE_URL, JWT_ACCESS_SECRET, JWT_ACCESS_TTL, JWT_REFRESH_SECRET, JWT_REFRESH_TTL, NODE_ENV (+6 more)
 
 ### Community 80 - "student-import.ts"
-Cohesion: 0.22
-Nodes (12): ALIASES, HeaderMap, LOOKUP, mapHeader(), MAX_IMPORT_ROWS, norm(), parseDate(), ParsedStudent (+4 more)
+Cohesion: 0.24
+Nodes (11): ALIASES, HeaderMap, LOOKUP, mapHeader(), MAX_IMPORT_ROWS, norm(), parseDate(), parseRow() (+3 more)
 
 ### Community 81 - "api/package.json"
 Cohesion: 0.12
 Nodes (15): author, description, embedded-postgres@17.11.0-beta.19, tsx@^4.23.15, typescript@^6.0.2, vite@^8.0.0, typescript, license (+7 more)
 
-### Community 82 - "settings-plans.e2e-spec.ts"
-Cohesion: 0.13
-Nodes (15): LOGIN_ACCOUNT_MAX_FAILURES, LOGIN_MAX_FAILURES, LOGIN_WINDOW_SECONDS, CYRILLIC, slugify(), NO_CONTEXT, activate(), Api (+7 more)
+### Community 82 - "payroll.e2e-spec.ts"
+Cohesion: 0.21
+Nodes (11): activate(), Api, Center, config, M, makeApi(), newCenter(), NEXT (+3 more)
 
-### Community 83 - "AccessClaims"
-Cohesion: 0.17
-Nodes (5): AccessClaims, JwtAuthGuard, PermissionsGuard, RolesGuard, unauthorized()
+### Community 83 - "i18n-check.mjs"
+Cohesion: 0.15
+Nodes (9): csp, nextConfig, securityHeaders, dict, files, keys, missing, root (+1 more)
 
 ### Community 84 - ".end"
 Cohesion: 0.27
@@ -518,8 +527,8 @@ Cohesion: 0.29
 Nodes (8): AuditPage(), AuditRow, dayEnd(), dayStart(), ENTITY, instant, metadata, Page()
 
 ### Community 89 - "Kichik klaster 89"
-Cohesion: 0.15
-Nodes (14): Ikki to'lov rejimi GROUP_CYCLE / STUDENT_CYCLE, Attendance lesson lock (attendance_lock_days, edit_past), enrollments table, ERD: groups, enrollments, attendance, homework, rating, Homework and rating rules (step 20), join_proration setting (FULL_MONTH / REMAINING_LESSONS), rating_points event table, Center settings, plans, lesson lock, login throttle (step 22) (+6 more)
+Cohesion: 0.27
+Nodes (7): Ikki to'lov rejimi GROUP_CYCLE / STUDENT_CYCLE, join_proration setting (FULL_MONTH / REMAINING_LESSONS), Bozor bo'shlig'i (taxmin), Moslashuvchan maosh motori (farqlovchi), Telegram-first aloqa, Ikki xil to'lov sikli (farqlovchi), Qiymat taklifi
 
 ### Community 90 - "assignment-card.tsx"
 Cohesion: 0.29
@@ -581,25 +590,49 @@ Nodes (4): context, dockerfile, build, build
 Cohesion: 0.13
 Nodes (21): LandingStage(), MODULES, Action(), FEATURES, Landing(), metadata, ROLES, SessionAction() (+13 more)
 
+### Community 119 - "i18n.ts"
+Cohesion: 0.19
+Nodes (10): Lang, LANG_COOKIE, LANGS, listeners, readLang(), T, translate(), useLang() (+2 more)
+
+### Community 120 - "TelegramBotService"
+Cohesion: 0.23
+Nodes (5): badCodeMessage(), helpMessage(), linkedMessage(), unlinkedMessage(), TelegramBotService
+
+### Community 121 - "load-bench.mjs"
+Cohesion: 0.18
+Nodes (9): CONC, ENDPOINTS, H, owner, rows, s, today, TOTAL (+1 more)
+
+### Community 122 - "telegram.poller.spec.ts"
+Cohesion: 0.24
+Nodes (7): dueDay(), localTime(), BOT_COMMANDS, FetchFn, base, TELEGRAM_FETCH, Update
+
+### Community 123 - "DispatchService"
+Cohesion: 0.36
+Nodes (3): DispatchService, emptySummary(), RunInput
+
+### Community 124 - ".login"
+Cohesion: 0.33
+Nodes (5): accountInactive(), centerBlocked(), invalidCredentials(), verifyAgainstDummy(), verifyPassword()
+
 ## Knowledge Gaps
 - **46 isolated node(s):** `./tsconfig.json`, `Open questions: cross-branch names in rating, SaaS subscription billing`, `Daily pg_dump backup and restore testing`, `Environment variables (DATABASE_URL, JWT secrets, TRUST_PROXY, CRON_SECRET, API_URL...)`, `Option 2: Neon + container hosting` (+41 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 914 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **16 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 956 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **19 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `next` connect `Web: kirish va panel sahifalari` to `Web: kutubxona va tariflar sahifasi`, `app/layout.tsx`, `TextInput`, `permissions-page.tsx`, `shell.tsx`, `payroll-page.tsx`, `Web package bog'liqliklari`, `Button`, `Kichik klaster 109`, `[...path]/route.ts`, `app/page.tsx`, `DataView`, `Kichik klaster 88`, `assignment-card.tsx`?**
-  _High betweenness centrality (0.227) - this node is a cross-community bridge._
+- **Why does `next` connect `Web: kirish va panel sahifalari` to `Web: kutubxona va tariflar sahifasi`, `app/layout.tsx`, `TextInput`, `permissions-page.tsx`, `shell.tsx`, `payroll-page.tsx`, `Web package bog'liqliklari`, `Button`, `Kichik klaster 109`, `[...path]/route.ts`, `i18n-check.mjs`, `app/page.tsx`, `DataView`, `Kichik klaster 88`, `assignment-card.tsx`?**
+  _High betweenness centrality (0.214) - this node is a cross-community bridge._
 - **What connects `./tsconfig.json`, `Open questions: cross-branch names in rating, SaaS subscription billing`, `Daily pg_dump backup and restore testing` to the rest of the system?**
   _46 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Web: kirish va panel sahifalari` be split into smaller, more focused modules?**
   _Cohesion score 0.028051181102362203 - nodes in this community are weakly interconnected._
-- **Why does `AuthUser` connect `AuthUser` to `Vazifalar xizmati va DB sxemasi`, `LessonsService`, `Guruhlar API`, `StudentsService`, `enrollments.controller.ts`, `Controller yordamchilari`, `ExpensesService`, `payroll.schemas.ts`, `RequirePermission`, `.run`, `.run`, `ChargesService`, `.update`, `Tariflar API`, `CoursesService`, `DbService`, `To'lov taqsimlagich (FIFO)`, `Xodimlar API`, `Filiallar API`, `.end`, `Hisoblar API`, `TokenService`, `To'lovlar API`, `notifications.schemas.ts`, `CurrentUser`, `O'quvchilar API`, `permissions-admin.controller.ts`, `finance.schemas.ts`, `lessons.schemas.ts`, `groups.controller.ts`, `PayrollRulesService`, `enrollments.schemas.ts`, `.events`, `.withContext`, `.end`?**
-  _High betweenness centrality (0.169) - this node is a cross-community bridge._
+- **Why does `AuthUser` connect `AuthUser` to `Vazifalar xizmati va DB sxemasi`, `LessonsService`, `.hasIn`, `.branches`, `Controller yordamchilari`, `.update`, `payroll.schemas.ts`, `RequirePermission`, `.run`, `.update`, `CoursesService`, `DbService`, `To'lov taqsimlagich (FIFO)`, `Xodimlar API`, `Filiallar API`, `.end`, `Hisoblar API`, `TokenService`, `To'lovlar API`, `notifications.schemas.ts`, `CurrentUser`, `O'quvchilar API`, `finance.schemas.ts`, `lessons.schemas.ts`, `groups.controller.ts`, `PayrollRulesService`, `enrollments.schemas.ts`, `.events`, `PermissionsAdminService`, `.end`, `.login`, `.list`?**
+  _High betweenness centrality (0.170) - this node is a cross-community bridge._
 - **Should `Vazifalar xizmati va DB sxemasi` be split into smaller, more focused modules?**
-  _Cohesion score 0.06746608527131782 - nodes in this community are weakly interconnected._
-- **Why does `@nestjs/common` connect `@nestjs/common` to `Vazifalar xizmati va DB sxemasi`, `lessons.schemas.ts`, `app-config.ts`, `Xodimlar API`, `Filiallar API`, `enrollments.controller.ts`, `Controller yordamchilari`, `billing.e2e-spec.ts`, `To'lovlar API`, `api/package.json`, `settings-plans.e2e-spec.ts`, `CurrentUser`, `notifications.schemas.ts`, `.run`, `permissions-admin.controller.ts`, `notifications.e2e-spec.ts`, `API bog'liqliklari`, `DbService`?**
-  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+  _Cohesion score 0.06303555599330248 - nodes in this community are weakly interconnected._
+- **Why does `@nestjs/common` connect `@nestjs/common` to `Vazifalar xizmati va DB sxemasi`, `lessons.schemas.ts`, `app-config.ts`, `notifications.e2e-spec.ts`, `Controller yordamchilari`, `todayLocal`, `To'lovlar API`, `api/package.json`, `payroll.e2e-spec.ts`, `telegram.poller.spec.ts`, `API bog'liqliklari`, `DbService`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Should `app-config.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.02849722242262463 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.029300378712377916 - nodes in this community are weakly interconnected._

@@ -16,3 +16,6 @@ apps/api/.pg-data/
 apps/web/e2e/.data.json
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Yuk sinovi natijasi
+apps/api/scripts/.load-owner.json

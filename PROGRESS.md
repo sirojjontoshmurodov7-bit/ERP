@@ -1,6 +1,6 @@
 # Progress: skelet bosqichi holati
 
-Oxirgi yangilanish: 2026-11-26 (31-qadam: Playwright e2e; 30-qadam: xavfsizlik (CSP, login cheklovi, API sarlavhalari); 29-qadam: haqiqiy Telegram bot (polling, ichki jadval); 28-qadam: Stitch dizayni, TST_ERP brendi; skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi), 23 (haqiqiy Postgres'da sinash), 24 (web panel), 25 (Docker, CI, deploy qo'llanmasi) tayyor; keyingi: haqiqiy serverga deploy va haqiqiy Telegram bot). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
+Oxirgi yangilanish: 2026-11-26 (32-qadam: yuk sinovi va optimallashtirish; 31-qadam: Playwright e2e; 30-qadam: xavfsizlik (CSP, login cheklovi, API sarlavhalari); 29-qadam: haqiqiy Telegram bot (polling, ichki jadval); 28-qadam: Stitch dizayni, TST_ERP brendi; skelet 1-7, 8 (o'quvchilar), 9 (kurs va guruhlar), 10 (yozilish), 11 (darslar va davomat), 12 (davomat qulfi va ko'rish), 13 (hisob-kitob), 14 (to'lovlar), 15 (chegirmalar va qarzdorlar), 16 (maosh), 17 (xarajat va moliyaviy hisobot), 18 (umumiy hisobotlar), 19 (Excel import), 20 (vazifa va reyting), 21 (Telegram bot va bildirishnomalar), 22 (sozlamalar, tariflar, qulf, filtrlar, login cheklovi), 23 (haqiqiy Postgres'da sinash), 24 (web panel), 25 (Docker, CI, deploy qo'llanmasi) tayyor; keyingi: haqiqiy serverga deploy va haqiqiy Telegram bot). Keyingi chatda **avval shu faylni o'qi**, so'ng [CLAUDE.md](CLAUDE.md), kerak bo'lsa [ERD-VA-RUXSATLAR.md](ERD-VA-RUXSATLAR.md). Kod bo'yicha savollar uchun `graphify-out/graph.json` (`graphify query "..."`).
 
 ## Holat
 | Qadam | Holat | Qayerda |
@@ -36,8 +36,19 @@ Oxirgi yangilanish: 2026-11-26 (31-qadam: Playwright e2e; 30-qadam: xavfsizlik (
 | 29. Haqiqiy Telegram bot: polling rejimi, ichki kundalik jadval, sozlash skripti; TRUST_PROXY xatosi tuzatildi | tayyor | `apps/api/src/notifications/{telegram.poller,notify.scheduler}.ts`, `apps/api/scripts/telegram-setup.mjs`, `src/config/app-config.ts`, `DEPLOY.md` |
 | 30. Xavfsizlik: CSP va HSTS, login bo'yicha ikkinchi cheklov, API himoya sarlavhalari, OWASP ko'rigi | tayyor | `apps/web/next.config.ts`, `apps/api/src/auth/login-throttle.ts`, `apps/api/src/main.ts` |
 | 31. Playwright brauzer e2e (8 oqim) va CI job'i; dialog aria nomi xatosi tuzatildi | tayyor | `apps/web/{playwright.config.ts,e2e/}`, `.github/workflows/ci.yml` (`e2e-browser`), `src/components/ui.tsx` |
+| 32. Yuk sinovi (2000 o'quvchi) va optimallashtirish: kassa kitobi 175x, qarzdorlar/hisoblar 7-25x tezroq | tayyor | `apps/api/scripts/{load-seed,load-bench}.mjs`, `src/billing/billing.service.ts`, `src/finance/finance-report.service.ts`, `src/lessons/lessons.service.ts` |
 
 Commitlar: skelet 1-7 `6e73b51`, 8 `b332eda`, 9 `af89a71`, 10 `75e0994`, 11 `55a443e`, 12 `5e88ce8`, 13 `c2f7d5c`, 14 `9ca1190`, 15 `343e229`, 16 `0224f50`, 17 `4e5c2c5`, 18 `2efb36a`, 19 `f064a4d`, 20 `5af5283`; 21 `aca884c`; 22 `8c82722`, 23 `c9c97d8`, 24 `b55e8ff` + `918e77c`, 25 `27d613d`; GitHub: origin main. Commitni foydalanuvchi so'raganda qil.
+
+### 32-qadam: yuk sinovi (tayyor)
+- **Ma'lumot** (`scripts/load-seed.mjs`, faqat API orqali, ALOHIDA bazada: lokal `erp_load`): 5 filial, 20 ustoz, 100 guruh, 2000 o'quvchi (6-12 oy oldin yozilgan, ~20 ming hisob), 6860 to'lov, 3000 dars (~55 ming davomat yozuvi). O'lchash: `scripts/load-bench.mjs [so'rov] [parallel]` (40 so'rov, 5 parallel; lokal PG 17, Windows).
+- **Topilgan va tuzatilgan:**
+  - `/reports/finance/daily` (yillik): har kun uchun korrelyatsiyalangan subquery → oraliq bir marta guruhlanib kunlarga ulanadi: **7360 → 42 ms**.
+  - O'qish endpointlari (`/debtors`, `/charges`, `/reports/*`) har so'rovda butun markaz `generate` qilardi (hamma hisoblarni yuklab): endi joriy davri hisoblangan yozilishlar SQL'da chiqarib tashlanadi (motor mantig'i bilan isbotlangan, faqat butun markaz chaqiruvlarida). `/charges` **778 → 31 ms**, `/debtors` **814 → 120 ms**, `/reports/overview` **903 → 240 ms**, `/reports/branches` **950 → 274 ms**.
+  - `/attendance/summary`: jami alohida so'rov o'rniga kesim qatorlari yig'indisi (bitta skan): **377 → 203 ms**.
+- O'zgarmagan tezlar: ro'yxatlar va qidiruv 20-50 ms, reyting ~210 ms, moliya yig'masi ~160 ms. Hammasi 536 e2e bilan tekshirildi.
+- **Kuzatuv:** bir xil ismli xodim/o'quvchini juda parallel yaratganda avtomatik login to'qnashib 409 `LOGIN_TAKEN` qaytishi mumkin (ma'lumot buzilmaydi; real ishda kam uchraydi).
+- **Ochiq:** `/reports/overview` va reyting uchun materializatsiya/kesh (10 ming+ o'quvchida); davomat uchun guruh-sana indekslari.
 
 ### 31-qadam: Playwright e2e (tayyor)
 - `apps/web/e2e/`: `global-setup.ts` API orqali har safar yangi sinov markazi yaratadi (rahbar, ustoz, bugungi jadvalli guruh, o'quvchi; mavjud ma'lumotga tegmaydi), `flows.spec.ts` 8 oqim: landing va xato parol, sessiyasiz sahifadan login va qaytish, rahbar bosh sahifasi (KPI, yorug' mavzu reload'dan keyin saqlanadi, yon panel), o'quvchi qo'shish + to'lov kvitansiyasi, ustoz birinchi kirish + davomat, o'quvchi birinchi kirish + portal, super admin paneli, mobil menyu (Pixel 7, gorizontal skroll yo'q). Qo'llanma: `e2e/README.md`.
@@ -312,7 +323,7 @@ Backend (1-23), web panel (24) va deploy tayyorgarligi (25) tayyor. Qolgani, tav
 0. **(26-qadamda bajarildi, qoldig'i: haqiqiy brend nomi, kontakt, narx, ko'proq skrinshot.)** Dizayn va landing page. Panel dizaynini sayqallash (Hallmark, Coral mavzusi, `apps/web/src/app/globals.css` + `src/styles/tokens.css`) va mahsulot uchun ochiq landing sahifa (`/` tashqarisida, masalan `(site)` route group yoki alohida domen; hozir `/` panel bosh sahifasi va `proxy.ts` sessiyasizlarni `/login` ga yo'naltiradi). Landing uchun Hallmark to'liq oqimi: material (skrinshotlar, raqamlar, narx) foydalanuvchidan so'raladi; o'ylab topilgan raqam/sharh yo'q.
 1. **(29-qadamda bajarildi: haqiqiy bot polling bilan sinaldi.)** Neon bilan sinash deploy bilan birga.
 2. **Birinchi haqiqiy deploy:** server yoki Neon + hosting tanlash, `DEPLOY.md` bo'yicha ko'tarish, CI'ning Docker job'i yashil bo'lishini kuzatish, zaxira nusxa cron'i, monitoring/xatolar hisoboti (masalan Uptime Kuma, Sentry).
-3. **Sifat:** xavfsizlik tekshiruvi (OWASP, CSP), Playwright e2e (asosiy oqimlar), yuk sinovi (hisobotlar agregatsiyasi, `/debtors`), rus tili tarjimasi.
+3. **Sifat:** xavfsizlik (30), Playwright e2e (31), yuk sinovi (32) bajarildi; rus tili tarjimasi.
 Kod konvensiyalari yangi chat uchun: migratsiya = drizzle-kit (jadvallar) + qo'lda SQL (RLS, trigger, huquq); har yangi tenant jadvali `TENANT_TABLES` ga va izolyatsiya testiga qo'shiladi; pul yozuvi append-only; yangi ruxsat kodi `packages/shared` da; har qadam oxirida testlar, lint, build, PROGRESS.md + ERD, `graphify update .`.
 
 ## Ochiq savollar

@@ -103,10 +103,21 @@ export class FinanceReportService {
       if (ctx.empty) return { ...base, items: [], totals: { income: 0, expenses: 0, net: 0 } };
       const { branch } = ctx;
       const rows = rowsOf<{ day: string; income: string; expenses: string }>(
-        await tx.execute(sql`select to_char(d.day, 'YYYY-MM-DD') as day,
-            coalesce((select sum(p.amount) from payments p where (p.paid_at at time zone 'Asia/Tashkent')::date = d.day and ${branch('p.branch_id')}), 0) as income,
-            coalesce((select sum(e.amount) from expenses e where e.status = 'ACTIVE' and e.spent_on = d.day and ${branch('e.branch_id')}), 0) as expenses
-          from generate_series(${q.from}::date, ${q.to}::date, interval '1 day') as d(day) order by d.day`),
+        // Har kunga alohida subquery o'rniga oraliq bir marta guruhlanadi (yillik oraliq 7 s dan ~100 ms ga, PROGRESS 32-qadam)
+        await tx.execute(sql`with inc as (
+              select (p.paid_at at time zone 'Asia/Tashkent')::date as day, sum(p.amount) as v from payments p
+              where p.paid_at >= (${q.from}::date)::timestamp at time zone 'Asia/Tashkent'
+                and p.paid_at < (${q.to}::date + 1)::timestamp at time zone 'Asia/Tashkent' and ${branch('p.branch_id')}
+              group by 1),
+            exp as (
+              select e.spent_on as day, sum(e.amount) as v from expenses e
+              where e.status = 'ACTIVE' and e.spent_on between ${q.from}::date and ${q.to}::date and ${branch('e.branch_id')}
+              group by 1)
+          select to_char(d.day, 'YYYY-MM-DD') as day, coalesce(inc.v, 0) as income, coalesce(exp.v, 0) as expenses
+          from generate_series(${q.from}::date, ${q.to}::date, interval '1 day') as d(day)
+          left join inc on inc.day = d.day::date
+          left join exp on exp.day = d.day::date
+          order by d.day`),
       );
       const items = rows.map((r) => ({ date: r.day, income: num(r.income), expenses: num(r.expenses), net: num(r.income) - num(r.expenses) }));
       const income = items.reduce((s, r) => s + r.income, 0);

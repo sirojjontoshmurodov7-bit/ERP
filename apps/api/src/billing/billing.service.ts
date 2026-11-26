@@ -42,6 +42,15 @@ export class BillingService {
       opts.groupId ? eq(enrollments.groupId, opts.groupId) : undefined,
       opts.studentId ? eq(enrollments.studentId, opts.studentId) : undefined,
     ];
+    // Butun markaz bo'yicha (o'qish endpointlari har so'rovda chaqiradi): joriy davr hisobi bor yozilishni o'tkazib yuboramiz.
+    // Davrlar ketma-ket va har birining tugashi ichida: agar REGULAR/FIRST hisob `period_end >= asOf` bo'lsa, keyingi davr muddati
+    // asOf dan keyin, oldingi davrlar esa allaqachon yaratilgan (muzlatilganlari ataylab o'tkazilgan) — motor hech narsa qo'shmaydi.
+    // 2000 yozilishli markazda /debtors ~0.8 s dan bir necha o'n ms ga tushadi (yuk sinovi, PROGRESS 32-qadam).
+    if (!opts.enrollmentIds && !opts.groupId && !opts.studentId) {
+      conds.push(
+        sql`not exists (select 1 from ${charges} c where c.enrollment_id = ${enrollments.id} and c.kind in ('REGULAR', 'FIRST_PRORATED') and c.period_end >= ${asOf}::date)`,
+      );
+    }
     const rows = await tx
       .select({ e: enrollments, g: groups })
       .from(enrollments)

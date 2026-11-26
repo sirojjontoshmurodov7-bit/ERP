@@ -260,13 +260,10 @@ export class LessonsService {
         total: r.present + r.absent + r.late + r.excused,
         rate: rate(r.present, r.late, r.absent),
       });
-      const [totals] = await tx
-        .select(counts)
-        .from(attendanceRecords)
-        .innerJoin(lessons, eq(lessons.id, attendanceRecords.lessonId))
-        .innerJoin(groups, eq(groups.id, lessons.groupId))
-        .where(where);
-      const result: Record<string, unknown> = { totals: shape(totals ?? { present: 0, absent: 0, late: 0, excused: 0 }) };
+      // Jami alohida so'rov bilan emas: kesim qatorlari xuddi shu filtr bilan, shuning uchun yig'indisi jamiga teng (bitta skan)
+      const sum = (rows: { present: number; absent: number; late: number; excused: number }[]) =>
+        rows.reduce((t, r) => ({ present: t.present + r.present, absent: t.absent + r.absent, late: t.late + r.late, excused: t.excused + r.excused }), { present: 0, absent: 0, late: 0, excused: 0 });
+      const result: Record<string, unknown> = {};
       if (q.groupId && actor.role !== 'STUDENT') {
         const rows = await tx
           .select({ studentId: attendanceRecords.studentId, fullName: users.fullName, ...counts })
@@ -277,6 +274,7 @@ export class LessonsService {
           .where(where)
           .groupBy(attendanceRecords.studentId, users.fullName)
           .orderBy(asc(users.fullName));
+        result.totals = shape(sum(rows));
         result.byStudent = rows.map(shape);
       } else {
         const rows = await tx
@@ -287,6 +285,7 @@ export class LessonsService {
           .where(where)
           .groupBy(groups.id, groups.name)
           .orderBy(asc(groups.name));
+        result.totals = shape(sum(rows));
         result.byGroup = rows.map(shape);
       }
       return result;
