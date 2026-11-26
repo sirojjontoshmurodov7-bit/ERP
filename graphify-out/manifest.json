@@ -102,10 +102,10 @@
     "semantic_hash": ""
   },
   "apps/web/package.json": {
-    "mtime": 1795061432.2165449,
-    "seen": 1795063491.189214,
-    "ast_hash": "1f014c5a4cf355729e5c9c6b7cb28aef",
-    "semantic_hash": "1f014c5a4cf355729e5c9c6b7cb28aef"
+    "mtime": 1795650740.2600307,
+    "seen": 1795652126.7398531,
+    "ast_hash": "9c17e1f94cf794e3a1e589914c589268",
+    "semantic_hash": ""
   },
   "apps/web/src/app/layout.tsx": {
     "mtime": 1795642127.060932,
@@ -396,9 +396,9 @@
     "semantic_hash": ""
   },
   "PROGRESS.md": {
-    "mtime": 1795650546.55037,
-    "seen": 1795650556.3481421,
-    "ast_hash": "48a56a27e58b1ec2c8e06118ebbf5687",
+    "mtime": 1795652109.662135,
+    "seen": 1795652126.7631755,
+    "ast_hash": "76daecc662b6eeb8ef1e597895ebeece",
     "semantic_hash": ""
   },
   "apps/api/src/branches/branches.controller.ts": {
@@ -1194,10 +1194,10 @@
     "semantic_hash": ""
   },
   ".github/workflows/ci.yml": {
-    "mtime": 1795061991.2211804,
-    "seen": 1795063491.1879814,
-    "ast_hash": "4006f3ad51d60c3b1c1f3a1240dc6886",
-    "semantic_hash": "4006f3ad51d60c3b1c1f3a1240dc6886"
+    "mtime": 1795652092.6983173,
+    "seen": 1795652126.705298,
+    "ast_hash": "31d2f2cfe6beec33457542c0d04de30d",
+    "semantic_hash": ""
   },
   "apps/api/scripts/demo-seed.mjs": {
     "mtime": 1795044797.5008087,
@@ -1632,9 +1632,9 @@
     "semantic_hash": "97355f38297739722ed48159ec9dc9b0"
   },
   "apps/web/src/components/ui.tsx": {
-    "mtime": 1795642019.2819297,
-    "seen": 1795642342.7325037,
-    "ast_hash": "7e9cf87b83120048f9c066d8e4f398b2",
+    "mtime": 1795651418.2841768,
+    "seen": 1795652126.755441,
+    "ast_hash": "1bcfc4f1113369f5ba78d4aec4a90af9",
     "semantic_hash": ""
   },
   "apps/web/src/lib/api.ts": {
@@ -1865,10 +1865,34 @@
     "ast_hash": "55acd745c331649bbcef3f03332889fe",
     "semantic_hash": ""
   },
+  "apps/web/e2e/flows.spec.ts": {
+    "mtime": 1795652003.431254,
+    "seen": 1795652126.7394593,
+    "ast_hash": "79bf388f0389e3f1dc51d82218cb7e9a",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/global-setup.ts": {
+    "mtime": 1795650750.2118974,
+    "seen": 1795652126.7394629,
+    "ast_hash": "b9655fac1da79bae600ec9039e62369b",
+    "semantic_hash": ""
+  },
+  "apps/web/playwright.config.ts": {
+    "mtime": 1795651080.3633902,
+    "seen": 1795652126.7398565,
+    "ast_hash": "4ff369efb989cac1f8d3cd9f2a5d0a19",
+    "semantic_hash": ""
+  },
+  "apps/web/e2e/README.md": {
+    "mtime": 1795652092.8492944,
+    "seen": 1795652126.7636254,
+    "ast_hash": "e23cf3bc3f7eac92cd73bd02202e5e25",
+    "semantic_hash": ""
+  },
   "pnpm-lock.yaml": {
-    "mtime": 1795061409.1390316,
-    "seen": 1795064696.0774198,
-    "ast_hash": "f38f2f4b3ec364c004c9d83a0edbdbd7",
+    "mtime": 1795650634.7701108,
+    "seen": 1795652126.763629,
+    "ast_hash": "99864f32266ea7c71db15170b9fec33e",
     "semantic_hash": ""
   }
 }

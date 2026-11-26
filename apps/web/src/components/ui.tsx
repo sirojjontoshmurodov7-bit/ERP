@@ -252,6 +252,8 @@ export function Pager({ offset, limit, count, total, onChange }: { offset: numbe
 // ---------------------------------------------------------------- dialog
 export function Dialog({ open, onClose, title, children, footer, wide }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
+  // id sarlavha matnidan emas: bo'shliqli id aria-labelledby'da ikki id bo'lib o'qiladi va dialog nomsiz qoladi
+  const titleId = useId();
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
@@ -259,11 +261,11 @@ export function Dialog({ open, onClose, title, children, footer, wide }: { open:
     if (!open && d.open) d.close();
   }, [open]);
   return (
-    <dialog ref={ref} className={wide ? 'dialog dialog--wide' : 'dialog'} onClose={onClose} onCancel={onClose} aria-labelledby={`${title}-t`}>
+    <dialog ref={ref} className={wide ? 'dialog dialog--wide' : 'dialog'} onClose={onClose} onCancel={onClose} aria-labelledby={titleId}>
       {open ? (
         <div className="dialog-inner">
           <div className="dialog-head">
-            <h2 id={`${title}-t`}>{title}</h2>
+            <h2 id={titleId}>{title}</h2>
             <Button variant="ghost" className="btn--icon" aria-label="Yopish" onClick={onClose} icon={<Icon.close />} />
           </div>
           <div className="dialog-body">{children}</div>

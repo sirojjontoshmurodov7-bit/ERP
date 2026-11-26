@@ -58,6 +58,84 @@ jobs:
           TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
         run: pnpm --filter @erp/api test:e2e
 
+  # Brauzer e2e: haqiqiy stack (Postgres 17 + API + Next production) va Playwright (Chromium)
+  e2e-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://erp_app:erp_app_password@localhost:5432/erp
+      DATABASE_MIGRATION_URL: postgresql://erp:erp_dev_password@localhost:5432/erp
+      JWT_ACCESS_SECRET: ci-access-secret-0123456789abcdef
+      JWT_REFRESH_SECRET: ci-refresh-secret-0123456789abcdef
+      API_PORT: "3001"
+      E2E_ROOT_LOGIN: e2e.root
+      E2E_ROOT_PASSWORD: Ci-Root-Password-1
+      E2E_BASE_URL: http://localhost:3000
+      E2E_API_URL: http://localhost:3001
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.18.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.18.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Baza rollari (egasi va ilova roli superuser emas, production kabi)
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE erp LOGIN NOSUPERUSER CREATEDB PASSWORD 'erp_dev_password'"
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "CREATE ROLE erp_app LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD 'erp_app_password'"
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE erp OWNER erp"
+          psql -h localhost -U postgres -v ON_ERROR_STOP=1 -c "GRANT CONNECT ON DATABASE erp TO erp_app"
+      - name: Migratsiya, seed, e2e super admin
+        run: |
+          touch .env
+          pnpm --filter @erp/api db:migrate
+          pnpm --filter @erp/api db:seed
+          SUPER_ADMIN_LOGIN="$E2E_ROOT_LOGIN" SUPER_ADMIN_PASSWORD="$E2E_ROOT_PASSWORD" pnpm --filter @erp/api db:create-super-admin
+      - name: API va web'ni ishga tushirish
+        run: |
+          nohup node apps/api/dist/main > api.log 2>&1 &
+          (cd apps/web && API_URL=http://localhost:3001 WEB_SECURE_COOKIES=false nohup node node_modules/next/dist/bin/next start -p 3000 > ../../web.log 2>&1 &)
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:3001/health >/dev/null && curl -sf -o /dev/null http://localhost:3000/login; then echo "tayyor"; exit 0; fi
+            sleep 2
+          done
+          echo "Serverlar ishga tushmadi"; tail -50 api.log web.log; exit 1
+      - name: Playwright
+        run: |
+          pnpm --filter @erp/web exec playwright install --with-deps chromium
+          pnpm --filter @erp/web e2e
+      - name: Hisobot va loglar (xatoda)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+            api.log
+            web.log
+          retention-days: 7
+
   docker:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
