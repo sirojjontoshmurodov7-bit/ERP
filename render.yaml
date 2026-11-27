@@ -36,7 +36,7 @@ services:
         value: TST_ERP_bot
       - key: TELEGRAM_WEBHOOK_SECRET
         generateValue: true
-      # Kundalik eslatmalar: servis cron-job.org pingi bilan uyg'oq turadi, ichki jadval 09:00 da ishlaydi
+      # Kundalik eslatmalar: cron-job.org 08:55 da /ping qilib servisni uyg'otadi, ichki jadval 09:00 da ishlaydi (24/7 ping qilinmaydi: bepul soatlar workspace bo'yicha umumiy, 750 soat)
       - key: NOTIFY_DAILY_AT
         value: "09:00"
       - key: CRON_SECRET

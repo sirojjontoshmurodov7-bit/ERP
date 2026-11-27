@@ -62,7 +62,7 @@ Bitta Render bepul servisi (API + web bitta konteynerda: `Dockerfile.render`, `d
    - `TELEGRAM_BOT_TOKEN`: BotFather'dan (bo'sh qoldirsa bot o'chiq).
    Qolgan sirlar (`JWT_*`, `APP_DB_PASSWORD`, `TELEGRAM_WEBHOOK_SECRET`, `CRON_SECRET`) Render tomonidan yaratiladi.
 3. Birinchi deploy (~5-8 daqiqa) loglarida: `migrations applied`, `Super admin created`, `API tayyor`, `Telegram webhook: https://...onrender.com/telegram/webhook`. Konteyner har ishga tushishda o'zi: `erp_app` rolini (NOSUPERUSER NOBYPASSRLS, aks holda to'xtaydi) ta'minlaydi, migratsiya va seed yuritadi, Telegram webhook'ni o'rnatadi.
-4. **cron-job.org** (bepul): har 10 daqiqada `GET https://<servis>.onrender.com/ping`. Bu servisni uyg'oq ushlaydi (bazaga tegmaydi, Neon kvotasini yemaydi); kundalik eslatmalar ichki jadval bilan 09:00 da (`NOTIFY_DAILY_AT`) ketadi.
+4. **cron-job.org** (bepul): har kuni **08:55** (Asia/Tashkent) da `GET https://<servis>.onrender.com/ping`. Servis uyg'onadi va 09:00 da kundalik eslatmalar ketadi, keyin 15 daqiqada uxlaydi. **24/7 ping qilmang**: Render'ning 750 bepul soati butun workspace uchun umumiy (bitta doim uyg'oq servis ~744 soat), oshsa workspace'dagi hamma bepul servislar oy oxirigacha to'xtaydi. Bot va sayt so'rov kelganda o'zi uyg'onadi (birinchi javob ~1 daqiqa). Haqiqiy mijozlar kelganda servisni Starter ($7/oy) ga o'tkazing: u bepul soatga kirmaydi va uxlamaydi.
 5. Tekshirish: `https://<servis>.onrender.com/login`, super admin bilan kirish, parolni almashtirish, markaz ochish; Telegram: `/start KOD`.
 
 Eslatma: bepul servisda fayl tizimi vaqtinchalik (bizga kerak emas: hamma narsa bazada). Zaxira nusxa: Neon 6 soatlik tiklash tarixi; qo'shimcha `pg_dump` uchun lokal kompyuterdan `DATABASE_MIGRATION_URL` bilan.
