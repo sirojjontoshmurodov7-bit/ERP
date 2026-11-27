@@ -10,7 +10,7 @@ const files = [];
   for (const f of readdirSync(d)) {
     const p = join(d, f);
     if (statSync(p).isDirectory()) walk(p);
-    else if (/\.(tsx?|ts)$/.test(f) && !f.startsWith('i18n-ru')) files.push(p);
+    else if (/\.(tsx?|ts)$/.test(f) && !/^(i18n-(ru|en)|translit)/.test(f)) files.push(p);
   }
 })(root);
 

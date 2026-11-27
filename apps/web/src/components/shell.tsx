@@ -1,6 +1,7 @@
 'use client';
 // Panel qobig'i: sessiyani yuklaydi (`/auth/me`), parolni majburiy almashtirishga yo'naltiradi, yon menyu va yuqori panelni chizadi.
-import { LANGS, setLang, useLang, useT } from '@/lib/i18n';
+import { LangDropdown } from '@/components/lang-dropdown';
+import { useT } from '@/lib/i18n';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -192,6 +193,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </div>
               <div className="topbar-right">
                 {session.is('OWNER', 'ADMIN', 'CASHIER', 'TEACHER') && session.can('student.view') ? <StudentSearch /> : null}
+                <LangDropdown />
                 <ThemeButton />
                 <Account session={session} onLogout={logout} />
               </div>
@@ -280,39 +282,12 @@ function Account({ session, onLogout }: { session: Session; onLogout: () => void
             <Icon.user />
             {t("Profil")}
           </Link>
-          <LangSwitch />
           <button type="button" className="menu-item menu-item--danger" role="menuitem" onClick={onLogout}>
             <Icon.logout />
             {t("Chiqish")}
           </button>
         </div>
       ) : null}
-    </div>
-  );
-}
-
-/** Til: tanlov cookie'da; sahifa qayta yuklanadi (hamma matn, sana va xato xabarlari bir xil tilda bo'lsin). */
-function LangSwitch() {
-  const t = useT();
-  const lang = useLang();
-  return (
-    <div className="menu-lang" role="group" aria-label={t('Til')}>
-      {LANGS.map((l) => (
-        <button
-          key={l.value}
-          type="button"
-          role="menuitemradio"
-          aria-checked={lang === l.value}
-          className="menu-lang-btn"
-          onClick={() => {
-            if (lang === l.value) return;
-            setLang(l.value);
-            window.location.reload();
-          }}
-        >
-          {l.label}
-        </button>
-      ))}
     </div>
   );
 }

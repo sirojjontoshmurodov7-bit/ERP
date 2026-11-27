@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { Icon } from '@/components/icons';
+import { LangDropdown } from '@/components/lang-dropdown';
 import { LandingStage } from './landing-stage';
 import { RoleDeck } from './role-deck';
 import './landing.css';
@@ -73,6 +74,7 @@ export default function Landing() {
             <a href="#rollar"><T>{"Rollar"}</T></a>
             <a href="#xavfsizlik"><T>{"Xavfsizlik"}</T></a>
           </nav>
+          <span className="lp-lang"><LangDropdown /></span>
           <Action variant="primary" />
         </div>
       </header>

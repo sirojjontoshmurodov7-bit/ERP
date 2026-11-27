@@ -149,8 +149,9 @@ test('mobil: menyu ochiladi va bo\'limga o\'tadi @mobile', async ({ page }) => {
 test('til: rus tiliga o\'tish menyu, sarlavha, KPI va sanalarni o\'zgartiradi, qaytish ham ishlaydi', async ({ page }) => {
   const d = data();
   await signedIn(page, d.owner.login, d.owner.password);
-  await page.locator('.account-btn').click();
-  await page.getByRole('menuitemradio', { name: 'Русский' }).click();
+  await page.locator('.lang-dd-btn').click();
+  await expect(page.getByRole('option')).toHaveCount(4);
+  await page.getByRole('option', { name: 'Русский' }).click();
   await expect(page.getByRole('heading', { name: 'Панель управления центром' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Ученики' })).toBeVisible();
   await expect(page.getByText('Активные ученики')).toBeVisible();
@@ -161,8 +162,18 @@ test('til: rus tiliga o\'tish menyu, sarlavha, KPI va sanalarni o\'zgartiradi, q
   await dlg.getByRole('button', { name: 'Добавить' }).click();
   await expect(dlg.getByText('Проверьте поля')).toBeVisible();
   await dlg.getByRole('button', { name: 'Отмена' }).click();
-  // o'zbekchaga qaytish
-  await page.locator('.account-btn').click();
-  await page.getByRole('menuitemradio', { name: "O'zbekcha" }).click();
+  // ingliz va kirill o'zbekcha
+  await page.locator('.lang-dd-btn').click();
+  await page.getByRole('option', { name: 'English' }).click();
+  await expect(page.getByRole('heading', { name: 'Center dashboard' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Students' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await page.locator('.lang-dd-btn').click();
+  await page.getByRole('option', { name: 'Ўзбекча' }).click();
+  await expect(page.getByRole('link', { name: 'Ўқувчилар' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uz-Cyrl');
+  // o'zbekcha lotinga qaytish
+  await page.locator('.lang-dd-btn').click();
+  await page.getByRole('option', { name: /zbekcha/ }).click();
   await expect(page.getByRole('link', { name: "O'quvchilar" })).toBeVisible();
 });

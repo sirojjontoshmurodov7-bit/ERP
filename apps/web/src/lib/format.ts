@@ -1,6 +1,6 @@
 // Ko'rsatish formatlari: pul (so'm), sana va vaqt Toshkent bo'yicha. Biznes sanasi API'dan `YYYY-MM-DD` satr bo'lib keladi.
 // Matnlar joriy tilda (tr): oy va hafta kunlari nomlari, "yo'q", "so'm", ixcham birliklar.
-import { tr } from './i18n';
+import { currentLang, tr } from './i18n';
 
 /** Indeks bilan o'qilganda tarjima qilinadigan ro'yxat (WEEKDAYS[i], .map ham ishlaydi). */
 const translated = (xs: string[]): readonly string[] => new Proxy(xs, { get: (a, k) => (typeof k === 'string' && /^\d+$/.test(k) ? tr(a[Number(k)] ?? '') : Reflect.get(a, k)) });
@@ -12,7 +12,8 @@ const SOM = new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 });
 export function money(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(n)) return NO();
   const sign = n < 0 ? '−' : '';
-  return sign + SOM.format(Math.abs(Math.round(n))).replace(/[  ,.]/g, ' ');
+  const sep = currentLang() === 'en' ? ',' : ' ';
+  return sign + SOM.format(Math.abs(Math.round(n))).replace(/[  ,.]/g, sep);
 }
 export const som = (n: number | null | undefined) => (n === null || n === undefined ? NO() : `${money(n)} ${tr("so'm")}`);
 
@@ -52,7 +53,7 @@ export function compact(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(n)) return NO();
   const a = Math.abs(n);
   const sign = n < 0 ? '−' : '';
-  const fmt = (v: number, unit: string) => `${sign}${(Math.round(v * 100) / 100).toString().replace('.', ',')} ${unit}`;
+  const fmt = (v: number, unit: string) => `${sign}${(Math.round(v * 100) / 100).toString().replace('.', currentLang() === 'en' ? '.' : ',')} ${unit}`;
   if (a >= 1e9) return fmt(a / 1e9, tr('mlrd'));
   if (a >= 1e6) return fmt(a >= 1e8 ? Math.round(a / 1e6) : a / 1e6, tr('mln'));
   if (a >= 1e4) return fmt(Math.round(a / 100) / 10, tr('ming'));

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { Globe } from '@/components/globe';
 import { Icon } from '@/components/icons';
+import { LangDropdown } from '@/components/lang-dropdown';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Kirish' };
@@ -22,6 +23,9 @@ export default function LoginPage() {
         <p className="login-claim"><T>{"Guruh, davomat, to'lov va maosh: hammasi bitta tizimda."}</T></p>
       </aside>
       <section className="login-main">
+        <div className="login-lang">
+          <LangDropdown />
+        </div>
         <div className="login-card" data-tilt>
           <div>
             <h1><T>{"Tizimga kirish"}</T></h1>

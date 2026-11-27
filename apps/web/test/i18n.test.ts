@@ -2,7 +2,9 @@
 import { describe, expect, it } from 'vitest';
 import { WEEKDAYS, monthLabel } from '../src/lib/format';
 import { translate, trMap } from '../src/lib/i18n';
+import { EN } from '../src/lib/i18n-en';
 import { RU } from '../src/lib/i18n-ru';
+import { toCyrillic } from '../src/lib/translit';
 
 const vars = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort().join(',');
 
@@ -10,6 +12,27 @@ describe('i18n', () => {
   it("lug'atdagi har tarjima kalitdagi o'zgaruvchilarni saqlaydi", () => {
     const bad = Object.entries(RU).filter(([k, v]) => vars(k) !== vars(v));
     expect(bad).toEqual([]);
+  });
+
+  it("inglizcha lug'at ruscha bilan bir xil kalitlarda, o'zgaruvchilar saqlangan", () => {
+    expect(Object.keys(EN).sort()).toEqual(Object.keys(RU).sort());
+    const bad = Object.entries(EN).filter(([k, v]) => vars(k) !== vars(v));
+    expect(bad).toEqual([]);
+    expect(translate('en', 'Jami {n} ta qarzdor', { n: 5 })).toBe('5 debtors in total');
+  });
+
+  it("kirill o'zbekcha: lotindan o'giriladi, o'zgaruvchi va texnik so'zlar saqlanadi", () => {
+    expect(toCyrillic("O'quvchilar")).toBe('Ўқувчилар');
+    expect(toCyrillic("Yo'l")).toBe('Йўл');
+    expect(toCyrillic('Yozish')).toBe('Ёзиш');
+    expect(toCyrillic("Ma'lumot yo'q")).toBe('Маълумот йўқ');
+    expect(toCyrillic('Eski sana, Eng kam')).toBe('Эски сана, Энг кам');
+    expect(toCyrillic('Shanba, Chorshanba')).toBe('Шанба, Чоршанба');
+    expect(toCyrillic('{n} ta qarzdor')).toBe('{n} та қарздор');
+    expect(toCyrillic('Noyabr')).toBe('Ноябр');
+    expect(toCyrillic("Telegram'ga ulash")).toBe('Телеграмга улаш');
+    expect(toCyrillic('masalan: payment.create')).toBe('масалан: payment.create');
+    expect(translate('uz-cyrl', 'Jami {n} ta qarzdor', { n: 5 })).toBe('Жами 5 та қарздор');
   });
 
   it("o'zgaruvchilarni qo'yadi, yo'q kalitda asl matn qaytadi", () => {
